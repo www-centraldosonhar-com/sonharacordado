@@ -11,6 +11,8 @@ from flask import (
 import sqlite3
 from datetime import datetime
 
+import os
+
 
 # =========================================================
 # FLASK CONFIGURATION
@@ -20,7 +22,10 @@ app = Flask(__name__)
 
 # Development key used by Flask sessions.
 # Later this will be moved to an environment variable.
-app.secret_key = "dev-secret-key"
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "dev-secret-key"
+)
 
 
 # =========================================================
