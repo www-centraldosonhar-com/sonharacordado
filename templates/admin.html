@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+    <!-- Defines character encoding -->
+    <meta charset="UTF-8">
+
+    <!-- Makes the page adapt correctly to mobile screens -->
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Dashboard</title>
+
+    <!-- Loads the same CSS used by the rest of the system -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+    <!-- =================================================
+         ADMIN HEADER
+         ================================================= -->
+    <header>
+
+        <h1>
+            🛠 Admin Dashboard
+        </h1>
+
+        <!-- Gets the logged user's name from Flask session -->
+        <p>
+            Olá, {{ session["user_name"] }}!
+        </p>
+
+        <!-- Returns to the volunteer Home page -->
+        <a href="{{ url_for('home') }}">
+            Voltar para Home
+        </a>
+
+    </header>
+
+    <main>
+        <!-- =================================================
+            NOTIFICATIONS
+            ================================================= -->
+        <section>
+
+            <!-- =================================================
+                NOTIFICATION TITLE + UNREAD COUNT
+                ================================================= -->
+
+            <h2>
+                🔔 Notifications
+
+                {% if unread_notifications > 0 %}
+                    ({{ unread_notifications }})
+                {% endif %}
+            </h2>
+
+            <!-- =================================================
+                MARK ALL NOTIFICATIONS AS READ
+                ================================================= -->
+
+            <form
+                action="{{ url_for('mark_all_notifications_as_read') }}"
+                method="POST"
+            >
+                <button type="submit">
+                    Mark all as read
+                </button>
+            </form>
+
+            <!--
+                Checks whether there are any
+                internal notifications.
+            -->
+
+            {% if notifications %}
+
+                {% for notification in notifications %}
+
+                    <div class="notification-card">
+
+                        <!-- =================================================
+                            READ / UNREAD STATUS
+                            ================================================= -->
+
+                        {% if notification["read"] == 0 %}
+
+                            <p>
+                                🔴 New
+                            </p>
+
+                            <!-- =================================================
+                                MARK NOTIFICATION AS READ
+                                ================================================= -->
+
+                            <form
+                                action="{{ url_for(
+                                    'mark_notification_as_read',
+                                    notification_id=notification['id']
+                                ) }}"
+                                method="POST"
+                            >
+                                <button type="submit">
+                                    Mark as read
+                                </button>
+                            </form>
+
+                        {% else %}
+
+                            <p>
+                                ⚪ Read
+                            </p>
+
+                        {% endif %}
+
+
+                        <!-- =================================================
+                            NOTIFICATION ICON + MESSAGE
+                            ================================================= -->
+
+                        <p>
+
+                            {% if notification["notification_type"] == "task_joined" %}
+
+                                🙋
+
+                            {% elif notification["notification_type"] == "task_left" %}
+
+                                🚪
+
+                            {% elif notification["notification_type"] == "task_delivery_submitted" %}
+
+                                📁
+
+                            {% elif notification["notification_type"] == "event_confirmation_created" %}
+
+                                ✅
+
+                            {% elif notification["notification_type"] == "confirmation_cancelled" %}
+
+                                ❌
+
+                            {% else %}
+
+                                🔔
+
+                            {% endif %}
+
+                            {{ notification["message"] }}
+
+                        </p>
+
+                        <!-- FORMATTED NOTIFICATION DATE -->
+
+                        <p>
+                            🕐 {{ notification["created_at"] | datetime_br }}
+                        </p>
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>
+                    Nenhuma notificação.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+        <!-- =================================================
+            CREATE USER
+            ================================================= -->
+        <section>
+
+            <h2>
+                👤 Create user
+            </h2>
+
+            <form
+                action="{{ url_for('create_user') }}"
+                method="POST"
+            >
+
+                <!-- FIRST NAME -->
+
+                <label for="user-name">
+                    First name:
+                </label>
+
+                <input
+                    type="text"
+                    id="user-name"
+                    name="name"
+                    required
+                >
+
+
+                <!-- LAST NAME -->
+
+                <label for="user-last-name">
+                    Last name:
+                </label>
+
+                <input
+                    type="text"
+                    id="user-last-name"
+                    name="last_name"
+                >
+
+
+                <!-- PROJECT -->
+
+                <label for="user-project">
+                    Project:
+                </label>
+
+                <select
+                    id="user-project"
+                    name="project_id"
+                    required
+                >
+
+                    {% for project in projects %}
+
+                        <option value="{{ project['id'] }}">
+                            {{ project["name"] }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+
+                <!-- EMAIL -->
+
+                <label for="user-email">
+                    Email:
+                </label>
+
+                <input
+                    type="email"
+                    id="user-email"
+                    name="email"
+                >
+
+
+                <!-- USER TYPE -->
+
+                <label for="user-type">
+                    User type:
+                </label>
+
+                <select
+                    id="user-type"
+                    name="user_type"
+                    required
+                >
+
+                    <option value="volunteer">
+                        Volunteer
+                    </option>
+
+                    <option value="admin">
+                        Admin
+                    </option>
+
+                </select>
+
+
+                <!-- SUBMIT -->
+
+                <button type="submit">
+                    Create user
+                </button>
+
+            </form>
+
+        </section>        
+
+        <!-- =================================================
+            USERS LIST
+            ================================================= -->
+        <section>
+
+            <h2>
+                👥 Users
+            </h2>
+
+            {% if users %}
+
+                {% for user in users %}
+
+                    <div class="user-card">
+
+                        <h3>
+                            {{ user["name"] }}
+                            {{ user["last_name"] or "" }}
+                        </h3>
+
+                        <p>
+                            Projeto:
+                            {{ user["project"] }}
+                        </p>
+
+                        {% if user["email"] %}
+
+                            <p>
+                                Email:
+                                {{ user["email"] }}
+                            </p>
+
+                        {% endif %}
+
+                        <p>
+                            Tipo:
+                            {{ user["user_type"] }}
+                        </p>
+
+                        <!-- USER STATUS -->
+
+                        {% if user["active"] == 1 %}
+
+                            <p>
+                                🟢 Active
+                            </p>
+
+                            <form
+                                action="{{ url_for(
+                                    'deactivate_user',
+                                    user_id=user['id']
+                                ) }}"
+                                method="POST"
+                            >
+                                <button type="submit">
+                                    Deactivate user
+                                </button>
+                            </form>
+
+                        {% else %}
+
+                            <p>
+                                ⚪ Inactive
+                            </p>
+
+                            <form
+                                action="{{ url_for(
+                                    'reactivate_user',
+                                    user_id=user['id']
+                                ) }}"
+                                method="POST"
+                            >
+                                <button type="submit">
+                                    Reactivate user
+                                </button>
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>
+                    Nenhum usuário cadastrado.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+        <!-- =================================================
+            CREATE EVENT
+            ================================================= -->
+        <section>
+
+            <h2>
+                ➕ Create event
+            </h2>
+
+
+            <!--
+                This form sends its data to the
+                create_event() Flask route.
+            -->
+
+            <form
+                action="{{ url_for('create_event') }}"
+                method="POST"
+            >
+
+
+                <!-- EVENT NAME -->
+
+                <label for="name">
+                    Event name:
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                >
+
+
+                <!-- PROJECT -->
+
+                <label for="project_id">
+                    Project:
+                </label>
+
+                <select
+                    id="project_id"
+                    name="project_id"
+                >
+
+                    <!-- Empty value = general ONG event -->
+                    <option value="">
+                        General ONG event
+                    </option>
+
+
+                    {% for project in projects %}
+
+                        <option value="{{ project['id'] }}">
+                            {{ project["name"] }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+
+                <!-- EVENT TYPE -->
+
+                <label for="event_type">
+                    Event type:
+                </label>
+
+                <select
+                    id="event_type"
+                    name="event_type"
+                    required
+                >
+
+                    <option value="specific">
+                        Specific
+                    </option>
+
+                    <option value="general">
+                        General
+                    </option>
+
+                </select>
+
+
+                <!-- EVENT DATE -->
+
+                <label for="event_date">
+                    Event date:
+                </label>
+
+                <input
+                    type="date"
+                    id="event_date"
+                    name="event_date"
+                    required
+                >
+
+
+                <!-- EVENT TIME -->
+
+                <label for="event_time">
+                    Event time:
+                </label>
+
+                <input
+                    type="time"
+                    id="event_time"
+                    name="event_time"
+                    required
+                >
+
+
+                <!-- LOCATION -->
+
+                <label for="location">
+                    Location:
+                </label>
+
+                <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    required
+                >
+
+
+                <!-- CONFIRMATION DEADLINE -->
+
+                <label for="confirmation_deadline">
+                    Confirmation deadline:
+                </label>
+
+                <input
+                    type="datetime-local"
+                    id="confirmation_deadline"
+                    name="confirmation_deadline"
+                    required
+                >
+
+
+                <!-- SYMPLA LINK -->
+
+                <label for="sympla_link">
+                    Sympla link:
+                </label>
+
+                <input
+                    type="url"
+                    id="sympla_link"
+                    name="sympla_link"
+                >
+
+
+                <!-- SUBMIT BUTTON -->
+
+                <button type="submit">
+                    Create event
+                </button>
+
+            </form>
+
+        </section>
+
+        <!-- =================================================
+            CREATE EVENT ROLE
+            ================================================= -->
+        <section>
+
+            <h2>
+                🙋 Add role to event
+            </h2>
+
+
+
+            <!--
+                This form creates a vacancy
+                linked to an existing event.
+            -->
+
+            <form
+                action="{{ url_for('create_event_role') }}"
+                method="POST"
+            >
+
+
+                <!-- EVENT -->
+
+                <label for="event_id">
+                    Event:
+                </label>
+
+                <select
+                    id="event_id"
+                    name="event_id"
+                    required
+                >
+
+                    {% for event in events %}
+
+                        <option value="{{ event['id'] }}">
+                            {{ event["name"] }}
+                            —
+                            {{ event["event_date"] }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+
+                <!-- ROLE -->
+
+                <label for="role_id">
+                    Role:
+                </label>
+
+                <select
+                    id="role_id"
+                    name="role_id"
+                    required
+                >
+
+                    {% for role in roles %}
+
+                        <option value="{{ role['id'] }}">
+                            {{ role["name"] }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+
+                <!-- VACANCY LIMIT -->
+
+                <label for="vacancy_limit">
+                    Number of vacancies:
+                </label>
+
+                <input
+                    type="number"
+                    id="vacancy_limit"
+                    name="vacancy_limit"
+                    min="1"
+                    required
+                >
+
+
+                <!-- SUBMIT -->
+
+                <button type="submit">
+                    Add role
+                </button>
+
+            </form>
+
+        </section>
+
+        <!-- =================================================
+            EVENT ROLE SUMMARY
+            ================================================= -->
+        <section>
+
+            <h2>
+                📊 Event roles
+            </h2>
+
+
+            <!--
+                Checks whether there are roles
+                connected to events.
+            -->
+
+            {% if event_role_summary %}
+
+
+                <!--
+                    Creates one card for every event role.
+                -->
+
+                {% for event_role in event_role_summary %}
+
+                    <div class="role-card">
+                        
+                        <!-- =================================================
+                            EDIT VACANCY LIMIT
+                            ================================================= -->
+
+                        <form
+                            action="{{ url_for(
+                                'update_event_role',
+                                event_role_id=event_role['id']
+                            ) }}"
+                            method="POST"
+                        >
+
+                            <!--
+                                Shows the current vacancy limit
+                                and allows the admin to change it.
+                            -->
+
+                            <label for="vacancy-{{ event_role['id'] }}">
+                                Alterar quantidade de vagas:
+                            </label>
+
+                            <input
+                                type="number"
+                                id="vacancy-{{ event_role['id'] }}"
+                                name="vacancy_limit"
+                                value="{{ event_role['vacancy_limit'] }}"
+                                min="{{ event_role['confirmed_count'] if event_role['confirmed_count'] > 0 else 1 }}"
+                                required
+                            >
+
+                            <button type="submit">
+                                Update vacancies
+                            </button>
+
+                        </form>
+
+                        <!-- =================================================
+                            EVENT ROLE STATUS
+                            ================================================= -->
+
+                        {% if event_role["active"] == 1 %}
+
+                            <!-- ACTIVE ROLE -->
+
+                            <p>
+                                🟢 Active
+                            </p>
+
+                            <form
+                                action="{{ url_for(
+                                    'deactivate_event_role',
+                                    event_role_id=event_role['id']
+                                ) }}"
+                                method="POST"
+                            >
+                                <button type="submit">
+                                    Deactivate role
+                                </button>
+                            </form>
+
+                        {% else %}
+
+                            <!-- INACTIVE ROLE -->
+
+                            <p>
+                                ⚪ Inactive
+                            </p>
+
+                            <form
+                                action="{{ url_for(
+                                    'reactivate_event_role',
+                                    event_role_id=event_role['id']
+                                ) }}"
+                                method="POST"
+                            >
+                                <button type="submit">
+                                    Reactivate role
+                                </button>
+                            </form>
+
+                        {% endif %}
+
+
+                        <!-- EVENT NAME -->
+
+                        <h3>
+                            {{ event_role["event_name"] }}
+                        </h3>
+
+
+                        <!-- EVENT DATE -->
+
+                        <p>
+                            📅 {{ event_role["event_date"] }}
+                        </p>
+
+
+                        <!-- ROLE NAME -->
+
+                        <p>
+                            <strong>
+                                {{ event_role["role_name"] }}
+                            </strong>
+                        </p>
+
+
+                        <!-- TOTAL VACANCIES -->
+
+                        <p>
+                            Total de vagas:
+                            {{ event_role["vacancy_limit"] }}
+                        </p>
+
+
+                        <!-- CONFIRMED VOLUNTEERS -->
+
+                        <p>
+                            ✅ Confirmados:
+                            {{ event_role["confirmed_count"] }}
+                        </p>
+
+
+                        <!-- REMAINING VACANCIES -->
+
+                        <p>
+                            🙋 Vagas restantes:
+                            {{ event_role["remaining_count"] }}
+                        </p>
+
+
+                        <!--
+                            Shows a different message
+                            when all vacancies are filled.
+                        -->
+
+                        {% if event_role["remaining_count"] <= 0 %}
+
+                            <p>
+                                ✅ Vaga preenchida
+                            </p>
+
+                        {% else %}
+
+                            <p>
+                                🟢 Vaga aberta
+                            </p>
+
+                        {% endif %}
+
+
+                    </div>
+
+                {% endfor %}
+
+
+            {% else %}
+
+                <p>
+                    Nenhuma função cadastrada nos eventos.
+                </p>
+
+            {% endif %}
+
+        </section>        
+
+
+        <!-- =================================================
+             EVENTS SECTION
+             ================================================= -->
+        <section>
+
+            <h2>
+                📅 Events
+            </h2>
+
+
+            <!-- Checks whether Flask sent any events -->
+            {% if events %}
+
+
+                <!-- Repeats this card for every event -->
+                {% for event in events %}
+
+                <div class="event-card">
+
+                    <h3>
+                        {{ event["name"] }}
+                    </h3>
+
+                    <p>
+                        📅 {{ event["event_date"] }}
+                    </p>
+
+                    <p>
+                        🕐 {{ event["event_time"] }}
+                    </p>
+
+                    <p>
+                        📍 {{ event["location"] }}
+                    </p>
+
+
+                    <!-- =============================================
+                        EDIT EVENT
+                        This form edits THIS specific event.
+                        ============================================= -->
+
+                    <form
+                        action="{{ url_for(
+                            'update_event',
+                            event_id=event['id']
+                        ) }}"
+                        method="POST"
+                    >
+
+                        <!-- EVENT NAME -->
+
+                        <label for="event-name-{{ event['id'] }}">
+                            Event name:
+                        </label>
+
+                        <input
+                            type="text"
+                            id="event-name-{{ event['id'] }}"
+                            name="name"
+                            value="{{ event['name'] }}"
+                            required
+                        >
+
+
+                        <!-- PROJECT -->
+
+                        <label for="event-project-{{ event['id'] }}">
+                            Project:
+                        </label>
+
+                        <select
+                            id="event-project-{{ event['id'] }}"
+                            name="project_id"
+                        >
+
+                            <option value="">
+                                General ONG event
+                            </option>
+
+                            {% for project in projects %}
+
+                                <option
+                                    value="{{ project['id'] }}"
+
+                                    {% if event["project_id"] == project["id"] %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ project["name"] }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+
+                        <!-- EVENT TYPE -->
+
+                        <label for="event-type-{{ event['id'] }}">
+                            Event type:
+                        </label>
+
+                        <select
+                            id="event-type-{{ event['id'] }}"
+                            name="event_type"
+                            required
+                        >
+
+                            <option
+                                value="specific"
+
+                                {% if event["event_type"] == "specific" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Specific
+                            </option>
+
+                            <option
+                                value="general"
+
+                                {% if event["event_type"] == "general" %}
+                                    selected
+                                {% endif %}
+                            >
+                                General
+                            </option>
+
+                        </select>
+
+
+                        <!-- DATE -->
+
+                        <label for="event-date-{{ event['id'] }}">
+                            Date:
+                        </label>
+
+                        <input
+                            type="date"
+                            id="event-date-{{ event['id'] }}"
+                            name="event_date"
+                            value="{{ event['event_date'] }}"
+                            required
+                        >
+
+
+                        <!-- TIME -->
+
+                        <label for="event-time-{{ event['id'] }}">
+                            Time:
+                        </label>
+
+                        <input
+                            type="time"
+                            id="event-time-{{ event['id'] }}"
+                            name="event_time"
+                            value="{{ event['event_time'] }}"
+                            required
+                        >
+
+
+                        <!-- LOCATION -->
+
+                        <label for="event-location-{{ event['id'] }}">
+                            Location:
+                        </label>
+
+                        <input
+                            type="text"
+                            id="event-location-{{ event['id'] }}"
+                            name="location"
+                            value="{{ event['location'] }}"
+                            required
+                        >
+
+
+                        <!-- CONFIRMATION DEADLINE -->
+
+                        <label for="event-deadline-{{ event['id'] }}">
+                            Confirmation deadline:
+                        </label>
+
+                        <input
+                            type="datetime-local"
+                            id="event-deadline-{{ event['id'] }}"
+                            name="confirmation_deadline"
+                            value="{{ event['confirmation_deadline'].replace(' ', 'T') }}"
+                            required
+                        >
+
+
+                        <!-- SYMPLA LINK -->
+
+                        <label for="event-sympla-{{ event['id'] }}">
+                            Sympla link:
+                        </label>
+
+                        <input
+                            type="url"
+                            id="event-sympla-{{ event['id'] }}"
+                            name="sympla_link"
+                            value="{{ event['sympla_link'] or '' }}"
+                        >
+
+
+                        <!-- SAVE -->
+
+                        <button type="submit">
+                            Update event
+                        </button>
+
+                    </form>
+                    
+                    <!-- =================================================
+                        EVENT STATUS
+                        ================================================= -->
+
+                    {% if event["active"] == 1 %}
+
+                        <!-- ACTIVE EVENT -->
+
+                        <p>
+                            🟢 Active
+                        </p>
+
+                        <form
+                            action="{{ url_for(
+                                'deactivate_event',
+                                event_id=event['id']
+                            ) }}"
+                            method="POST"
+                        >
+                            <button type="submit">
+                                Deactivate event
+                            </button>
+                        </form>
+
+                    {% else %}
+
+                        <!-- INACTIVE EVENT -->
+
+                        <p>
+                            ⚪ Inactive
+                        </p>
+
+                        <form
+                            action="{{ url_for(
+                                'reactivate_event',
+                                event_id=event['id']
+                            ) }}"
+                            method="POST"
+                        >
+                            <button type="submit">
+                                Reactivate event
+                            </button>
+                        </form>
+
+                    {% endif %}
+
+                </div> 
+
+                {% endfor %}
+
+
+            {% else %}
+
+                <!-- Shown when there are no events -->
+                <p>
+                    Nenhum evento cadastrado.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- =================================================
+            CREATE TASK
+            ================================================= -->
+        <section>
+
+            <h2>
+                📝 Create task
+            </h2>
+
+            <!--
+                Creates a new task.
+
+                The task may be related to an event,
+                or may be completely independent.
+            -->
+
+            <form
+                action="{{ url_for('create_task') }}"
+                method="POST"
+            >
+
+                <!-- TASK TITLE -->
+
+                <label for="task-title">
+                    Task title:
+                </label>
+
+                <input
+                    type="text"
+                    id="task-title"
+                    name="title"
+                    required
+                >
+
+
+                <!-- DESCRIPTION -->
+
+                <label for="task-description">
+                    Description:
+                </label>
+
+                <textarea
+                    id="task-description"
+                    name="description"
+                ></textarea>
+
+
+                <!-- RELATED EVENT -->
+
+                <label for="task-event">
+                    Related event:
+                </label>
+
+                <select
+                    id="task-event"
+                    name="event_id"
+                >
+
+                    <!--
+                        Empty value means that the task
+                        is not connected to an event.
+                    -->
+
+                    <option value="">
+                        No specific event
+                    </option>
+
+                    {% for event in events %}
+
+                        {% if event["active"] == 1 %}
+
+                            <option value="{{ event['id'] }}">
+                                {{ event["name"] }}
+                                —
+                                {{ event["event_date"] }}
+                            </option>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </select>
+
+
+                <!-- DEADLINE -->
+
+                <label for="task-deadline">
+                    Deadline:
+                </label>
+
+                <input
+                    type="datetime-local"
+                    id="task-deadline"
+                    name="deadline"
+                    required
+                >
+
+
+                <!-- PRIORITY -->
+
+                <label for="task-priority">
+                    Priority:
+                </label>
+
+                <select
+                    id="task-priority"
+                    name="priority"
+                    required
+                >
+
+                    <option value="normal">
+                        Normal
+                    </option>
+
+                    <option value="important">
+                        Important
+                    </option>
+
+                    <option value="urgent">
+                        Urgent
+                    </option>
+
+                </select>
+
+
+                <!-- VOLUNTEER LIMIT -->
+
+                <label for="task-volunteer-limit">
+                    Number of volunteers:
+                </label>
+
+                <input
+                    type="number"
+                    id="task-volunteer-limit"
+                    name="volunteer_limit"
+                    value="1"
+                    min="1"
+                    required
+                >
+
+
+                <!-- SUBMIT -->
+
+                <button type="submit">
+                    Create task
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- =================================================
+            TASK LIST
+            ================================================= -->
+        <section>
+
+            <h2>
+                📋 Tasks
+            </h2>
+
+            {% if tasks %}
+
+                {% for task in tasks %}
+
+                    <div class="task-card">
+
+                        <!-- TASK TITLE -->
+                        <h3>
+                            {{ task["title"] }}
+                        </h3>
+
+
+                        <!-- DESCRIPTION -->
+                        {% if task["description"] %}
+
+                            <p>
+                                {{ task["description"] }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <!-- RELATED EVENT -->
+                        {% if task["event_name"] %}
+
+                            <p>
+                                📅 Event:
+                                {{ task["event_name"] }}
+                            </p>
+
+                        {% else %}
+
+                            <p>
+                                📌 Independent task
+                            </p>
+
+                        {% endif %}
+
+
+                        <!-- DEADLINE -->
+                        <p>
+                            ⏰ Deadline:
+                            {{ task["deadline"] }}
+                        </p>
+
+
+                        <!-- PRIORITY -->
+                        <p>
+                            Priority:
+                            {{ task["priority"] }}
+                        </p>
+
+
+                        <!-- VOLUNTEER LIMIT -->
+                        <p>
+                            Volunteers needed:
+                            {{ task["volunteer_limit"] }}
+                        </p>
+
+
+                        <!-- TASK STATUS -->
+                        {% if task["status"] == "completed" %}
+
+                            <p>
+                                ✅ Completed
+                            </p>
+
+                        {% elif task["overdue"] %}
+
+                            <p>
+                                ⚠️ Overdue
+                            </p>
+
+                        {% elif task["status"] == "in_progress" %}
+
+                            <p>
+                                🟡 In progress
+                            </p>
+
+                        {% else %}
+
+                            <p>
+                                🟢 Open
+                            </p>
+
+                        {% endif %}
+
+                        <!-- =================================================
+                            TASK STATUS CONTROL
+                            ================================================= -->
+
+                        <form
+                            action="{{ url_for(
+                                'update_task_status',
+                                task_id=task['id']
+                            ) }}"
+                            method="POST"
+                        >
+
+                            <label for="task-status-{{ task['id'] }}">
+                                Status:
+                            </label>
+
+                            <select
+                                id="task-status-{{ task['id'] }}"
+                                name="status"
+                                required
+                            >
+
+                                <option
+                                    value="open"
+                                    {% if task["status"] == "open" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Open
+                                </option>
+
+                                <option
+                                    value="in_progress"
+                                    {% if task["status"] == "in_progress" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    In progress
+                                </option>
+
+                                <option
+                                    value="completed"
+                                    {% if task["status"] == "completed" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Completed
+                                </option>
+
+                            </select>
+
+                            <button type="submit">
+                                Update status
+                            </button>
+
+                        </form>
+
+                        <!-- =================================================
+                            TASK PARTICIPANTS
+                            ================================================= -->
+
+                        <h4>
+                            👥 Volunteers
+                        </h4>
+
+                        {% set namespace = namespace(found=false) %}
+
+                        {% for participant in task_participants %}
+
+                            {% if participant["task_id"] == task["id"] %}
+
+                                {% set namespace.found = true %}
+
+                                <p>
+                                    {{ participant["volunteer_name"] }}
+                                    —
+                                    {{ participant["project"] }}
+                                </p>
+
+                            <!-- DELIVERY -->
+
+                            {% if participant["delivery_link"] %}
+
+                                <p>
+                                    📁
+                                    <a
+                                        href="{{ participant['delivery_link'] }}"
+                                        target="_blank"
+                                    >
+                                        Open delivery
+                                    </a>
+                                </p>
+
+                                <p>
+                                    ✅ Submitted
+                                </p>
+
+                            {% else %}
+
+                                <p>
+                                    ⏳ No delivery submitted
+                                </p>
+
+                            {% endif %}
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                        {% if not namespace.found %}
+
+                            <p>
+                                Nenhum voluntário nesta tarefa.
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>
+                    Nenhuma tarefa cadastrada.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- =================================================
+             CONFIRMED VOLUNTEERS SECTION
+             ================================================= -->
+        <section>
+
+            <h2>
+                ✅ Confirmed volunteers
+            </h2>
+
+
+            <!--
+                Checks whether there are confirmed volunteers.
+            -->
+
+            {% if confirmed_volunteers %}
+
+
+                <!--
+                    Repeats this card for every confirmed volunteer.
+                -->
+
+                {% for volunteer in confirmed_volunteers %}
+
+                    <div class="confirmation-card">
+
+
+                        <!-- Volunteer name -->
+                        <strong>
+                            {{ volunteer["name"] }}
+                        </strong>
+
+
+                        <!-- Volunteer's original project -->
+                        <p>
+                            Projeto:
+                            {{ volunteer["project"] }}
+                        </p>
+
+
+                        <!-- Role selected for the event -->
+                        <p>
+                            Função:
+                            {{ volunteer["role"] }}
+                        </p>
+
+
+                        <!-- Event where the volunteer confirmed -->
+                        <p>
+                            Evento:
+                            {{ volunteer["event_name"] }}
+                        </p>
+
+
+                    </div>
+
+                {% endfor %}
+
+
+            {% else %}
+
+                <!--
+                    Shown when nobody has confirmed yet.
+                -->
+
+                <p>
+                    Nenhum voluntário confirmado.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Central da ONG</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <header>
+        <h1>❤️ Central da ONG</h1>
+
+        <p>
+            Olá, {{ session["user_name"] }}
+            do {{ session["project"] }}! ❤️
+        </p>
+
+        <a href="{{ url_for('logout') }}">Sair</a>
+
+        {% if session.get("user_type") == "admin" %}
+            <a href="{{ url_for('admin') }}">Admin</a>
+        {% endif %}
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+
+        {% if messages %}
+
+            {% for message in messages %}
+                <p class="flash-message">
+                    {{ message }}
+                </p>
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+    <main>
+        <section>
+            <h2>🙋 My confirmations</h2>
+
+            {% if my_confirmations %}
+
+                {% for confirmation in my_confirmations %}
+
+                    <div class="confirmation-card">
+
+                        <p>
+                            ✅ {{ confirmation["role"] }}
+                        </p>
+
+                        {% if confirmation["cancellation_open"] %}
+
+                            <form
+                                action="{{ url_for('cancel_confirmation', confirmation_id=confirmation['id']) }}"
+                                method="POST"
+                            >
+                                <label for="reason-{{ confirmation['id'] }}">
+                                    Reason for cancellation:
+                                </label>
+
+                                <textarea
+                                    id="reason-{{ confirmation['id'] }}"
+                                    name="cancellation_reason"
+                                    required
+                                ></textarea>
+
+                                <button type="submit">
+                                    Cancel confirmation
+                                </button>
+                            </form>
+
+                        {% else %}
+
+                            <p>
+                                🔒 Cancellation deadline closed.
+                                Please contact the coordination team.
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>
+                    Você ainda não confirmou nenhuma função.
+                </p>
+
+            {% endif %}
+        </section>
+
+
+        <!-- =================================================
+            MY TASKS
+            ================================================= -->
+        <section>
+
+            <h2>
+                📝 My tasks
+            </h2>
+
+            <!--
+                Checks whether the logged-in volunteer
+                is currently participating in any task.
+            -->
+
+            {% if my_tasks %}
+
+                <!--
+                    Creates one card for each task
+                    joined by the logged-in user.
+                -->
+
+                {% for task in my_tasks %}
+
+                    <div class="task-card">
+
+                        <!-- =================================================
+                            TASK INFORMATION
+                            ================================================= -->
+
+                        <h3>
+                            {{ task["title"] }}
+                        </h3>
+
+
+                        <!-- DESCRIPTION -->
+
+                        {% if task["description"] %}
+
+                            <p>
+                                {{ task["description"] }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <!-- DEADLINE -->
+
+                        <p>
+                            ⏰ Deadline:
+                            {{ task["deadline"] }}
+                        </p>
+
+
+                        <!-- PRIORITY -->
+
+                        <p>
+                            Priority:
+                            {{ task["priority"] }}
+                        </p>
+
+
+                        <!-- STATUS -->
+
+                        <p>
+                            Status:
+                            {{ task["status"] }}
+                        </p>
+
+
+                        <!-- =================================================
+                            TASK DELIVERY
+                            ================================================= -->
+
+                        <h4>
+                            📁 Delivery
+                        </h4>
+
+
+                        <!--
+                            If the volunteer already submitted
+                            a delivery link, show it.
+                        -->
+
+                        {% if task["delivery_link"] %}
+
+                            <p>
+                                ✅ Delivery submitted
+                            </p>
+
+                            <p>
+                                <a
+                                    href="{{ task['delivery_link'] }}"
+                                    target="_blank"
+                                >
+                                    Open delivery
+                                </a>
+                            </p>
+
+                        {% endif %}
+
+
+                        <!--
+                            Delivery form.
+
+                            This is its OWN form.
+                            It must NOT be inside the Leave Task form.
+                        -->
+
+                        {% if task["status"] != "completed" %}
+
+                            <form
+                                action="{{ url_for(
+                                    'submit_task_delivery',
+                                    participation_id=task['participation_id']
+                                ) }}"
+                                method="POST"
+                            >
+
+                                <label
+                                    for="delivery-{{ task['participation_id'] }}"
+                                >
+                                    Google Drive link:
+                                </label>
+
+                                <input
+                                    type="url"
+                                    id="delivery-{{ task['participation_id'] }}"
+                                    name="delivery_link"
+                                    value="{{ task['delivery_link'] or '' }}"
+                                    placeholder="https://drive.google.com/..."
+                                    required
+                                >
+
+                                <button type="submit">
+
+                                    {% if task["delivery_link"] %}
+
+                                        Update delivery
+
+                                    {% else %}
+
+                                        Submit delivery
+
+                                    {% endif %}
+
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+
+                        <!-- =================================================
+                            LEAVE TASK
+                            ================================================= -->
+
+                        <!--
+                            This is a completely separate form
+                            from the delivery form.
+                        -->
+
+                        {% if task["status"] != "completed" %}
+
+                            <form
+                                action="{{ url_for(
+                                    'leave_task',
+                                    participation_id=task['participation_id']
+                                ) }}"
+                                method="POST"
+                            >
+
+                                <button type="submit">
+                                    Sair desta tarefa
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+
+            {% else %}
+
+                <p>
+                    Você ainda não está ajudando em nenhuma tarefa.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+        <section>
+            <h2>📅 Próximo evento</h2>
+            {% if next_event %}
+                <p>
+                    <strong>{{ next_event["name"] }}</strong>
+                </p>
+
+                <p>
+                    {{ next_event["event_date"] }}
+                    •
+                    {{ next_event["event_time"] }}
+                </p>
+
+                <p>
+                    📍 {{ next_event["location"] }}
+                </p>
+
+            {% else %}
+
+                <p>Nenhum evento disponível.</p>
+            {% endif %}
+        </section>
+
+        <section>
+
+            <h2>🚨 Open roles</h2>
+
+            {% if event_roles %}
+
+                {% for event_role in event_roles %}
+
+                    <div class="role-card">
+
+                        <h3>{{ event_role["name"] }}</h3>
+
+                        <p>
+                            {{ event_role["confirmed_count"] }}
+                            de
+                            {{ event_role["vacancy_limit"] }}
+                            preenchidas
+                        </p>
+
+                        <p>
+                            {{ event_role["vacancy_limit"] - event_role["confirmed_count"] }}
+                            vagas restantes
+                        </p>
+
+                        {% if not event_role["confirmation_open"] %}
+
+                            <p>
+                                🔒 Confirmation deadline closed
+                            </p>
+
+                        {% elif event_role["confirmed_count"] >= event_role["vacancy_limit"] %}
+
+                            <p>
+                                ✅ Vaga preenchida
+                            </p>
+
+                        {% else %}
+
+                            <form
+                                action="{{ url_for('confirm', event_role_id=event_role['id']) }}"
+                                method="POST"
+                            >
+                                <button type="submit">
+                                    Quero ajudar
+                                </button>
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>
+                    Nenhuma vaga aberta para o próximo evento.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+        <!-- =================================================
+            AVAILABLE TASKS
+            ================================================= -->
+        <section>
+
+            <h2>
+                📝 Tasks
+            </h2>
+
+            {% if tasks %}
+
+                {% for task in tasks %}
+
+                    <div class="task-card">
+
+                        <!-- TASK TITLE -->
+                        <h3>
+                            {{ task["title"] }}
+                        </h3>
+
+
+                        <!-- DESCRIPTION -->
+                        {% if task["description"] %}
+
+                            <p>
+                                {{ task["description"] }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <!-- DEADLINE -->
+                        <p>
+                            ⏰ Deadline:
+                            {{ task["deadline"] }}
+                        </p>
+
+
+                        <!-- PRIORITY -->
+                        <p>
+                            Priority:
+                            {{ task["priority"] }}
+                        </p>
+
+
+                        <!-- VOLUNTEER COUNT -->
+                        <p>
+                            {{ task["volunteer_count"] }}
+                            de
+                            {{ task["volunteer_limit"] }}
+                            volunteers
+                        </p>
+
+
+                        <!-- OVERDUE -->
+                        {% if task["overdue"] %}
+
+                            <p>
+                                ⚠️ Task overdue
+                            </p>
+
+                        {% endif %}
+
+
+                        <!-- CHECK CAPACITY -->
+                        {% if task["volunteer_count"] >= task["volunteer_limit"] %}
+
+                            <p>
+                                ✅ Volunteer team complete
+                            </p>
+                            
+
+                        {% else %}
+
+                            <form
+                                action="{{ url_for(
+                                    'join_task',
+                                    task_id=task['id']
+                                ) }}"
+                                method="POST"
+                            >
+
+                                <button type="submit">
+                                    Quero ajudar nessa tarefa
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>
+                    Nenhuma tarefa disponível.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+        <section>
+
+            <h2>✅ Confirmed volunteers</h2>
+
+            {% for confirmation in confirmations %}
+
+                <p>
+                    {{ confirmation["name"] }}
+                    — {{ confirmation["project"] }}
+                    — {{ confirmation["role"] }}
+                </p>
+
+            {% endfor %}
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>
