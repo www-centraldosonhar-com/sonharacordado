@@ -4007,19 +4007,34 @@ def mark_all_notifications_as_read():
     )
 
 # =========================================================
-# APPLICATION START
+# APPLICATION INITIALIZATION
+# =========================================================
+
+# These functions must run when the application
+# is imported by Gunicorn on Render.
+#
+# Gunicorn uses:
+#
+#     gunicorn app:app
+#
+# In that case __name__ is NOT "__main__",
+# so database initialization cannot stay only
+# inside the block at the bottom.
+
+initialize_database()
+
+seed_projects()
+seed_users()
+seed_roles()
+seed_events()
+seed_event_roles()
+
+
+# =========================================================
+# LOCAL DEVELOPMENT START
 # =========================================================
 
 if __name__ == "__main__":
-
-    initialize_database()
-
-    # Seed order matters because of foreign keys.
-    seed_projects()
-    seed_users()
-    seed_roles()
-    seed_events()
-    seed_event_roles()
 
     app.run(
         debug=True
