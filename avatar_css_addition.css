@@ -1,0 +1,22 @@
+.admin-avatar,
+.admin-avatar-placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 8px 0 14px;
+}
+
+.admin-avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    color: #333;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.avatar-upload-form {
+    margin-bottom: 18px;
+}

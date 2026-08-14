@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local database from the old SQLite version
+database.db
+*.db
+*.sqlite
+*.sqlite3
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Local upload fallback
+static/avatars/*
+!static/avatars/.gitkeep
+static/event_images/*
+!static/event_images/.gitkeep
