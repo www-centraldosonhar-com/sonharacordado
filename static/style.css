@@ -2522,3 +2522,135 @@ select option {
     font-size: 0.84rem;
     line-height: 1.5;
 }
+
+/* =========================================================
+   FIX DEFINITIVO - AVATARES DA HOME / EQUIPE
+   Mantém imagens vindas do Supabase dentro do tamanho correto.
+   ========================================================= */
+
+/* Contêiner do avatar nos cards de equipe/confirmados */
+.person-row .avatar-shell {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    flex: 0 0 52px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 2px;
+    overflow: hidden;
+
+    border-radius: 50%;
+
+    background: linear-gradient(
+        135deg,
+        var(--red),
+        var(--orange),
+        var(--blue)
+    );
+}
+
+/* Foto real dentro do card */
+.person-row .people-avatar,
+.person-row .avatar-shell .people-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px;
+    max-width: 48px;
+    min-height: 48px;
+    max-height: 48px;
+
+    display: block;
+
+    border: 2px solid var(--surface);
+    border-radius: 50%;
+
+    object-fit: cover;
+    object-position: center;
+
+    overflow: hidden;
+}
+
+/* Fallback com inicial, no mesmo tamanho da foto */
+.person-row .avatar-shell .avatar-circle,
+.person-row .avatar-circle {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    min-height: 48px;
+    max-height: 48px;
+
+    flex: 0 0 48px;
+
+    border-radius: 50%;
+}
+
+/* Garante que nenhuma imagem do card estoure o layout */
+.person-row img {
+    flex-shrink: 0;
+}
+
+/* Avatar da navegação lateral */
+.sidebar-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px;
+    max-width: 44px;
+
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Avatar do cabeçalho */
+.header-avatar {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px;
+    max-width: 56px;
+
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Avatar no Admin */
+.admin-avatar {
+    width: 70px !important;
+    height: 70px !important;
+    min-width: 70px;
+    max-width: 70px;
+
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+
+    .header-avatar {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px;
+        max-width: 48px;
+    }
+
+    .person-row .avatar-shell {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+        flex-basis: 50px;
+    }
+
+    .person-row .people-avatar,
+    .person-row .avatar-shell .people-avatar,
+    .person-row .avatar-shell .avatar-circle,
+    .person-row .avatar-circle {
+        width: 46px !important;
+        height: 46px !important;
+        min-width: 46px;
+        max-width: 46px;
+        min-height: 46px;
+        max-height: 46px;
+    }
+}

@@ -583,6 +583,34 @@ def upload_media(
 
     return f"{folder}/{safe_filename}"
 
+
+def allowed_avatar_file(filename):
+    """
+    Checks whether an uploaded avatar uses
+    one of the allowed image extensions.
+    """
+
+    return (
+        "." in filename
+        and filename.rsplit(
+            ".",
+            1
+        )[1].lower()
+        in ALLOWED_AVATAR_EXTENSIONS
+    )
+
+
+def allowed_event_image_file(filename):
+    """
+    Checks whether an uploaded event cover uses
+    one of the allowed image extensions.
+    """
+
+    return allowed_avatar_file(
+        filename
+    )
+
+
 # =========================================================
 # FORM HELPERS
 # =========================================================
@@ -607,7 +635,8 @@ def form_text(field_name):
 
 def parse_datetime(value):
     """
-    Converts an ISO date/time string into datetime.
+    Accepts either PostgreSQL datetime objects
+    or ISO date/time strings.
 
     Returns None when invalid.
     """
@@ -615,24 +644,35 @@ def parse_datetime(value):
     if not value:
         return None
 
-    try:
+    if isinstance(
+        value,
+        datetime
+    ):
 
-        return datetime.fromisoformat(
-            value
-        )
+        return value
 
-    except ValueError:
+    if isinstance(
+        value,
+        str
+    ):
 
-        return None
+        try:
+
+            return datetime.fromisoformat(
+                value
+            )
+
+        except ValueError:
+
+            return None
+
+    return None
 
 
 def format_datetime(value):
     """
-    Converts:
-
-        2026-08-13T15:30:00
-
-    into:
+    Formats PostgreSQL datetime objects or
+    ISO date/time strings as:
 
         13/08/2026 às 15:30
     """
@@ -640,15 +680,33 @@ def format_datetime(value):
     if not value:
         return ""
 
-    try:
+    if isinstance(
+        value,
+        datetime
+    ):
 
-        date = datetime.fromisoformat(
+        date = value
+
+    elif isinstance(
+        value,
+        str
+    ):
+
+        try:
+
+            date = datetime.fromisoformat(
+                value
+            )
+
+        except ValueError:
+
+            return value
+
+    else:
+
+        return str(
             value
         )
-
-    except ValueError:
-
-        return value
 
     return date.strftime(
         "%d/%m/%Y às %H:%M"
@@ -662,6 +720,55 @@ def format_datetime(value):
 app.jinja_env.filters[
     "datetime_br"
 ] = format_datetime
+
+
+def format_datetime_local(value):
+    """
+    Formats PostgreSQL datetime objects or ISO strings for
+    HTML <input type="datetime-local"> values.
+
+    Example:
+        2026-08-14T13:30
+    """
+
+    if not value:
+        return ""
+
+    if isinstance(value, datetime):
+
+        date = value
+
+    elif isinstance(value, str):
+
+        try:
+
+            date = datetime.fromisoformat(
+                value
+            )
+
+        except ValueError:
+
+            return value.replace(
+                " ",
+                "T"
+            )
+
+    else:
+
+        return str(
+            value
+        )
+
+    return date.strftime(
+        "%Y-%m-%dT%H:%M"
+    )
+
+
+app.jinja_env.filters[
+    "datetime_local"
+] = format_datetime_local
+
+
 
 
 # =========================================================

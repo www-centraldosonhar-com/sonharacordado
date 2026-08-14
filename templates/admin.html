@@ -1269,7 +1269,7 @@
                                 type="datetime-local"
                                 id="event-deadline-{{ event['id'] }}"
                                 name="confirmation_deadline"
-                                value="{{ event['confirmation_deadline'].replace(' ', 'T') }}"
+                                value="{{ event['confirmation_deadline'] | datetime_local }}"
                                 required
                             >
 
@@ -1940,7 +1940,7 @@
                                 type="datetime-local"
                                 id="task-deadline-{{ task['id'] }}"
                                 name="deadline"
-                                value="{{ task['deadline'].replace(' ', 'T') }}"
+                                value="{{ task['deadline'] | datetime_local }}"
                                 required
                             >
 
