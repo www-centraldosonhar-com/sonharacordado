@@ -1,9 +1,22 @@
+import { useState } from 'react'
+import LoginPage from './pages/LoginPage'
+import HomePage from './pages/HomePage'
+
 function App() {
+  const [user, setUser] = useState(null)
+
+  if (!user) {
+    return (
+      <LoginPage
+        onLogin={setUser}
+      />
+    )
+  }
+
   return (
-    <main>
-      <h1>Central do Sonhar ❤️🧡💙</h1>
-      <p>Versão 2.0 em construção.</p>
-    </main>
+    <HomePage
+      user={user}
+    />
   )
 }
 
