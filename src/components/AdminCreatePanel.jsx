@@ -11,6 +11,11 @@ function AdminCreatePanel({
   const [isLoading, setIsLoading] = useState(false)
 
   const [
+    userType,
+    setUserType,
+  ] = useState('volunteer')
+
+  const [
     activityRequiresDelivery,
     setActivityRequiresDelivery,
   ] = useState(false)
@@ -50,6 +55,10 @@ function AdminCreatePanel({
 
       if (action === 'activity') {
         setActivityRequiresDelivery(false)
+      }
+
+      if (action === 'user') {
+        setUserType('volunteer')
       }
 
       await onCreated()
@@ -620,7 +629,12 @@ function AdminCreatePanel({
 
             <select
               name="userType"
-              defaultValue="volunteer"
+              value={userType}
+              onChange={(event) =>
+                setUserType(
+                  event.target.value
+                )
+              }
             >
               <option value="volunteer">
                 🫶 Voluntário
@@ -639,6 +653,11 @@ function AdminCreatePanel({
               </option>
             </select>
 
+            {[
+              'volunteer',
+              'team_admin',
+            ].includes(userType) && (
+              <>
             <label>
               Equipe principal
             </label>
@@ -683,6 +702,9 @@ function AdminCreatePanel({
               Mídias é a única equipe adicional permitida e
               atua em APS, PPF e SJ.
             </p>
+
+              </>
+            )}
 
             <label>
               Senha

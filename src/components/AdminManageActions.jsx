@@ -12,6 +12,24 @@ function AdminManageActions({
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+  const initialUserType =
+    type === 'user'
+      ? (
+          item.permissions?.includes('admin')
+            ? item.admin_scope === 'global'
+              ? 'admin'
+              : item.admin_scope === 'project'
+                ? 'project_admin'
+                : 'team_admin'
+            : 'volunteer'
+        )
+      : 'volunteer'
+
+  const [
+    userType,
+    setUserType,
+  ] = useState(initialUserType)
+
   const [
     activityRequiresDelivery,
     setActivityRequiresDelivery,
@@ -180,18 +198,11 @@ function AdminManageActions({
 
           <select
             name="userType"
-            defaultValue={
-              item.permissions?.includes(
-                'admin'
+            value={userType}
+            onChange={(event) =>
+              setUserType(
+                event.target.value
               )
-                ? item.admin_scope ===
-                  'global'
-                  ? 'admin'
-                  : item.admin_scope ===
-                    'project'
-                    ? 'project_admin'
-                    : 'team_admin'
-                : 'volunteer'
             }
           >
             <option value="volunteer">
@@ -211,6 +222,11 @@ function AdminManageActions({
             </option>
           </select>
 
+          {[
+            'volunteer',
+            'team_admin',
+          ].includes(userType) && (
+            <>
           <label>
             Equipe principal
           </label>
@@ -278,6 +294,9 @@ function AdminManageActions({
               📸 Também ajuda em Mídias
             </span>
           </label>
+
+            </>
+          )}
         </>
       )
     }
