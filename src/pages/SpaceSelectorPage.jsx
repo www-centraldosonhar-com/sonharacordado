@@ -114,7 +114,10 @@ function SpaceSelectorPage({
                   {user.adminScope ===
                   'global'
                     ? 'Administração Geral'
-                    : 'Administração da sua equipe'}
+                    : user.adminScope ===
+                      'project'
+                      ? `Administração do ${user.project}`
+                      : 'Administração da sua equipe'}
                 </small>
               </button>
             )}

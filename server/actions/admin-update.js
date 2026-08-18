@@ -186,7 +186,10 @@ export default async function handler(
       }
 
       if (
-        userType !== 'admin' &&
+        ![
+          'admin',
+          'project_admin',
+        ].includes(userType) &&
         !primaryTeam &&
         !wantsMedia
       ) {
@@ -216,6 +219,7 @@ export default async function handler(
         ![
           'volunteer',
           'team_admin',
+          'project_admin',
           'admin',
         ].includes(userType)
       ) {
@@ -266,6 +270,7 @@ export default async function handler(
           project_id = ${projectId},
           user_type = ${
             userType === 'admin' ||
+            userType === 'project_admin' ||
             userType === 'team_admin'
               ? 'admin'
               : 'volunteer'
@@ -334,6 +339,7 @@ export default async function handler(
 
       if (
         userType === 'admin' ||
+        userType === 'project_admin' ||
         userType === 'team_admin'
       ) {
         await sql`
@@ -349,7 +355,10 @@ export default async function handler(
             ${
               userType === 'admin'
                 ? 'global'
-                : 'team'
+                : userType ===
+                  'project_admin'
+                  ? 'project'
+                  : 'team'
             },
             1
           )

@@ -1,6 +1,8 @@
 import {
   getAdminTeamIds,
   isGlobalAdmin,
+  isMediaAdmin,
+  isProjectAdmin,
   requireAdmin,
   sql,
 } from './_admin.js'
@@ -38,11 +40,24 @@ export default async function handler(request, response) {
     const globalAdmin =
       isGlobalAdmin(admin)
 
+    const projectAdmin =
+      isProjectAdmin(admin)
+
+    const mediaAdmin =
+      isMediaAdmin(admin)
+
+    const unrestrictedProjects =
+      globalAdmin ||
+      mediaAdmin
+
     const projects = await sql`
       SELECT
         id,
         name
       FROM projects
+      WHERE
+        ${unrestrictedProjects}
+        OR id = ${admin.projectId}
       ORDER BY name
     `
 
@@ -119,16 +134,49 @@ export default async function handler(request, response) {
 
       WHERE
         ${globalAdmin}
-        OR EXISTS (
-          SELECT 1
-          FROM user_teams scoped_ut
-          WHERE
-            scoped_ut.user_id = u.id
-            AND scoped_ut.active = 1
-            AND scoped_ut.team_id =
-              ANY(
-                ${adminTeamIds}
-              )
+
+        OR (
+          ${projectAdmin}
+          AND u.project_id =
+            ${admin.projectId}
+        )
+
+        OR (
+          ${mediaAdmin}
+          AND EXISTS (
+            SELECT 1
+            FROM user_teams scoped_media
+            JOIN teams scoped_team
+              ON scoped_team.id =
+                scoped_media.team_id
+            WHERE
+              scoped_media.user_id =
+                u.id
+              AND scoped_media.active = 1
+              AND scoped_team.code =
+                'media'
+          )
+        )
+
+        OR (
+          ${!globalAdmin &&
+            !projectAdmin &&
+            !mediaAdmin}
+
+          AND u.project_id =
+            ${admin.projectId}
+
+          AND EXISTS (
+            SELECT 1
+            FROM user_teams scoped_ut
+            WHERE
+              scoped_ut.user_id = u.id
+              AND scoped_ut.active = 1
+              AND scoped_ut.team_id =
+                ANY(
+                  ${adminTeamIds}
+                )
+          )
         )
 
       GROUP BY
@@ -168,6 +216,12 @@ export default async function handler(request, response) {
       FROM events e
       LEFT JOIN projects p
         ON e.project_id = p.id
+
+      WHERE
+        ${unrestrictedProjects}
+        OR e.project_id =
+          ${admin.projectId}
+
       ORDER BY
         e.event_date DESC,
         e.event_time DESC
@@ -203,6 +257,12 @@ export default async function handler(request, response) {
       LEFT JOIN confirmations c
         ON c.event_role_id = er.id
         AND c.status = 'confirmed'
+
+      WHERE
+        ${unrestrictedProjects}
+        OR e.project_id =
+          ${admin.projectId}
+
       GROUP BY
         er.id,
         er.event_id,
@@ -289,6 +349,11 @@ export default async function handler(request, response) {
         ON er.event_id = e.id
       WHERE c.status = 'confirmed'
         AND c.completed_at IS NULL
+        AND (
+          ${unrestrictedProjects}
+          OR e.project_id =
+            ${admin.projectId}
+        )
       ORDER BY
         e.event_date DESC,
         r.name,
@@ -392,6 +457,12 @@ export default async function handler(request, response) {
         ORDER BY roles.name
         LIMIT 1
       ) r ON TRUE
+
+      WHERE
+        ${unrestrictedProjects}
+        OR e.project_id =
+          ${admin.projectId}
+
       ORDER BY
         e.event_date DESC,
         er.created_at DESC
@@ -432,6 +503,11 @@ export default async function handler(request, response) {
       JOIN events e
         ON er.event_id = e.id
       WHERE c.status = 'confirmed'
+        AND (
+          ${unrestrictedProjects}
+          OR e.project_id =
+            ${admin.projectId}
+        )
       ORDER BY
         e.event_date DESC,
         u.name
@@ -443,6 +519,14 @@ export default async function handler(request, response) {
       adminAccess: {
         scope:
           admin.adminScope,
+
+        project: {
+          id:
+            admin.projectId,
+          name:
+            admin.project,
+        },
+
         teams:
           admin.teams || [],
       },

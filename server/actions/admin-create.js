@@ -400,6 +400,7 @@ export default async function handler(request, response) {
         ![
           'volunteer',
           'team_admin',
+          'project_admin',
           'admin',
         ].includes(userType)
       ) {
@@ -442,6 +443,7 @@ export default async function handler(request, response) {
           ${passwordHash},
           ${
             userType === 'admin' ||
+            userType === 'project_admin' ||
             userType === 'team_admin'
               ? 'admin'
               : 'volunteer'
@@ -498,6 +500,7 @@ export default async function handler(request, response) {
 
       if (
         userType === 'admin' ||
+        userType === 'project_admin' ||
         userType === 'team_admin'
       ) {
         await sql`
@@ -513,7 +516,10 @@ export default async function handler(request, response) {
             ${
               userType === 'admin'
                 ? 'global'
-                : 'team'
+                : userType ===
+                  'project_admin'
+                  ? 'project'
+                  : 'team'
             },
             1
           )
@@ -598,7 +604,10 @@ export default async function handler(request, response) {
       }
 
       if (
-        userType !== 'admin' &&
+        ![
+          'admin',
+          'project_admin',
+        ].includes(userType) &&
         !primaryTeam &&
         !wantsMedia
       ) {

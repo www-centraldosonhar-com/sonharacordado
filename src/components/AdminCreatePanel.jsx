@@ -630,6 +630,10 @@ function AdminCreatePanel({
                 ⚙️ Admin de equipe
               </option>
 
+              <option value="project_admin">
+                🏠 Admin de Projeto
+              </option>
+
               <option value="admin">
                 🛡️ Admin Geral
               </option>

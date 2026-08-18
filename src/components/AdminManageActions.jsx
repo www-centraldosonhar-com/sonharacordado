@@ -187,7 +187,10 @@ function AdminManageActions({
                 ? item.admin_scope ===
                   'global'
                   ? 'admin'
-                  : 'team_admin'
+                  : item.admin_scope ===
+                    'project'
+                    ? 'project_admin'
+                    : 'team_admin'
                 : 'volunteer'
             }
           >
@@ -197,6 +200,10 @@ function AdminManageActions({
 
             <option value="team_admin">
               ⚙️ Admin de equipe
+            </option>
+
+            <option value="project_admin">
+              🏠 Admin de Projeto
             </option>
 
             <option value="admin">

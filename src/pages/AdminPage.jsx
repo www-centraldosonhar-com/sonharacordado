@@ -274,7 +274,10 @@ function AdminPage({
                     ? person.admin_scope ===
                       'global'
                       ? '🛡️ Admin Geral'
-                      : '⚙️ Admin de equipe'
+                      : person.admin_scope ===
+                        'project'
+                        ? '🏠 Admin de Projeto'
+                        : '⚙️ Admin de equipe'
                     : person.permissions?.includes(
                         'volunteer'
                       )
