@@ -214,6 +214,7 @@ export default async function handler(request, response) {
       JOIN events e
         ON er.event_id = e.id
       WHERE c.status = 'confirmed'
+        AND c.completed_at IS NULL
       ORDER BY
         e.event_date DESC,
         r.name,

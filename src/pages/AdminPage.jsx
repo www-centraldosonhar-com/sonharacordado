@@ -470,6 +470,24 @@ function AdminPage({
                               <span>
                                 {participant.project_name}
                               </span>
+
+                              {Number(
+                                participant.requires_delivery
+                              ) === 1 ? (
+                                participant.photo_submitted_at ? (
+                                  <span className="admin-participant-status admin-participant-ready">
+                                    🔎 Entrega realizada — aguardando validação
+                                  </span>
+                                ) : (
+                                  <span className="admin-participant-status admin-participant-pending">
+                                    ⏳ Aguardando entrega
+                                  </span>
+                                )
+                              ) : (
+                                <span className="admin-participant-status admin-participant-ready">
+                                  ✅ Pronto para finalizar
+                                </span>
+                              )}
                             </div>
 
                             <AdminParticipantAction

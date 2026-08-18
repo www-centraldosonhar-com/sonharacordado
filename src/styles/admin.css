@@ -820,3 +820,23 @@
   border: 1px solid #ece8e4;
   border-radius: 14px;
 }
+
+/* =========================================================
+   ACTIVITY PARTICIPANT WORKFLOW STATUS
+   ========================================================= */
+
+.admin-participant-status {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.admin-participant-pending {
+  opacity: 0.72;
+}
+
+.admin-participant-ready {
+  opacity: 0.9;
+}
