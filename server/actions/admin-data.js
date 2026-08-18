@@ -1,38 +1,9 @@
-import process from 'node:process'
-import { neon } from '@neondatabase/serverless'
-import { getSessionUser } from './_session.js'
-
-const sql = neon(process.env.DATABASE_URL)
-
-async function requireAdmin(request) {
-  const sessionUser = await getSessionUser(request)
-
-  if (!sessionUser?.userId) {
-    return null
-  }
-
-  const users = await sql`
-    SELECT
-      id,
-      user_type,
-      active
-    FROM users
-    WHERE id = ${sessionUser.userId}
-    LIMIT 1
-  `
-
-  const user = users[0]
-
-  if (
-    !user ||
-    !user.active ||
-    user.user_type !== 'admin'
-  ) {
-    return null
-  }
-
-  return user
-}
+import {
+  getAdminTeamIds,
+  isGlobalAdmin,
+  requireAdmin,
+  sql,
+} from './_admin.js'
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') {
@@ -50,6 +21,23 @@ export default async function handler(request, response) {
   }
 
   try {
+    const teams = await sql`
+      SELECT
+        id,
+        code,
+        name,
+        active
+      FROM teams
+      WHERE active = 1
+      ORDER BY name
+    `
+
+    const adminTeamIds =
+      getAdminTeamIds(admin)
+
+    const globalAdmin =
+      isGlobalAdmin(admin)
+
     const projects = await sql`
       SELECT
         id,
@@ -67,10 +55,94 @@ export default async function handler(request, response) {
         u.active,
         u.avatar_path,
         u.project_id,
-        p.name AS project
+        u.profile_review_required,
+        u.profile_review_message,
+        p.name AS project,
+
+        COALESCE(
+          ARRAY_AGG(
+            DISTINCT up.permission
+          ) FILTER (
+            WHERE
+              up.permission IS NOT NULL
+              AND up.active = 1
+          ),
+          ARRAY[]::text[]
+        ) AS permissions,
+
+        MAX(
+          CASE
+            WHEN
+              up.permission = 'admin'
+              AND up.active = 1
+            THEN up.admin_scope
+          END
+        ) AS admin_scope,
+
+        COALESCE(
+          ARRAY_AGG(
+            DISTINCT t.id
+          ) FILTER (
+            WHERE
+              t.id IS NOT NULL
+              AND ut.active = 1
+          ),
+          ARRAY[]::integer[]
+        ) AS team_ids,
+
+        COALESCE(
+          ARRAY_AGG(
+            DISTINCT t.name
+          ) FILTER (
+            WHERE
+              t.name IS NOT NULL
+              AND ut.active = 1
+          ),
+          ARRAY[]::text[]
+        ) AS team_names
+
       FROM users u
+
       JOIN projects p
         ON u.project_id = p.id
+
+      LEFT JOIN user_permissions up
+        ON up.user_id = u.id
+
+      LEFT JOIN user_teams ut
+        ON ut.user_id = u.id
+        AND ut.active = 1
+
+      LEFT JOIN teams t
+        ON t.id = ut.team_id
+        AND t.active = 1
+
+      WHERE
+        ${globalAdmin}
+        OR EXISTS (
+          SELECT 1
+          FROM user_teams scoped_ut
+          WHERE
+            scoped_ut.user_id = u.id
+            AND scoped_ut.active = 1
+            AND scoped_ut.team_id =
+              ANY(
+                ${adminTeamIds}
+              )
+        )
+
+      GROUP BY
+        u.id,
+        u.name,
+        u.email,
+        u.user_type,
+        u.active,
+        u.avatar_path,
+        u.project_id,
+        u.profile_review_required,
+        u.profile_review_message,
+        p.name
+
       ORDER BY
         u.active DESC,
         u.name
@@ -367,6 +439,13 @@ export default async function handler(request, response) {
 
     return response.status(200).json({
       projects,
+      teams,
+      adminAccess: {
+        scope:
+          admin.adminScope,
+        teams:
+          admin.teams || [],
+      },
       users,
       events,
       roles,

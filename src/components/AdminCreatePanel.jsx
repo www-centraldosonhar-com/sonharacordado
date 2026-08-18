@@ -4,6 +4,7 @@ function AdminCreatePanel({
   projects,
   events,
   roles,
+  teams = [],
   onCreated,
 }) {
   const [message, setMessage] = useState('')
@@ -622,12 +623,38 @@ function AdminCreatePanel({
               defaultValue="volunteer"
             >
               <option value="volunteer">
-                Voluntário
+                🫶 Voluntário
+              </option>
+
+              <option value="team_admin">
+                ⚙️ Admin de equipe
               </option>
 
               <option value="admin">
-                Administrador
+                🛡️ Admin Geral
               </option>
+            </select>
+
+            <label>
+              Equipe
+            </label>
+
+            <select
+              name="teamIds"
+              defaultValue=""
+            >
+              <option value="">
+                Sem equipe definida
+              </option>
+
+              {teams.map((team) => (
+                <option
+                  key={team.id}
+                  value={team.id}
+                >
+                  {team.name}
+                </option>
+              ))}
             </select>
 
             <label>

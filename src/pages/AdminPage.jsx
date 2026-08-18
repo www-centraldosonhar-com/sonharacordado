@@ -174,6 +174,7 @@ function AdminPage({
           projects={data.projects}
           events={data.events}
           roles={data.roles}
+          teams={data.teams || []}
           onCreated={reloadAdmin}
         />
         <section
@@ -266,8 +267,29 @@ function AdminPage({
                 </div>
 
                 <p>
-                  Tipo: {person.user_type}
+                  Acesso:{' '}
+                  {person.permissions?.includes(
+                    'admin'
+                  )
+                    ? person.admin_scope ===
+                      'global'
+                      ? '🛡️ Admin Geral'
+                      : '⚙️ Admin de equipe'
+                    : person.permissions?.includes(
+                        'volunteer'
+                      )
+                      ? '🫶 Voluntário'
+                      : '❤️ Sócio Sonhador'}
                 </p>
+
+                {person.team_names?.length > 0 && (
+                  <p>
+                    👥{' '}
+                    {person.team_names.join(
+                      ', '
+                    )}
+                  </p>
+                )}
 
                 {person.email && (
                   <p>
@@ -296,6 +318,7 @@ function AdminPage({
                   type="user"
                   item={person}
                   projects={data.projects}
+                  teams={data.teams || []}
                   onUpdated={reloadAdmin}
                 />
               </article>

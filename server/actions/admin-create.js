@@ -373,6 +373,7 @@ export default async function handler(request, response) {
         projectId,
         email,
         userType,
+        teamIds,
         password,
       } = data
 
@@ -395,8 +396,11 @@ export default async function handler(request, response) {
       }
 
       if (
-        !['volunteer', 'admin']
-          .includes(userType)
+        ![
+          'volunteer',
+          'team_admin',
+          'admin',
+        ].includes(userType)
       ) {
         return response.status(400).json({
           error: 'Tipo de usuário inválido.',
@@ -421,7 +425,7 @@ export default async function handler(request, response) {
       const passwordHash =
         await createWerkzeugHash(password)
 
-      await sql`
+      const createdUsers = await sql`
         INSERT INTO users (
           name,
           project_id,
@@ -435,10 +439,127 @@ export default async function handler(request, response) {
           ${projectId},
           ${email?.trim() || null},
           ${passwordHash},
-          ${userType},
+          ${
+            userType === 'admin' ||
+            userType === 'team_admin'
+              ? 'admin'
+              : 'volunteer'
+          },
           1
         )
+        RETURNING id
       `
+
+      const createdUserId =
+        createdUsers[0].id
+
+      // Todos possuem acesso ao Sócio Sonhador.
+      await sql`
+        INSERT INTO user_permissions (
+          user_id,
+          permission,
+          admin_scope,
+          active
+        )
+        VALUES (
+          ${createdUserId},
+          'dreamer',
+          NULL,
+          1
+        )
+        ON CONFLICT (
+          user_id,
+          permission
+        )
+        DO NOTHING
+      `
+
+      // Usuários criados pelo Admin são voluntários.
+      await sql`
+        INSERT INTO user_permissions (
+          user_id,
+          permission,
+          admin_scope,
+          active
+        )
+        VALUES (
+          ${createdUserId},
+          'volunteer',
+          NULL,
+          1
+        )
+        ON CONFLICT (
+          user_id,
+          permission
+        )
+        DO NOTHING
+      `
+
+      if (
+        userType === 'admin' ||
+        userType === 'team_admin'
+      ) {
+        await sql`
+          INSERT INTO user_permissions (
+            user_id,
+            permission,
+            admin_scope,
+            active
+          )
+          VALUES (
+            ${createdUserId},
+            'admin',
+            ${
+              userType === 'admin'
+                ? 'global'
+                : 'team'
+            },
+            1
+          )
+          ON CONFLICT (
+            user_id,
+            permission
+          )
+          DO UPDATE SET
+            admin_scope =
+              EXCLUDED.admin_scope,
+            active = 1
+        `
+      }
+
+      const normalizedTeamIds =
+        Array.isArray(teamIds)
+          ? teamIds
+              .map(Number)
+              .filter(Number.isInteger)
+          : teamIds
+            ? [Number(teamIds)]
+                .filter(Number.isInteger)
+            : []
+
+      for (
+        const teamId
+        of normalizedTeamIds
+      ) {
+        await sql`
+          INSERT INTO user_teams (
+            user_id,
+            team_id,
+            active
+          )
+          VALUES (
+            ${createdUserId},
+            ${teamId},
+            1
+          )
+          ON CONFLICT (
+            user_id,
+            team_id
+          )
+          DO UPDATE SET
+            active = 1
+        `
+      }
 
       return response.status(201).json({
         success: true,

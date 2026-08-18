@@ -117,13 +117,33 @@ export default async function handler(
     if (action === 'update-user') {
       const name = cleanText(data.name)
       const email = cleanText(data.email)
-      const projectId = Number(data.projectId)
-      const userType = data.userType
+      const projectId =
+        Number(data.projectId)
+
+      const userType =
+        data.userType
+
+      const normalizedTeamIds =
+        Array.isArray(data.teamIds)
+          ? data.teamIds
+              .map(Number)
+              .filter(Number.isInteger)
+          : data.teamIds
+            ? [
+                Number(data.teamIds),
+              ].filter(
+                Number.isInteger
+              )
+            : []
 
       if (
         !name ||
         !Number.isInteger(projectId) ||
-        !['volunteer', 'admin'].includes(userType)
+        ![
+          'volunteer',
+          'team_admin',
+          'admin',
+        ].includes(userType)
       ) {
         return response.status(400).json({
           error: 'Dados do usuário inválidos.',
@@ -155,6 +175,7 @@ export default async function handler(
 
       if (
         recordId === Number(admin.id) &&
+        admin.adminScope === 'global' &&
         userType !== 'admin'
       ) {
         return response.status(400).json({
@@ -169,7 +190,12 @@ export default async function handler(
           name = ${name},
           email = ${email || null},
           project_id = ${projectId},
-          user_type = ${userType}
+          user_type = ${
+            userType === 'admin' ||
+            userType === 'team_admin'
+              ? 'admin'
+              : 'volunteer'
+          }
         WHERE id = ${recordId}
         RETURNING id
       `
@@ -178,6 +204,134 @@ export default async function handler(
         return response.status(404).json({
           error: 'Usuário não encontrado.',
         })
+      }
+
+      // -----------------------------------------------
+      // DREAMER ACCESS
+      // -----------------------------------------------
+
+      await sql`
+        INSERT INTO user_permissions (
+          user_id,
+          permission,
+          admin_scope,
+          active
+        )
+        VALUES (
+          ${recordId},
+          'dreamer',
+          NULL,
+          1
+        )
+        ON CONFLICT (
+          user_id,
+          permission
+        )
+        DO UPDATE SET active = 1
+      `
+
+      // -----------------------------------------------
+      // VOLUNTEER ACCESS
+      // -----------------------------------------------
+
+      await sql`
+        INSERT INTO user_permissions (
+          user_id,
+          permission,
+          admin_scope,
+          active
+        )
+        VALUES (
+          ${recordId},
+          'volunteer',
+          NULL,
+          1
+        )
+        ON CONFLICT (
+          user_id,
+          permission
+        )
+        DO UPDATE SET active = 1
+      `
+
+      // -----------------------------------------------
+      // ADMIN ACCESS
+      // -----------------------------------------------
+
+      if (
+        userType === 'admin' ||
+        userType === 'team_admin'
+      ) {
+        await sql`
+          INSERT INTO user_permissions (
+            user_id,
+            permission,
+            admin_scope,
+            active
+          )
+          VALUES (
+            ${recordId},
+            'admin',
+            ${
+              userType === 'admin'
+                ? 'global'
+                : 'team'
+            },
+            1
+          )
+          ON CONFLICT (
+            user_id,
+            permission
+          )
+          DO UPDATE SET
+            admin_scope =
+              EXCLUDED.admin_scope,
+            active = 1
+        `
+      } else {
+        await sql`
+          UPDATE user_permissions
+          SET
+            active = 0,
+            admin_scope = NULL
+          WHERE
+            user_id = ${recordId}
+            AND permission = 'admin'
+        `
+      }
+
+      // -----------------------------------------------
+      // USER TEAMS
+      // -----------------------------------------------
+
+      await sql`
+        UPDATE user_teams
+        SET active = 0
+        WHERE user_id = ${recordId}
+      `
+
+      for (
+        const teamId
+        of normalizedTeamIds
+      ) {
+        await sql`
+          INSERT INTO user_teams (
+            user_id,
+            team_id,
+            active
+          )
+          VALUES (
+            ${recordId},
+            ${teamId},
+            1
+          )
+          ON CONFLICT (
+            user_id,
+            team_id
+          )
+          DO UPDATE SET
+            active = 1
+        `
       }
 
       return response.status(200).json({

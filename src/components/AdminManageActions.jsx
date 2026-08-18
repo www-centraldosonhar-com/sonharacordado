@@ -5,6 +5,7 @@ function AdminManageActions({
   item,
   projects = [],
   events = [],
+  teams = [],
   onUpdated,
 }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -173,21 +174,58 @@ function AdminManageActions({
             ))}
           </select>
 
-          <label>Tipo</label>
+          <label>
+            Acesso
+          </label>
 
           <select
             name="userType"
             defaultValue={
-              item.user_type
+              item.permissions?.includes(
+                'admin'
+              )
+                ? item.admin_scope ===
+                  'global'
+                  ? 'admin'
+                  : 'team_admin'
+                : 'volunteer'
             }
           >
             <option value="volunteer">
-              Voluntário
+              🫶 Voluntário
+            </option>
+
+            <option value="team_admin">
+              ⚙️ Admin de equipe
             </option>
 
             <option value="admin">
-              Administrador
+              🛡️ Admin Geral
             </option>
+          </select>
+
+          <label>
+            Equipe principal
+          </label>
+
+          <select
+            name="teamIds"
+            defaultValue={
+              item.team_ids?.[0] || ''
+            }
+          >
+            <option value="">
+              Sem equipe definida
+            </option>
+
+            {teams.map((team) => (
+              <option
+                key={team.id}
+                value={team.id}
+              >
+                {team.name}
+              </option>
+            ))}
           </select>
         </>
       )
