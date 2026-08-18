@@ -269,9 +269,6 @@ export default async function handler(
           ? null
           : Number(rawProjectId)
 
-      const symplaLink =
-        cleanText(data.symplaLink)
-
       const driveLink =
         cleanText(data.driveLink)
 
@@ -305,7 +302,6 @@ export default async function handler(
           location = ${location},
           confirmation_deadline =
             ${confirmationDeadline},
-          sympla_link = ${symplaLink || null},
           drive_link = ${driveLink || null}
         WHERE id = ${recordId}
         RETURNING id

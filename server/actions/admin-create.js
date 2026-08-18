@@ -165,7 +165,6 @@ export default async function handler(request, response) {
         confirmationDeadline,
         registrationFee,
         registrationDeadline,
-        symplaLink,
         driveLink,
       } = data
 
@@ -207,7 +206,6 @@ export default async function handler(request, response) {
           registration_fee,
           registration_deadline,
           registrations_open,
-          sympla_link,
           drive_link,
           active
         )
@@ -222,7 +220,6 @@ export default async function handler(request, response) {
           ${Number(registrationFee)},
           ${registrationDeadline},
           1,
-          ${symplaLink?.trim() || null},
           ${driveLink?.trim() || null},
           1
         )

@@ -89,7 +89,6 @@ export default async function handler(request, response) {
         e.registration_fee,
         e.registration_deadline,
         e.registrations_open,
-        e.sympla_link,
         e.drive_link,
         e.event_image_path,
         e.active,

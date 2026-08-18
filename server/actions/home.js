@@ -118,7 +118,6 @@ export default async function handler(request, response) {
         events.event_date,
         events.event_time,
         events.location,
-        events.sympla_link,
         events.event_image_path,
         events.confirmation_deadline,
         events.registration_fee,

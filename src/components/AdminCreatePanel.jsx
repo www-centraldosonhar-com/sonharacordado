@@ -308,15 +308,6 @@ function AdminCreatePanel({
             />
 
             <label>
-              Link do Sympla
-            </label>
-
-            <input
-              type="url"
-              name="symplaLink"
-            />
-
-            <label>
               Link das fotos no Google Drive
             </label>
 

@@ -65,15 +65,38 @@ function EventCard({ event }) {
           </div>
         </div>
 
-        {event.sympla_link && (
-          <a
-            className="text-link"
-            href={event.sympla_link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Abrir informações do evento →
-          </a>
+        {event.location && (
+          <div className="event-map-actions">
+            <a
+              className="event-map-link"
+              href={
+                `https://www.google.com/maps/search/?api=1&query=${
+                  encodeURIComponent(
+                    event.location
+                  )
+                }`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              🗺️ Google Maps
+            </a>
+
+            <a
+              className="event-map-link"
+              href={
+                `https://www.waze.com/ul?q=${
+                  encodeURIComponent(
+                    event.location
+                  )
+                }&navigate=yes`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              🚙 Waze
+            </a>
+          </div>
         )}
       </div>
     </article>

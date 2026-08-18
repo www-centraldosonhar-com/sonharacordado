@@ -296,16 +296,6 @@ function AdminManageActions({
             required
           />
 
-          <label>Sympla</label>
-
-          <input
-            type="url"
-            name="symplaLink"
-            defaultValue={
-              item.sympla_link || ''
-            }
-          />
-
           <label>Fotos no Google Drive</label>
 
           <input
