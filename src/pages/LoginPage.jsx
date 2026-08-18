@@ -206,11 +206,7 @@ function LoginPage({ onLogin }) {
                 Seu projeto
               </label>
 
-              <div className="login-input-wrap">
-                <span aria-hidden="true">
-                  ❤️
-                </span>
-
+              <div className="login-input-wrap login-input-wrap-select">
                 <select
                   id="project"
                   name="project"
@@ -283,7 +279,16 @@ function LoginPage({ onLogin }) {
                   )
                 }
               >
-                ❤️ Criar minha conta
+                <span
+                  className="create-account-hearts"
+                  aria-hidden="true"
+                >
+                  <span className="heart-red">♥</span>
+                  <span className="heart-orange">♥</span>
+                  <span className="heart-blue">♥</span>
+                </span>
+
+                Criar minha conta
               </button>
             </div>
           </div>

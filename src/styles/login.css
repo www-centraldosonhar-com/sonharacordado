@@ -440,3 +440,33 @@
   line-height: 1.4;
   opacity: 0.68;
 }
+
+/* =========================================================
+   LOGIN — SMALL VISUAL FIXES
+   ========================================================= */
+
+/* Select não possui ícone lateral, evitando sobreposição */
+.login-input-wrap-select select {
+  padding-left: 16px;
+}
+
+/* Corações oficiais no botão de criação de conta */
+.create-account-hearts {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 7px;
+  font-size: 0.95em;
+}
+
+.create-account-hearts .heart-red {
+  color: #ef4056;
+}
+
+.create-account-hearts .heart-orange {
+  color: #f5a623;
+}
+
+.create-account-hearts .heart-blue {
+  color: #2787c8;
+}
