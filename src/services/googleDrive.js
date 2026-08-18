@@ -353,13 +353,22 @@ async function findOrCreateFolder(
 
 export async function getEventDriveFolder(
   accessToken,
-  eventName
+  eventName,
+  photographerName
 ) {
+  // =======================================================
+  // MAIN CENTRAL FOLDER
+  // =======================================================
+
   const centralFolder =
     await findOrCreateFolder(
       accessToken,
       'Central do Sonhar'
     )
+
+  // =======================================================
+  // EVENTS FOLDER
+  // =======================================================
 
   const eventsFolder =
     await findOrCreateFolder(
@@ -368,6 +377,11 @@ export async function getEventDriveFolder(
       centralFolder.id
     )
 
+  // =======================================================
+  // EVENT FOLDER
+  // This is the folder saved in Memories.
+  // =======================================================
+
   const eventFolder =
     await findOrCreateFolder(
       accessToken,
@@ -375,7 +389,29 @@ export async function getEventDriveFolder(
       eventsFolder.id
     )
 
-  return eventFolder
+  // =======================================================
+  // PHOTOGRAPHER FOLDER
+  // Each photographer receives their own folder inside
+  // the same event.
+  // =======================================================
+
+  const safePhotographerName =
+    String(
+      photographerName ||
+      'Fotógrafo'
+    ).trim()
+
+  const photographerFolder =
+    await findOrCreateFolder(
+      accessToken,
+      safePhotographerName,
+      eventFolder.id
+    )
+
+  return {
+    eventFolder,
+    photographerFolder,
+  }
 }
 
 

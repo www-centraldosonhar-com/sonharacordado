@@ -19,6 +19,7 @@ const WATERMARK_URL =
 
 function PhotoDeliveryPanel({
   event,
+  photographerName,
 }) {
   const [
     driveAccessToken,
@@ -115,10 +116,15 @@ function PhotoDeliveryPanel({
       const folder =
         await getEventDriveFolder(
           driveAccessToken,
-          event.name
+          event.name,
+          photographerName
         )
 
-      setEventDriveFolder(folder)
+      // Memories points to the whole event,
+      // while uploads go to this photographer's folder.
+      setEventDriveFolder(
+        folder.eventFolder
+      )
 
       for (
         let index = 0;
@@ -131,7 +137,7 @@ function PhotoDeliveryPanel({
 
         await uploadPhotoToDrive(
           driveAccessToken,
-          folder.id,
+          folder.photographerFolder.id,
           processedPhotos[index]
         )
 
@@ -173,7 +179,7 @@ function PhotoDeliveryPanel({
                 event.id,
 
               driveLink:
-                folder.webViewLink,
+                folder.eventFolder.webViewLink,
             }),
           }
         )

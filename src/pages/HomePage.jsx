@@ -268,6 +268,9 @@ function HomePage({
                   name:
                     confirmation.event_name,
                 }}
+                photographerName={
+                  data.currentUser.name
+                }
               />
             ))}
 
