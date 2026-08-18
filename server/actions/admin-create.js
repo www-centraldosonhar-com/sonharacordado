@@ -1,6 +1,15 @@
 import crypto from 'node:crypto'
 import { promisify } from 'node:util'
-import { requireAdmin, sql } from './_admin.js'
+import {
+  adminCanAccessEvent,
+  adminCanAccessProject,
+  isGlobalAdmin,
+  isMediaAdmin,
+  isProjectAdmin,
+  isTeamAdmin,
+  requireAdmin,
+  sql,
+} from './_admin.js'
 
 const scryptAsync = promisify(crypto.scrypt)
 
@@ -26,6 +35,37 @@ async function createWerkzeugHash(password) {
   )
 
   return `scrypt:${n}:${r}:${p}$${salt}$${key.toString('hex')}`
+}
+
+function forbidden(response) {
+  return response.status(403).json({
+    error:
+      'Você não possui permissão para essa operação.',
+  })
+}
+
+function canCreateUserType(
+  admin,
+  userType
+) {
+  if (isGlobalAdmin(admin)) {
+    return true
+  }
+
+  if (isProjectAdmin(admin)) {
+    return [
+      'volunteer',
+      'team_admin',
+    ].includes(userType)
+  }
+
+  if (isTeamAdmin(admin)) {
+    return (
+      userType === 'volunteer'
+    )
+  }
+
+  return false
 }
 
 export default async function handler(request, response) {
@@ -56,6 +96,10 @@ export default async function handler(request, response) {
 
   try {
     if (action === 'announcement') {
+      if (!isGlobalAdmin(admin)) {
+        return forbidden(response)
+      }
+
       const title = data.title?.trim()
       const message = data.message?.trim()
       const priority = data.priority || 'normal'
@@ -99,6 +143,10 @@ export default async function handler(request, response) {
     }
 
     if (action === 'coupon') {
+      if (!isGlobalAdmin(admin)) {
+        return forbidden(response)
+      }
+
       const code =
         typeof data.code === 'string'
           ? data.code
@@ -194,6 +242,29 @@ export default async function handler(request, response) {
         })
       }
 
+      const targetProjectId =
+        projectId
+          ? Number(projectId)
+          : null
+
+      // Evento geral da ONG é exclusivo do Admin Geral.
+      if (
+        targetProjectId === null &&
+        !isGlobalAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      if (
+        targetProjectId !== null &&
+        !adminCanAccessProject(
+          admin,
+          targetProjectId
+        )
+      ) {
+        return forbidden(response)
+      }
+
       await sql`
         INSERT INTO events (
           name,
@@ -257,6 +328,16 @@ export default async function handler(request, response) {
         return response.status(400).json({
           error: 'Preencha corretamente a atividade.',
         })
+      }
+
+      const canAccessEvent =
+        await adminCanAccessEvent(
+          admin,
+          eventId
+        )
+
+      if (!canAccessEvent) {
+        return forbidden(response)
       }
 
       const existing = await sql`
@@ -338,6 +419,22 @@ export default async function handler(request, response) {
         })
       }
 
+      if (eventId) {
+        const canAccessEvent =
+          await adminCanAccessEvent(
+            admin,
+            eventId
+          )
+
+        if (!canAccessEvent) {
+          return forbidden(response)
+        }
+      } else if (
+        !isGlobalAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
       await sql`
         INSERT INTO tasks (
           title,
@@ -407,6 +504,24 @@ export default async function handler(request, response) {
         return response.status(400).json({
           error: 'Tipo de usuário inválido.',
         })
+      }
+
+      if (
+        !canCreateUserType(
+          admin,
+          userType
+        )
+      ) {
+        return forbidden(response)
+      }
+
+      if (
+        !adminCanAccessProject(
+          admin,
+          projectId
+        )
+      ) {
+        return forbidden(response)
       }
 
       const existing = await sql`
@@ -629,6 +744,47 @@ export default async function handler(request, response) {
         normalizedTeamIds.push(
           Number(mediaTeamId)
         )
+      }
+
+      if (
+        isTeamAdmin(admin) &&
+        !isMediaAdmin(admin)
+      ) {
+        const allowedTeamIds =
+          (
+            admin.teams || []
+          ).map(
+            (team) =>
+              Number(team.id)
+          )
+
+        const invalidTeam =
+          normalizedTeamIds.some(
+            (teamId) =>
+              !allowedTeamIds.includes(
+                Number(teamId)
+              )
+          )
+
+        if (invalidTeam) {
+          return forbidden(response)
+        }
+      }
+
+      if (
+        isTeamAdmin(admin) &&
+        isMediaAdmin(admin)
+      ) {
+        const onlyMedia =
+          normalizedTeamIds.every(
+            (teamId) =>
+              Number(teamId) ===
+              Number(mediaTeamId)
+          )
+
+        if (!onlyMedia) {
+          return forbidden(response)
+        }
       }
 
       for (

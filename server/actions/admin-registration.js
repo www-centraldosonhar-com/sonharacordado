@@ -1,6 +1,11 @@
 import process from 'node:process'
 import { createClient } from '@supabase/supabase-js'
-import { requireAdmin, sql } from './_admin.js'
+import {
+  adminCanAccessRegistration,
+  isGlobalAdmin,
+  requireAdmin,
+  sql,
+} from './_admin.js'
 
 const RECEIPT_BUCKET =
   process.env.REGISTRATION_RECEIPTS_BUCKET ||
@@ -47,6 +52,32 @@ export default async function handler(
   } = request.body ?? {}
 
   try {
+    const registrationOperations = [
+      'receipt-url',
+      'approve',
+      'reject',
+      'cancel',
+    ]
+
+    if (
+      registrationOperations.includes(
+        operation
+      )
+    ) {
+      const allowed =
+        await adminCanAccessRegistration(
+          admin,
+          registrationId
+        )
+
+      if (!allowed) {
+        return response.status(403).json({
+          error:
+            'Você não possui acesso a essa inscrição.',
+        })
+      }
+    }
+
     if (
       operation === 'receipt-url'
     ) {
@@ -208,6 +239,12 @@ export default async function handler(
     if (
       operation === 'toggle-coupon'
     ) {
+      if (!isGlobalAdmin(admin)) {
+        return response.status(403).json({
+          error:
+            'Somente a Administração Geral pode alterar cupons.',
+        })
+      }
       const updated = await sql`
         UPDATE registration_coupons
         SET active =

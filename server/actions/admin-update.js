@@ -1,6 +1,16 @@
 import crypto from 'node:crypto'
 import { promisify } from 'node:util'
-import { requireAdmin, sql } from './_admin.js'
+import {
+  adminCanAccessActivity,
+  adminCanAccessEvent,
+  adminCanAccessTask,
+  adminCanAccessUser,
+  adminCanAccessProject,
+  isGlobalAdmin,
+  isTeamAdmin,
+  requireAdmin,
+  sql,
+} from './_admin.js'
 
 const scryptAsync = promisify(crypto.scrypt)
 
@@ -36,6 +46,13 @@ function cleanText(value) {
   }
 
   return value.trim()
+}
+
+function forbidden(response) {
+  return response.status(403).json({
+    error:
+      'Você não possui permissão para essa operação.',
+  })
 }
 
 export default async function handler(
@@ -79,6 +96,26 @@ export default async function handler(
     // ---------------------------------
     // USER
     // ---------------------------------
+
+    const userActions = [
+      'toggle-user',
+      'update-user',
+      'reset-password',
+    ]
+
+    if (
+      userActions.includes(action)
+    ) {
+      const canAccessUser =
+        await adminCanAccessUser(
+          admin,
+          recordId
+        )
+
+      if (!canAccessUser) {
+        return forbidden(response)
+      }
+    }
 
     if (action === 'toggle-user') {
       if (recordId === Number(admin.id)) {
@@ -233,6 +270,35 @@ export default async function handler(
           error:
             'O usuário não pode conter espaços.',
         })
+      }
+
+      if (
+        !adminCanAccessProject(
+          admin,
+          projectId
+        )
+      ) {
+        return forbidden(response)
+      }
+
+      // Apenas Admin Geral pode conceder Admin Geral
+      // ou Admin de Projeto.
+      if (
+        (
+          userType === 'admin' ||
+          userType === 'project_admin'
+        ) &&
+        !isGlobalAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      // Admin de equipe não promove outros admins.
+      if (
+        isTeamAdmin(admin) &&
+        userType !== 'volunteer'
+      ) {
+        return forbidden(response)
       }
 
       const duplicate = await sql`
@@ -458,6 +524,67 @@ export default async function handler(
       })
     }
 
+    // =================================================
+    // RECORD SCOPE GUARDS
+    // =================================================
+
+    const eventActions = [
+      'toggle-event',
+      'update-event',
+    ]
+
+    if (
+      eventActions.includes(action)
+    ) {
+      const allowed =
+        await adminCanAccessEvent(
+          admin,
+          recordId
+        )
+
+      if (!allowed) {
+        return forbidden(response)
+      }
+    }
+
+    const activityActions = [
+      'toggle-activity',
+      'update-activity',
+    ]
+
+    if (
+      activityActions.includes(action)
+    ) {
+      const allowed =
+        await adminCanAccessActivity(
+          admin,
+          recordId
+        )
+
+      if (!allowed) {
+        return forbidden(response)
+      }
+    }
+
+    const taskActions = [
+      'toggle-task',
+      'update-task',
+    ]
+
+    if (
+      taskActions.includes(action)
+    ) {
+      const allowed =
+        await adminCanAccessTask(
+          admin,
+          recordId
+        )
+
+      if (!allowed) {
+        return forbidden(response)
+      }
+    }
+
     // ---------------------------------
     // EVENT
     // ---------------------------------
@@ -526,6 +653,26 @@ export default async function handler(
         return response.status(400).json({
           error: 'Dados do evento inválidos.',
         })
+      }
+
+      // Evento geral da ONG é exclusivo do Admin Geral.
+      if (
+        projectId === null &&
+        !isGlobalAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      // Admin de Projeto/Equipe só pode apontar
+      // o evento para um projeto permitido.
+      if (
+        projectId !== null &&
+        !adminCanAccessProject(
+          admin,
+          projectId
+        )
+      ) {
+        return forbidden(response)
       }
 
       const updated = await sql`
@@ -914,6 +1061,10 @@ export default async function handler(
     // ---------------------------------
 
     if (action === 'toggle-announcement') {
+      if (!isGlobalAdmin(admin)) {
+        return forbidden(response)
+      }
+
       const updated = await sql`
         UPDATE announcements
         SET active =
@@ -942,6 +1093,10 @@ export default async function handler(
     }
 
     if (action === 'update-announcement') {
+      if (!isGlobalAdmin(admin)) {
+        return forbidden(response)
+      }
+
       const title = cleanText(data.title)
       const message =
         cleanText(data.message)
