@@ -79,6 +79,7 @@ export default async function handler(request, response) {
     const myConfirmations = await sql`
       SELECT
         confirmations.id,
+        confirmations.photo_submitted_at,
         events.id AS event_id,
         events.event_date,
         roles.name AS role,

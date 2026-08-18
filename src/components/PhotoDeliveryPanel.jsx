@@ -21,6 +21,8 @@ const WATERMARK_URL =
 function PhotoDeliveryPanel({
   event,
   photographerName,
+  confirmationId,
+  photoSubmittedAt,
 }) {
   const [
     driveAccessToken,
@@ -218,6 +220,45 @@ function PhotoDeliveryPanel({
         )
       }
 
+      // ===================================================
+      // COMPLETE PHOTO DELIVERY
+      // ===================================================
+      // The delivery is marked as complete only after:
+      // 1. The photos were processed/uploaded successfully.
+      // 2. The event Drive folder was saved successfully.
+      // ===================================================
+
+      setDriveMessage(
+        'Registrando sua entrega...'
+      )
+
+      const deliveryResponse =
+        await fetch(
+          '/api/volunteer?action=complete-photo-delivery',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body: JSON.stringify({
+              confirmationId,
+            }),
+          }
+        )
+
+      const deliveryResult =
+        await deliveryResponse.json()
+
+      if (!deliveryResponse.ok) {
+        throw new Error(
+          deliveryResult.error ||
+            'As fotos foram enviadas, mas não foi possível registrar a entrega.'
+        )
+      }
+
       const duplicateText =
         duplicateCount > 0
           ? ` • ${duplicateCount} duplicada(s) ignorada(s)`
@@ -402,6 +443,28 @@ function PhotoDeliveryPanel({
         <p className="photo-event-name">
           {event.name}
         </p>
+
+        {photoSubmittedAt ? (
+          <div className="photo-delivery-status is-complete">
+            <strong>
+              ✓ Fotos entregues
+            </strong>
+
+            <span>
+              Você ainda pode adicionar novas fotos.
+            </span>
+          </div>
+        ) : (
+          <div className="photo-delivery-status is-pending">
+            <strong>
+              ⏳ Entrega pendente
+            </strong>
+
+            <span>
+              Envie as fotos deste evento quando estiverem prontas.
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="photo-upload-box">

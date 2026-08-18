@@ -1686,3 +1686,49 @@ body {
       1fr;
   }
 }
+
+/* =========================================================
+   PHOTO DELIVERY STATUS
+   ========================================================= */
+
+.photo-delivery-status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  width: fit-content;
+  margin-top: 12px;
+  padding: 9px 12px;
+
+  border-radius: 12px;
+
+  font-size: 0.82rem;
+}
+
+.photo-delivery-status strong {
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.photo-delivery-status span {
+  opacity: 0.8;
+}
+
+.photo-delivery-status.is-complete {
+  background: #eaf8ef;
+  color: #247343;
+  border: 1px solid rgba(36, 115, 67, 0.18);
+}
+
+.photo-delivery-status.is-pending {
+  background: #fff7e8;
+  color: #8a6116;
+  border: 1px solid rgba(138, 97, 22, 0.18);
+}
+
+@media (max-width: 520px) {
+  .photo-delivery-status {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

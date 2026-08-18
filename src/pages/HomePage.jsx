@@ -271,6 +271,12 @@ function HomePage({
                 photographerName={
                   data.currentUser.name
                 }
+                confirmationId={
+                  confirmation.id
+                }
+                photoSubmittedAt={
+                  confirmation.photo_submitted_at
+                }
               />
             ))}
 
