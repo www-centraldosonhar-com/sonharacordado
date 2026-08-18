@@ -38,9 +38,6 @@ function AdminImageUpload({
     setIsLoading(true)
     setMessage('✨ Otimizando imagem...')
 
-    let currentStage =
-      'PROCESS'
-
     try {
       // ===================================================
       // 1. PROCESS LOCALLY
@@ -76,9 +73,6 @@ function AdminImageUpload({
         '🔐 Preparando envio seguro...'
       )
 
-      currentStage =
-        'PREPARE FETCH'
-
       const prepareResponse =
         await fetch(
           '/api/upload',
@@ -102,9 +96,6 @@ function AdminImageUpload({
           }
         )
 
-      currentStage =
-        'PREPARE RESPONSE'
-
       const prepareContentType =
         prepareResponse.headers.get(
           'content-type'
@@ -127,16 +118,14 @@ function AdminImageUpload({
 
       if (!prepareResponse.ok) {
         throw new Error(
-          `PREPARE: ${
-            prepareResult.error ||
-            'Não foi possível preparar o upload.'
-          }`
+          prepareResult.error ||
+          'Não foi possível preparar o upload.'
         )
       }
 
       if (!prepareResult.signedUrl) {
         throw new Error(
-          'PREPARE: O servidor não retornou a URL de upload.'
+          'Não foi possível preparar o envio da imagem.'
         )
       }
 
@@ -151,9 +140,6 @@ function AdminImageUpload({
         '☁️ Enviando imagem...'
       )
 
-      currentStage =
-        'UPLOAD FORM DATA'
-
       const formData =
         new FormData()
 
@@ -166,9 +152,6 @@ function AdminImageUpload({
         '',
         processedFile
       )
-
-      currentStage =
-        'UPLOAD FETCH'
 
       const uploadResponse =
         await fetch(
@@ -201,10 +184,8 @@ function AdminImageUpload({
         }
 
         throw new Error(
-          `UPLOAD: ${
-            details ||
-            `HTTP ${uploadResponse.status}`
-          }`
+          details ||
+          'Não foi possível enviar a imagem para o armazenamento.'
         )
       }
 
@@ -215,9 +196,6 @@ function AdminImageUpload({
       setMessage(
         '💾 Salvando imagem...'
       )
-
-      currentStage =
-        'COMPLETE FETCH'
 
       const completeResponse =
         await fetch(
@@ -242,18 +220,13 @@ function AdminImageUpload({
           }
         )
 
-      currentStage =
-        'COMPLETE JSON'
-
       const completeResult =
         await completeResponse.json()
 
       if (!completeResponse.ok) {
         throw new Error(
-          `COMPLETE: ${
-            completeResult.error ||
-            'Não foi possível registrar a imagem.'
-          }`
+          completeResult.error ||
+          'A imagem foi enviada, mas não foi possível registrá-la.'
         )
       }
 
@@ -269,10 +242,8 @@ function AdminImageUpload({
       )
 
       setMessage(
-        `${currentStage}: ${
-          error.message ||
-          'Não foi possível enviar esta imagem.'
-        }`
+        error.message ||
+        'Não foi possível enviar esta imagem.'
       )
     } finally {
       setIsLoading(false)
