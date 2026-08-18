@@ -1,6 +1,10 @@
 import { useState } from 'react'
 
 import {
+  supabase,
+} from '../services/supabase'
+
+import {
   processAdminImage,
 } from '../utils/adminImageProcessor'
 
@@ -16,29 +20,6 @@ function AdminImageUpload({
   const [message, setMessage] =
     useState('')
 
-  async function fileToBase64(file) {
-    const buffer =
-      await file.arrayBuffer()
-
-    const bytes =
-      new Uint8Array(buffer)
-
-    let binary = ''
-
-    for (
-      let index = 0;
-      index < bytes.length;
-      index += 1
-    ) {
-      binary +=
-        String.fromCharCode(
-          bytes[index]
-        )
-    }
-
-    return window.btoa(binary)
-  }
-
   function formatMb(bytes) {
     return (
       bytes /
@@ -51,60 +32,43 @@ function AdminImageUpload({
     const input =
       event.target
 
-    const file =
+    const originalFile =
       input.files?.[0]
 
-    if (!file) {
+    if (!originalFile) {
       return
     }
 
     setIsLoading(true)
 
-    setMessage(
-      '✨ Preparando imagem...'
-    )
-
     try {
       // ===================================================
-      // AUTOMATIC PROCESSING
+      // 1. PROCESS IMAGE LOCALLY
       // ===================================================
+
+      setMessage(
+        '✨ Otimizando imagem...'
+      )
 
       const processedFile =
         await processAdminImage(
-          file,
+          originalFile,
           target
         )
 
       setMessage(
-        `✨ Imagem otimizada: ${formatMb(file.size)} MB → ${formatMb(processedFile.size)} MB`
+        `✨ ${formatMb(originalFile.size)} MB → ${formatMb(processedFile.size)} MB`
       )
 
       // ===================================================
-      // EXTRA SAFETY
+      // 2. ASK SERVER FOR SIGNED UPLOAD TOKEN
       // ===================================================
-      // Server currently accepts up to 3 MB.
-      // The processor targets considerably less than that.
-      // ===================================================
-
-      if (
-        processedFile.size >
-        3 * 1024 * 1024
-      ) {
-        throw new Error(
-          'Não foi possível reduzir a imagem para menos de 3 MB.'
-        )
-      }
-
-      const base64 =
-        await fileToBase64(
-          processedFile
-        )
 
       setMessage(
-        '☁️ Enviando imagem...'
+        '🔐 Preparando envio seguro...'
       )
 
-      const response =
+      const prepareResponse =
         await fetch(
           '/api/upload',
           {
@@ -117,32 +81,104 @@ function AdminImageUpload({
 
             body:
               JSON.stringify({
+                stage:
+                  'prepare',
+
                 target,
                 id,
 
-                fileName:
-                  processedFile.name,
-
                 contentType:
                   processedFile.type,
-
-                base64,
               }),
           }
         )
 
-      const result =
-        await response.json()
+      const prepareResult =
+        await prepareResponse.json()
 
-      if (!response.ok) {
+      if (!prepareResponse.ok) {
         throw new Error(
-          result.error ||
-            'Não foi possível enviar a imagem.'
+          prepareResult.error ||
+          'Não foi possível preparar o upload.'
+        )
+      }
+
+      // ===================================================
+      // 3. DIRECT BROWSER -> SUPABASE STORAGE
+      // ===================================================
+      // The image no longer passes through the Vercel
+      // Function as Base64.
+      // ===================================================
+
+      setMessage(
+        '☁️ Enviando imagem...'
+      )
+
+      const {
+        error: uploadError,
+      } = await supabase.storage
+        .from(
+          prepareResult.bucket
+        )
+        .uploadToSignedUrl(
+          prepareResult.storagePath,
+          prepareResult.token,
+          processedFile,
+          {
+            contentType:
+              'image/jpeg',
+          }
+        )
+
+      if (uploadError) {
+        throw uploadError
+      }
+
+      // ===================================================
+      // 4. CONFIRM UPLOAD AND SAVE URL IN NEON
+      // ===================================================
+
+      setMessage(
+        '💾 Salvando imagem...'
+      )
+
+      const completeResponse =
+        await fetch(
+          '/api/upload',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                stage:
+                  'complete',
+
+                target,
+                id,
+
+                storagePath:
+                  prepareResult.storagePath,
+              }),
+          }
+        )
+
+      const completeResult =
+        await completeResponse.json()
+
+      if (!completeResponse.ok) {
+        throw new Error(
+          completeResult.error ||
+          'A imagem foi enviada, mas não foi possível salvá-la.'
         )
       }
 
       setMessage(
-        `✅ ${result.message}`
+        `✅ ${completeResult.message}`
       )
 
       await onUpdated()
@@ -154,11 +190,10 @@ function AdminImageUpload({
 
       setMessage(
         error.message ||
-          'Não foi possível preparar esta imagem.'
+        'Não foi possível enviar esta imagem.'
       )
     } finally {
       setIsLoading(false)
-
       input.value = ''
     }
   }

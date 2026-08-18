@@ -1,18 +1,15 @@
 import process from 'node:process'
-import { Buffer } from 'node:buffer'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin, sql } from './_admin.js'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024
-
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
-  'image/png',
-  'image/webp',
 ])
 
 function getSupabaseAdmin() {
-  const url = process.env.SUPABASE_URL
+  const url =
+    process.env.SUPABASE_URL
+
   const serviceRoleKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -34,22 +31,247 @@ function getSupabaseAdmin() {
   )
 }
 
-function getExtension(contentType) {
-  const extensions = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp',
-  }
-
-  return extensions[contentType]
+function getBucket() {
+  return (
+    process.env.SUPABASE_BUCKET ||
+    'central-sonhar'
+  )
 }
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '6mb',
-    },
-  },
+function getFolder(target) {
+  return target === 'avatar'
+    ? 'avatars'
+    : 'events'
+}
+
+function isValidTarget(target) {
+  return ['avatar', 'event']
+    .includes(target)
+}
+
+async function recordExists(
+  target,
+  recordId
+) {
+  if (target === 'avatar') {
+    const users = await sql`
+      SELECT id
+      FROM users
+      WHERE id = ${recordId}
+      LIMIT 1
+    `
+
+    return Boolean(users[0])
+  }
+
+  const events = await sql`
+    SELECT id
+    FROM events
+    WHERE id = ${recordId}
+    LIMIT 1
+  `
+
+  return Boolean(events[0])
+}
+
+// =========================================================
+// PREPARE SIGNED UPLOAD
+// =========================================================
+
+async function prepareUpload({
+  target,
+  recordId,
+  contentType,
+}) {
+  if (!ALLOWED_TYPES.has(contentType)) {
+    throw new Error(
+      'A imagem processada precisa ser JPEG.'
+    )
+  }
+
+  const exists =
+    await recordExists(
+      target,
+      recordId
+    )
+
+  if (!exists) {
+    const error =
+      new Error(
+        target === 'avatar'
+          ? 'Usuário não encontrado.'
+          : 'Evento não encontrado.'
+      )
+
+    error.statusCode = 404
+    throw error
+  }
+
+  const folder =
+    getFolder(target)
+
+  const fileName =
+    `${recordId}-${Date.now()}-${crypto.randomUUID()}.jpg`
+
+  const storagePath =
+    `${folder}/${fileName}`
+
+  const supabase =
+    getSupabaseAdmin()
+
+  const bucket =
+    getBucket()
+
+  const {
+    data,
+    error,
+  } = await supabase.storage
+    .from(bucket)
+    .createSignedUploadUrl(
+      storagePath,
+      {
+        upsert: false,
+      }
+    )
+
+  if (error) {
+    throw error
+  }
+
+  return {
+    bucket,
+    storagePath,
+    token:
+      data.token,
+  }
+}
+
+// =========================================================
+// FINALIZE UPLOAD
+// =========================================================
+
+async function finalizeUpload({
+  target,
+  recordId,
+  storagePath,
+}) {
+  const expectedFolder =
+    getFolder(target)
+
+  const expectedPrefix =
+    `${expectedFolder}/${recordId}-`
+
+  if (
+    typeof storagePath !== 'string' ||
+    !storagePath.startsWith(
+      expectedPrefix
+    ) ||
+    !storagePath.endsWith('.jpg')
+  ) {
+    const error =
+      new Error(
+        'Caminho da imagem inválido.'
+      )
+
+    error.statusCode = 400
+    throw error
+  }
+
+  const supabase =
+    getSupabaseAdmin()
+
+  const bucket =
+    getBucket()
+
+  // Confirm that the object really exists before
+  // storing its URL in Neon.
+  const fileName =
+    storagePath.split('/').pop()
+
+  const folder =
+    storagePath
+      .split('/')
+      .slice(0, -1)
+      .join('/')
+
+  const {
+    data: files,
+    error: listError,
+  } = await supabase.storage
+    .from(bucket)
+    .list(
+      folder,
+      {
+        search:
+          fileName,
+        limit: 5,
+      }
+    )
+
+  if (listError) {
+    throw listError
+  }
+
+  const exists =
+    files?.some(
+      (file) =>
+        file.name === fileName
+    )
+
+  if (!exists) {
+    const error =
+      new Error(
+        'O arquivo ainda não chegou ao Storage.'
+      )
+
+    error.statusCode = 400
+    throw error
+  }
+
+  const {
+    data: publicData,
+  } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(
+      storagePath
+    )
+
+  const publicUrl =
+    publicData.publicUrl
+
+  if (target === 'avatar') {
+    const updated = await sql`
+      UPDATE users
+      SET avatar_path = ${publicUrl}
+      WHERE id = ${recordId}
+      RETURNING id
+    `
+
+    if (!updated[0]) {
+      throw new Error(
+        'Usuário não encontrado.'
+      )
+    }
+  }
+
+  if (target === 'event') {
+    const updated = await sql`
+      UPDATE events
+      SET event_image_path = ${publicUrl}
+      WHERE id = ${recordId}
+      RETURNING id
+    `
+
+    if (!updated[0]) {
+      throw new Error(
+        'Evento não encontrado.'
+      )
+    }
+  }
+
+  return {
+    publicUrl,
+  }
 }
 
 export default async function handler(
@@ -58,11 +280,13 @@ export default async function handler(
 ) {
   if (request.method !== 'POST') {
     return response.status(405).json({
-      error: 'Method not allowed.',
+      error:
+        'Method not allowed.',
     })
   }
 
-  const admin = await requireAdmin(request)
+  const admin =
+    await requireAdmin(request)
 
   if (!admin) {
     return response.status(403).json({
@@ -73,138 +297,68 @@ export default async function handler(
 
   try {
     const {
+      stage,
       target,
       id,
-      fileName,
       contentType,
-      base64,
+      storagePath,
     } = request.body ?? {}
 
-    const recordId = Number(id)
+    const recordId =
+      Number(id)
 
     if (
-      !['avatar', 'event'].includes(target) ||
+      !isValidTarget(target) ||
       !Number.isInteger(recordId) ||
       recordId < 1
     ) {
       return response.status(400).json({
-        error: 'Destino da imagem inválido.',
-      })
-    }
-
-    if (
-      !fileName ||
-      !base64 ||
-      !ALLOWED_TYPES.has(contentType)
-    ) {
-      return response.status(400).json({
         error:
-          'Envie uma imagem JPG, PNG ou WebP.',
+          'Destino da imagem inválido.',
       })
     }
 
-    const buffer =
-      Buffer.from(base64, 'base64')
-
-    if (
-      buffer.length === 0 ||
-      buffer.length > MAX_FILE_SIZE
-    ) {
-      return response.status(400).json({
-        error:
-          'A imagem deve ter no máximo 5 MB.',
-      })
-    }
-
-    const extension =
-      getExtension(contentType)
-
-    const folder =
-      target === 'avatar'
-        ? 'avatars'
-        : 'events'
-
-    const storagePath =
-      `${folder}/${recordId}-${Date.now()}.${extension}`
-
-    const supabase =
-      getSupabaseAdmin()
-
-    const bucket =
-      process.env.SUPABASE_BUCKET ||
-      'central-sonhar'
-
-    const {
-      error: uploadError,
-    } = await supabase.storage
-      .from(bucket)
-      .upload(
-        storagePath,
-        buffer,
-        {
+    if (stage === 'prepare') {
+      const prepared =
+        await prepareUpload({
+          target,
+          recordId,
           contentType,
-          upsert: false,
-        }
-      )
-
-    if (uploadError) {
-      throw uploadError
-    }
-
-    const {
-      data: publicData,
-    } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(storagePath)
-
-    const publicUrl =
-      publicData.publicUrl
-
-    if (target === 'avatar') {
-      const updated = await sql`
-        UPDATE users
-        SET avatar_path = ${publicUrl}
-        WHERE id = ${recordId}
-        RETURNING id
-      `
-
-      if (!updated[0]) {
-        await supabase.storage
-          .from(bucket)
-          .remove([storagePath])
-
-        return response.status(404).json({
-          error: 'Usuário não encontrado.',
         })
-      }
-    }
 
-    if (target === 'event') {
-      const updated = await sql`
-        UPDATE events
-        SET event_image_path = ${publicUrl}
-        WHERE id = ${recordId}
-        RETURNING id
-      `
-
-      if (!updated[0]) {
-        await supabase.storage
-          .from(bucket)
-          .remove([storagePath])
-
-        return response.status(404).json({
-          error: 'Evento não encontrado.',
+      return response
+        .status(200)
+        .json({
+          success: true,
+          ...prepared,
         })
-      }
     }
 
-    return response.status(200).json({
-      success: true,
-      url: publicUrl,
-      message:
-        target === 'avatar'
-          ? 'Avatar atualizado! 📸'
-          : 'Capa do evento atualizada! 🎨',
+    if (stage === 'complete') {
+      const completed =
+        await finalizeUpload({
+          target,
+          recordId,
+          storagePath,
+        })
+
+      return response
+        .status(200)
+        .json({
+          success: true,
+          url:
+            completed.publicUrl,
+
+          message:
+            target === 'avatar'
+              ? 'Avatar atualizado! 📸'
+              : 'Capa do evento atualizada! 🎨',
+        })
+    }
+
+    return response.status(400).json({
+      error:
+        'Etapa do upload inválida.',
     })
   } catch (error) {
     console.error(
@@ -212,11 +366,14 @@ export default async function handler(
       error
     )
 
-    return response.status(500).json({
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'Não foi possível enviar a imagem.'
-          : `Não foi possível enviar a imagem: ${error.message}`,
-    })
+    return response
+      .status(
+        error.statusCode || 500
+      )
+      .json({
+        error:
+          error.message ||
+          'Não foi possível enviar a imagem.',
+      })
   }
 }
