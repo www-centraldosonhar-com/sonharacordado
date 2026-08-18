@@ -10,6 +10,7 @@ import {
 
 import {
   connectGoogleDrive,
+  driveFileExists,
   getEventDriveFolder,
   uploadPhotoToDrive,
 } from '../services/googleDrive'
@@ -126,20 +127,43 @@ function PhotoDeliveryPanel({
         folder.eventFolder
       )
 
+      let uploadedCount = 0
+      let duplicateCount = 0
+
       for (
         let index = 0;
         index < processedPhotos.length;
         index += 1
       ) {
+        const photo =
+          processedPhotos[index]
+
         setDriveMessage(
-          `Enviando foto ${index + 1} de ${processedPhotos.length}...`
+          `Verificando foto ${index + 1} de ${processedPhotos.length}...`
         )
 
-        await uploadPhotoToDrive(
-          driveAccessToken,
-          folder.photographerFolder.id,
-          processedPhotos[index]
-        )
+        const alreadyExists =
+          await driveFileExists(
+            driveAccessToken,
+            folder.photographerFolder.id,
+            photo.fileName
+          )
+
+        if (alreadyExists) {
+          duplicateCount += 1
+        } else {
+          setDriveMessage(
+            `Enviando foto ${index + 1} de ${processedPhotos.length}...`
+          )
+
+          await uploadPhotoToDrive(
+            driveAccessToken,
+            folder.photographerFolder.id,
+            photo
+          )
+
+          uploadedCount += 1
+        }
 
         setDriveUploadProgress({
           current:
@@ -194,8 +218,13 @@ function PhotoDeliveryPanel({
         )
       }
 
+      const duplicateText =
+        duplicateCount > 0
+          ? ` • ${duplicateCount} duplicada(s) ignorada(s)`
+          : ''
+
       setDriveMessage(
-        `${processedPhotos.length} foto(s) enviada(s) e adicionada(s) às Memórias! 📸✅`
+        `${uploadedCount} nova(s) foto(s) enviada(s) 📸✅${duplicateText}`
       )
     } catch (error) {
       console.error(

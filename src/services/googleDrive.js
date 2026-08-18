@@ -471,3 +471,46 @@ export async function uploadPhotoToDrive(
     }
   )
 }
+
+
+// =========================================================
+// CHECK IF FILE ALREADY EXISTS
+// =========================================================
+// Google Drive allows multiple files with the same name.
+// Before uploading, the Central checks the photographer's
+// folder and skips an existing file with the same name.
+// =========================================================
+
+export async function driveFileExists(
+  accessToken,
+  folderId,
+  fileName
+) {
+  const safeName =
+    escapeDriveQueryValue(fileName)
+
+  const params =
+    new URLSearchParams({
+      q: [
+        `name = '${safeName}'`,
+        `'${folderId}' in parents`,
+        'trashed = false',
+      ].join(' and '),
+
+      fields:
+        'files(id,name)',
+
+      pageSize:
+        '1',
+    })
+
+  const data =
+    await driveRequest(
+      `${DRIVE_API}/files?${params.toString()}`,
+      accessToken
+    )
+
+  return Boolean(
+    data.files?.length
+  )
+}
