@@ -514,3 +514,39 @@ export async function driveFileExists(
     data.files?.length
   )
 }
+
+
+// =========================================================
+// SHARE EVENT FOLDER AS READ-ONLY
+// =========================================================
+// Makes the event folder accessible to anyone who has
+// its link.
+//
+// Important:
+// - Visitors can only VIEW the content.
+// - They cannot upload, edit or delete files.
+// - The Central itself controls who receives the link.
+// =========================================================
+
+export async function shareEventFolderReadOnly(
+  accessToken,
+  folderId
+) {
+  return driveRequest(
+    `${DRIVE_API}/files/${folderId}/permissions`,
+    accessToken,
+    {
+      method: 'POST',
+
+      headers: {
+        'Content-Type':
+          'application/json',
+      },
+
+      body: JSON.stringify({
+        type: 'anyone',
+        role: 'reader',
+      }),
+    }
+  )
+}

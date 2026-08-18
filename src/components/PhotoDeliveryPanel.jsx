@@ -12,6 +12,7 @@ import {
   connectGoogleDrive,
   driveFileExists,
   getEventDriveFolder,
+  shareEventFolderReadOnly,
   uploadPhotoToDrive,
 } from '../services/googleDrive'
 
@@ -127,6 +128,13 @@ function PhotoDeliveryPanel({
       // while uploads go to this photographer's folder.
       setEventDriveFolder(
         folder.eventFolder
+      )
+
+      // Allow volunteers to open the event photos without
+      // needing Google OAuth. Access remains read-only.
+      await shareEventFolderReadOnly(
+        driveAccessToken,
+        folder.eventFolder.id
       )
 
       let uploadedCount = 0
