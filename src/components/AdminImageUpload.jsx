@@ -103,10 +103,27 @@ function AdminImageUpload({
         )
 
       currentStage =
-        'PREPARE JSON'
+        'PREPARE RESPONSE'
 
-      const prepareResult =
-        await prepareResponse.json()
+      const prepareContentType =
+        prepareResponse.headers.get(
+          'content-type'
+        ) || 'sem content-type'
+
+      const prepareText =
+        await prepareResponse.text()
+
+      let prepareResult
+
+      try {
+        prepareResult =
+          JSON.parse(prepareText)
+      } catch (error) {
+        throw new Error(
+          `Resposta inválida da API • HTTP ${prepareResponse.status} • ${prepareContentType} • ${prepareText.slice(0, 180)}`,
+          { cause: error }
+        )
+      }
 
       if (!prepareResponse.ok) {
         throw new Error(
