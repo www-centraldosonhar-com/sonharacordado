@@ -144,8 +144,52 @@ function PhotoDeliveryPanel({
         })
       }
 
+      // ===================================================
+      // SAVE EVENT DRIVE FOLDER IN THE DATABASE
+      // ===================================================
+      // After every photo has been uploaded successfully,
+      // link this Google Drive folder to the event.
+      // This allows the Memories section to keep the folder
+      // available even after the page is refreshed.
+      // ===================================================
+
       setDriveMessage(
-        `${processedPhotos.length} foto(s) enviada(s) para o Google Drive! ☁️✅`
+        'Fotos enviadas! Vinculando ao evento...'
+      )
+
+      const saveResponse =
+        await fetch(
+          '/api/volunteer?action=save-event-drive',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body: JSON.stringify({
+              eventId:
+                event.id,
+
+              driveLink:
+                folder.webViewLink,
+            }),
+          }
+        )
+
+      const saveResult =
+        await saveResponse.json()
+
+      if (!saveResponse.ok) {
+        throw new Error(
+          saveResult.error ||
+            'As fotos foram enviadas, mas não foi possível vinculá-las ao evento.'
+        )
+      }
+
+      setDriveMessage(
+        `${processedPhotos.length} foto(s) enviada(s) e adicionada(s) às Memórias! 📸✅`
       )
     } catch (error) {
       console.error(

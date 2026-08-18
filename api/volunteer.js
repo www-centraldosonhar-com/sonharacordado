@@ -4,6 +4,7 @@ import cancelConfirmationHandler from '../server/actions/cancel-confirmation.js'
 import joinTaskHandler from '../server/actions/join-task.js'
 import leaveTaskHandler from '../server/actions/leave-task.js'
 import submitDeliveryHandler from '../server/actions/submit-delivery.js'
+import saveEventDriveHandler from '../server/actions/save-event-drive.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -30,6 +31,10 @@ export default async function handler(request, response) {
 
   if (action === 'submit-delivery') {
     return submitDeliveryHandler(request, response)
+  }
+
+  if (action === 'save-event-drive') {
+    return saveEventDriveHandler(request, response)
   }
 
   return response.status(404).json({
