@@ -531,3 +531,62 @@
 .register-project-select-wrap select:required:invalid {
   padding-left: 34px;
 }
+
+/* =========================================================
+   LOGIN / CADASTRO — HEART POLISH
+   ========================================================= */
+
+.button-heart-white,
+.create-account-heart-white {
+  display: inline-block;
+  margin-left: 7px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.login-input-wrap-select {
+  position: relative;
+}
+
+.select-heart-white {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+
+  pointer-events: none;
+}
+
+.login-input-wrap-select select {
+  padding-left: 40px;
+}
+
+.register-project-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.register-project-select-wrap select {
+  width: 100%;
+}
+
+.register-select-heart-white {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+
+  pointer-events: none;
+}
+
+.register-project-select-wrap select:required:invalid {
+  padding-left: 38px;
+}
