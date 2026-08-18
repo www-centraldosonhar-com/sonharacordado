@@ -399,3 +399,44 @@
     font-size: 0.86rem;
   }
 }
+
+/* =========================================================
+   SPACE SELECTOR
+   ========================================================= */
+
+.space-selector-grid {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.space-selector-card {
+  display: grid;
+  grid-template-columns:
+    auto 1fr;
+  gap: 4px 12px;
+  align-items: center;
+  width: 100%;
+  padding: 18px;
+  border: 1px solid
+    rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  background:
+    rgba(255, 255, 255, 0.92);
+  text-align: left;
+  cursor: pointer;
+}
+
+.space-selector-card > span {
+  grid-row: 1 / span 2;
+  font-size: 1.8rem;
+}
+
+.space-selector-card strong {
+  font-size: 0.98rem;
+}
+
+.space-selector-card small {
+  line-height: 1.4;
+  opacity: 0.68;
+}

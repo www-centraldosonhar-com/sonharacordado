@@ -72,6 +72,41 @@ export default async function handler(request, response) {
       })
     }
 
+    const permissions = await sql`
+      SELECT
+        permission,
+        admin_scope
+      FROM user_permissions
+      WHERE user_id = ${user.id}
+        AND active = 1
+      ORDER BY permission
+    `
+
+    const teams = await sql`
+      SELECT
+        t.code,
+        t.name
+      FROM user_teams ut
+      JOIN teams t
+        ON ut.team_id = t.id
+      WHERE ut.user_id = ${user.id}
+        AND ut.active = 1
+        AND t.active = 1
+      ORDER BY t.name
+    `
+
+    const permissionNames =
+      permissions.map(
+        (item) =>
+          item.permission
+      )
+
+    const adminPermission =
+      permissions.find(
+        (item) =>
+          item.permission === 'admin'
+      )
+
     return response.status(200).json({
       authenticated: true,
 
@@ -80,6 +115,12 @@ export default async function handler(request, response) {
         name: user.name,
         project: user.project,
         userType: user.user_type,
+        permissions:
+          permissionNames,
+        adminScope:
+          adminPermission?.admin_scope ||
+          null,
+        teams,
       },
     })
   } catch {

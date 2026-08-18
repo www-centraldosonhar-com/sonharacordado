@@ -2,6 +2,19 @@ import { useState } from 'react'
 import '../styles/login.css'
 
 function LoginPage({ onLogin }) {
+  const [
+    showRegister,
+    setShowRegister,
+  ] = useState(false)
+
+  const [
+    registerData,
+    setRegisterData,
+  ] = useState({
+    name: '',
+    project: '',
+    password: '',
+  })
   const [formData, setFormData] = useState({
     name: '',
     project: '',
@@ -19,6 +32,72 @@ function LoginPage({ onLogin }) {
       ...currentData,
       [name]: value,
     }))
+  }
+
+
+  async function handleRegister(event) {
+    event.preventDefault()
+
+    setMessage('')
+    setMessageType('')
+    setIsLoading(true)
+
+    try {
+      const response = await fetch(
+        '/api/auth?action=register-external',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body:
+            JSON.stringify(
+              registerData
+            ),
+        }
+      )
+
+      const data =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          'Não foi possível criar sua conta.'
+        )
+      }
+
+      setMessage(
+        data.message
+      )
+
+      setMessageType(
+        'success'
+      )
+
+      setFormData({
+        name:
+          registerData.name,
+        project:
+          registerData.project,
+        password: '',
+      })
+
+      setShowRegister(false)
+    } catch (error) {
+      setMessage(
+        error.message
+      )
+
+      setMessageType(
+        'error'
+      )
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   async function handleSubmit(event) {
@@ -189,12 +268,124 @@ function LoginPage({ onLogin }) {
               🌱
             </span>
 
-            <p>
-              Seu acesso é criado pela coordenação.
-              Se tiver algum problema para entrar,
-              fale com um administrador da Central.
-            </p>
+            <div>
+              <p>
+                Ainda não faz parte da Central?
+              </p>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  setShowRegister(
+                    (current) =>
+                      !current
+                  )
+                }
+              >
+                ❤️ Criar minha conta
+              </button>
+            </div>
           </div>
+
+          {showRegister && (
+            <form
+              className="login-form"
+              onSubmit={
+                handleRegister
+              }
+            >
+              <h2>
+                Vem sonhar com a gente ✨
+              </h2>
+
+              <p>
+                Escolha seu projeto com o coração.
+                Não existe resposta errada. ❤️
+              </p>
+
+              <input
+                placeholder="Seu usuário"
+                value={
+                  registerData.name
+                }
+                onChange={(event) =>
+                  setRegisterData(
+                    (current) => ({
+                      ...current,
+                      name:
+                        event.target
+                          .value,
+                    })
+                  )
+                }
+                required
+              />
+
+              <select
+                value={
+                  registerData.project
+                }
+                onChange={(event) =>
+                  setRegisterData(
+                    (current) => ({
+                      ...current,
+                      project:
+                        event.target
+                          .value,
+                    })
+                  )
+                }
+                required
+              >
+                <option value="">
+                  Escolha com o coração ❤️
+                </option>
+
+                <option value="APS">
+                  APS — energia das crianças
+                </option>
+
+                <option value="PPF">
+                  PPF — acompanhar sonhos crescendo
+                </option>
+
+                <option value="SJ">
+                  SJ — inclusão, vínculo e alegria
+                </option>
+              </select>
+
+              <input
+                type="password"
+                placeholder="Crie uma senha"
+                value={
+                  registerData.password
+                }
+                onChange={(event) =>
+                  setRegisterData(
+                    (current) => ({
+                      ...current,
+                      password:
+                        event.target
+                          .value,
+                    })
+                  )
+                }
+                minLength="4"
+                required
+              />
+
+              <button
+                className="login-button"
+                type="submit"
+                disabled={
+                  isLoading
+                }
+              >
+                Criar conta ❤️
+              </button>
+            </form>
+          )}
         </div>
 
         <aside

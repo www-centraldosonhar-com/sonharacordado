@@ -1,5 +1,6 @@
 import loginHandler from '../server/actions/login.js'
 import sessionHandler from '../server/actions/session.js'
+import registerExternalHandler from '../server/actions/register-external.js'
 import logoutHandler from '../server/actions/logout.js'
 
 export default async function handler(request, response) {
@@ -11,6 +12,13 @@ export default async function handler(request, response) {
 
   if (action === 'session') {
     return sessionHandler(request, response)
+  }
+
+  if (action === 'register-external') {
+    return registerExternalHandler(
+      request,
+      response
+    )
   }
 
   if (action === 'logout') {

@@ -1,14 +1,22 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import AdminPage from './pages/AdminPage'
+import DreamerPage from './pages/DreamerPage'
+import SpaceSelectorPage from './pages/SpaceSelectorPage'
 
 function App() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] =
+    useState(null)
 
-  const [currentPage, setCurrentPage] =
-    useState('home')
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState('select')
 
   const [
     isCheckingSession,
@@ -18,7 +26,9 @@ function App() {
   useEffect(() => {
     let active = true
 
-    fetch('/api/auth?action=session')
+    fetch(
+      '/api/auth?action=session'
+    )
       .then(async (response) => {
         if (!response.ok) {
           return null
@@ -33,6 +43,7 @@ function App() {
           data.user
         ) {
           setUser(data.user)
+          setCurrentPage('select')
         }
       })
       .catch((error) => {
@@ -54,24 +65,34 @@ function App() {
 
   async function handleLogout() {
     try {
-      await fetch('/api/auth?action=logout', {
-        method: 'POST',
-      })
+      await fetch(
+        '/api/auth?action=logout',
+        {
+          method: 'POST',
+        }
+      )
     } finally {
       setUser(null)
-      setCurrentPage('home')
+      setCurrentPage('select')
     }
   }
 
-  function handleLogin(loggedUser) {
+  function handleLogin(
+    loggedUser
+  ) {
     setUser(loggedUser)
-    setCurrentPage('home')
+    setCurrentPage('select')
   }
 
-  function handleOpenAdmin() {
-    if (user?.userType === 'admin') {
-      setCurrentPage('admin')
-    }
+  function hasPermission(
+    permission
+  ) {
+    return (
+      user?.permissions ||
+      []
+    ).includes(
+      permission
+    )
   }
 
   if (isCheckingSession) {
@@ -99,25 +120,87 @@ function App() {
   }
 
   if (
+    currentPage === 'select'
+  ) {
+    return (
+      <SpaceSelectorPage
+        user={user}
+        onSelect={
+          setCurrentPage
+        }
+        onLogout={
+          handleLogout
+        }
+      />
+    )
+  }
+
+  if (
+    currentPage === 'dreamer'
+  ) {
+    return (
+      <DreamerPage
+        user={user}
+        onBack={() =>
+          setCurrentPage('select')
+        }
+        onLogout={
+          handleLogout
+        }
+      />
+    )
+  }
+
+  if (
+    currentPage ===
+      'volunteer' &&
+    hasPermission(
+      'volunteer'
+    )
+  ) {
+    return (
+      <HomePage
+        user={user}
+        onLogout={
+          handleLogout
+        }
+        onOpenAdmin={() =>
+          setCurrentPage(
+            'admin'
+          )
+        }
+      />
+    )
+  }
+
+  if (
     currentPage === 'admin' &&
-    user.userType === 'admin'
+    hasPermission('admin')
   ) {
     return (
       <AdminPage
         user={user}
         onBack={() =>
-          setCurrentPage('home')
+          setCurrentPage(
+            'select'
+          )
         }
-        onLogout={handleLogout}
+        onLogout={
+          handleLogout
+        }
       />
     )
   }
 
   return (
-    <HomePage
+    <SpaceSelectorPage
       user={user}
-      onLogout={handleLogout}
-      onOpenAdmin={handleOpenAdmin}
+      onSelect={
+        setCurrentPage
+      }
+      onLogout={
+        handleLogout
+      }
     />
   )
 }
