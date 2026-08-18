@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatDateTimeBr } from '../utils/formatters'
 import AdminCreatePanel from '../components/AdminCreatePanel'
+import AdminManageActions from '../components/AdminManageActions'
 import '../styles/admin.css'
 
 function AdminPage({
@@ -268,6 +269,13 @@ function AdminPage({
                     ? '🟢 Ativo'
                     : '⚪ Inativo'}
                 </p>
+
+                <AdminManageActions
+                  type="user"
+                  item={person}
+                  projects={data.projects}
+                  onUpdated={reloadAdmin}
+                />
               </article>
             ))}
           </div>
@@ -319,6 +327,13 @@ function AdminPage({
                     ? '🟢 Ativo'
                     : '⚪ Inativo'}
                 </p>
+
+                <AdminManageActions
+                  type="event"
+                  item={event}
+                  projects={data.projects}
+                  onUpdated={reloadAdmin}
+                />
               </article>
             ))}
           </div>
@@ -383,6 +398,12 @@ function AdminPage({
                       ? '🟢 Aberta'
                       : '⚪ Fechada'}
                   </p>
+
+                  <AdminManageActions
+                    type="activity"
+                    item={activity}
+                    onUpdated={reloadAdmin}
+                  />
                 </article>
               )
             })}
@@ -438,6 +459,13 @@ function AdminPage({
                 <p>
                   Status: {task.status}
                 </p>
+
+                <AdminManageActions
+                  type="task"
+                  item={task}
+                  events={data.events}
+                  onUpdated={reloadAdmin}
+                />
               </article>
             ))}
           </div>
@@ -487,6 +515,12 @@ function AdminPage({
                       ? '🟢 Ativo'
                       : '⚪ Arquivado'}
                   </p>
+
+                  <AdminManageActions
+                    type="announcement"
+                    item={announcement}
+                    onUpdated={reloadAdmin}
+                  />
                 </article>
               )
             )}

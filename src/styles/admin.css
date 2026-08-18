@@ -620,3 +620,150 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   ADMIN MANAGEMENT
+   ========================================================= */
+
+.admin-manage-actions {
+  margin-top: 14px;
+  padding-top: 12px;
+
+  border-top:
+    1px solid #ece8e4;
+}
+
+.admin-manage-actions > button {
+  min-height: 38px;
+
+  margin:
+    5px 5px 0 0;
+
+  padding:
+    7px 10px;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.admin-edit-button {
+  border:
+    1px solid #b9d7ed;
+
+  background: #eef7fd;
+  color: #22679d;
+}
+
+.admin-toggle-button {
+  border:
+    1px solid #ddd7d2;
+
+  background: #f8f7f6;
+  color: #555;
+}
+
+.admin-password-button {
+  border:
+    1px solid #f0d6b1;
+
+  background: #fff7e9;
+  color: #945b16;
+}
+
+.admin-edit-form {
+  display: grid;
+
+  gap: 8px;
+}
+
+.admin-edit-form label {
+  margin-top: 4px;
+
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.admin-edit-form input,
+.admin-edit-form select,
+.admin-edit-form textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 9px 11px;
+
+  border:
+    1px solid #ddd7d2;
+
+  border-radius: 10px;
+
+  background: white;
+
+  font: inherit;
+}
+
+.admin-edit-form textarea {
+  min-height: 90px;
+
+  resize: vertical;
+}
+
+.admin-edit-actions {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1.5fr;
+
+  gap: 7px;
+
+  margin-top: 6px;
+}
+
+.admin-edit-actions button {
+  min-height: 40px;
+
+  border: 0;
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-weight: 850;
+}
+
+.admin-edit-actions button:first-child {
+  background: #f1f1f1;
+  color: #555;
+}
+
+.admin-edit-actions button:last-child {
+  background: #3184c6;
+  color: white;
+}
+
+.admin-action-message {
+  margin:
+    10px 0 0 !important;
+
+  padding:
+    9px 10px;
+
+  border-radius: 10px;
+
+  background: #eef7fd;
+
+  color: #22679d !important;
+
+  font-size: 0.76rem !important;
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .admin-edit-actions {
+    grid-template-columns: 1fr;
+  }
+}
