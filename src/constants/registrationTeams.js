@@ -1,19 +1,27 @@
 export const REGISTRATION_TEAMS = [
   {
+    value: 'participant',
+    label: '🤝 Sem equipe específica',
+  },
+  {
     value: 'activities',
-    label: 'Equipe de Atividades',
+    label: '🎨 Equipe de Atividades',
+  },
+  {
+    value: 'volunteers',
+    label: '🙋 Equipe de Voluntárias',
   },
   {
     value: 'assisted',
-    label: 'Equipe de Assistidos',
+    label: '🧒 Equipe de Assistidos',
+  },
+  {
+    value: 'food',
+    label: '🍽️ Equipe de Alimentação',
   },
   {
     value: 'media',
-    label: 'Equipe de Mídias',
-  },
-  {
-    value: 'kitchen',
-    label: 'Equipe de Cozinha',
+    label: '📸 Equipe de Mídias',
   },
 ]
 

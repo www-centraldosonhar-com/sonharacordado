@@ -394,7 +394,7 @@ function EventRegistrationPanel({
         />
 
         <label>
-          Sua equipe neste evento
+          Como você pretende participar?
         </label>
 
         <select

@@ -250,6 +250,21 @@ export default async function handler(
         )
       }
 
+      // =================================================
+      // PROJECT / GLOBAL ADMIN
+      // =================================================
+      // Admin de Projeto e Admin Geral não ficam presos
+      // a uma equipe. O escopo administrativo deles vem
+      // exclusivamente de admin_scope.
+      // =================================================
+
+      if (
+        userType === 'project_admin' ||
+        userType === 'admin'
+      ) {
+        normalizedTeamIds.length = 0
+      }
+
       if (
         !name ||
         !Number.isInteger(projectId) ||

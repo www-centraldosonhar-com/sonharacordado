@@ -7,10 +7,12 @@ import { getSessionUser } from './_session.js'
 const sql = neon(process.env.DATABASE_URL)
 
 const TEAMS = new Set([
+  'participant',
   'activities',
+  'volunteers',
   'assisted',
+  'food',
   'media',
-  'kitchen',
 ])
 
 const RECEIPT_BUCKET =
@@ -291,7 +293,7 @@ export default async function handler(
       ) {
         return response.status(400).json({
           error:
-            'Preencha corretamente e-mail e equipe.',
+            'Preencha corretamente e-mail e participação no evento.',
         })
       }
 

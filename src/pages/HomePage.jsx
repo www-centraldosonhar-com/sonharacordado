@@ -138,35 +138,11 @@ function HomePage({
     selectedArea ||
     defaultArea
 
+  // Eventos são encontros da ONG.
+  // Qualquer voluntário pode visualizar e participar,
+  // independentemente da equipe ou projeto.
   const visibleEvents =
-    data.nextEvents.filter(
-      (event) => {
-        if (
-          activeArea === 'media'
-        ) {
-          return true
-        }
-
-        if (
-          !volunteerAccess
-            ?.project
-            ?.id
-        ) {
-          return false
-        }
-
-        return (
-          event.project_id == null ||
-          Number(
-            event.project_id
-          ) ===
-            Number(
-              volunteerAccess
-                .project.id
-            )
-        )
-      }
-    )
+    data.nextEvents
 
   const sameDay =
     visibleEvents.length === 2 &&

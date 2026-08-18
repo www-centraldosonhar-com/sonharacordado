@@ -119,12 +119,6 @@ export default async function handler(request, response) {
         ON events.project_id = projects.id
       WHERE events.active = 1
         AND events.event_date >= CURRENT_DATE
-        AND (
-          ${hasMediaAccess}
-          OR events.project_id =
-            ${currentProjectId}
-          OR events.project_id IS NULL
-        )
       ORDER BY
         events.event_date ASC,
         events.event_time ASC

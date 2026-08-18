@@ -30,10 +30,9 @@ function VolunteerAreaSelector({
   const primary =
     access.primaryTeam
 
-  const hasMedia =
-    Boolean(
-      access.mediaSupport
-    )
+  // Mídias é uma área transversal e aberta
+  // para todos os voluntários da ONG.
+  const hasMedia = true
 
   return (
     <section className="volunteer-area-shell">
@@ -105,7 +104,7 @@ function VolunteerAreaSelector({
               </strong>
 
               <small>
-                APS • PPF • SJ
+                APS • PPF • SJ • aberta para todos
               </small>
             </span>
           </button>
