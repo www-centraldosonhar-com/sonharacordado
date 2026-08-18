@@ -767,3 +767,56 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   ADMIN IMAGE UPLOAD
+   ========================================================= */
+
+.admin-image-upload {
+  margin-top: 12px;
+}
+
+.admin-image-upload label {
+  min-height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px 11px;
+
+  border: 1px dashed #b9d7ed;
+  border-radius: 11px;
+
+  background: #f5fbff;
+  color: #22679d;
+
+  cursor: pointer;
+
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.admin-image-upload label:hover {
+  background: #eef7fd;
+  border-color: #3184c6;
+}
+
+.admin-image-upload input {
+  display: none;
+}
+
+.admin-event-image {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+
+  margin-top: 12px;
+
+  display: block;
+
+  object-fit: cover;
+  object-position: center;
+
+  border: 1px solid #ece8e4;
+  border-radius: 14px;
+}

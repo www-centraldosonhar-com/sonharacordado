@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatDateTimeBr } from '../utils/formatters'
 import AdminCreatePanel from '../components/AdminCreatePanel'
 import AdminManageActions from '../components/AdminManageActions'
+import AdminImageUpload from '../components/AdminImageUpload'
 import '../styles/admin.css'
 
 function AdminPage({
@@ -270,6 +271,17 @@ function AdminPage({
                     : '⚪ Inativo'}
                 </p>
 
+                <AdminImageUpload
+                  target="avatar"
+                  id={person.id}
+                  label={
+                    person.avatar_path
+                      ? '📸 Trocar avatar'
+                      : '📸 Adicionar avatar'
+                  }
+                  onUpdated={reloadAdmin}
+                />
+
                 <AdminManageActions
                   type="user"
                   item={person}
@@ -327,6 +339,25 @@ function AdminPage({
                     ? '🟢 Ativo'
                     : '⚪ Inativo'}
                 </p>
+
+                {event.event_image_path && (
+                  <img
+                    className="admin-event-image"
+                    src={event.event_image_path}
+                    alt={`Capa de ${event.name}`}
+                  />
+                )}
+
+                <AdminImageUpload
+                  target="event"
+                  id={event.id}
+                  label={
+                    event.event_image_path
+                      ? '🎨 Trocar capa'
+                      : '🎨 Adicionar capa'
+                  }
+                  onUpdated={reloadAdmin}
+                />
 
                 <AdminManageActions
                   type="event"
