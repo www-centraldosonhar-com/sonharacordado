@@ -369,7 +369,7 @@ function LoginPage({ onLogin }) {
                   required
                 >
                 <option value="">
-                  Escolha com o coração ❤️
+                  Escolha com o coração 🤍
                 </option>
 
                 <option value="APS">

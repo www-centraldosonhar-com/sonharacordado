@@ -590,3 +590,61 @@
 .register-project-select-wrap select:required:invalid {
   padding-left: 38px;
 }
+
+
+/* =========================================================
+   FINAL FIX — PROJECT SELECT HEART
+   ========================================================= */
+
+/*
+ * LOGIN
+ * Mantém o coração branco à esquerda.
+ * O padding reserva espaço real para o texto,
+ * impedindo "Selecione seu projeto" de ficar embaixo dele.
+ */
+
+.login-input-wrap-select {
+  position: relative;
+}
+
+.login-input-wrap-select::before {
+  content: "♥";
+  position: absolute;
+
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  z-index: 3;
+
+  color: #ffffff;
+  font-size: 17px;
+  line-height: 1;
+
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.30);
+
+  pointer-events: none;
+}
+
+.login-input-wrap-select select {
+  padding-left: 44px !important;
+}
+
+
+/*
+ * CADASTRO
+ * Não existe mais coração separado no início.
+ * O próprio texto mostra:
+ *
+ * Escolha com o coração 🤍
+ */
+
+.register-select-heart-white {
+  display: none !important;
+}
+
+.register-project-select-wrap select,
+.register-project-select-wrap select:required:invalid {
+  padding-left: 16px !important;
+}
