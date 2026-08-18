@@ -190,7 +190,35 @@ export default async function handler(request, response) {
         events.location,
         events.event_image_path,
         events.drive_link,
-        projects.name AS project
+        projects.name AS project,
+
+        (
+          SELECT STRING_AGG(
+            DISTINCT r_activity.name,
+            ', '
+            ORDER BY r_activity.name
+          )
+          FROM event_roles er_names
+          JOIN roles r_activity
+            ON er_names.role_id = r_activity.id
+          WHERE er_names.event_id = events.id
+        ) AS activity_names,
+
+        (
+          SELECT STRING_AGG(
+            DISTINCT u.name,
+            ', '
+            ORDER BY u.name
+          )
+          FROM confirmations c_names
+          JOIN users u
+            ON c_names.user_id = u.id
+          JOIN event_roles er_users
+            ON c_names.event_role_id = er_users.id
+          WHERE er_users.event_id = events.id
+            AND c_names.status = 'confirmed'
+        ) AS helper_names
+
       FROM events
       LEFT JOIN projects
         ON events.project_id = projects.id

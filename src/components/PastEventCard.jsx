@@ -34,6 +34,42 @@ function PastEventCard({ event }) {
               📍 {event.location}
             </p>
           )}
+
+          {(event.activity_names || event.helper_names) && (
+            <details className="memory-details">
+              <summary>
+                ✨ Relembrar esse encontro
+              </summary>
+
+              {event.activity_names && (
+                <div className="memory-detail-block">
+                  <strong>
+                    🙋 Atividades
+                  </strong>
+
+                  <p>
+                    {event.activity_names}
+                  </p>
+                </div>
+              )}
+
+              {event.helper_names && (
+                <div className="memory-detail-block">
+                  <strong>
+                    🤝 Quem ajudou nas atividades
+                  </strong>
+
+                  <p>
+                    {event.helper_names}
+                  </p>
+                </div>
+              )}
+
+              <p className="memory-after-message">
+                ❤️ Mais um encontro que virou memória.
+              </p>
+            </details>
+          )}
         </div>
 
         <a
@@ -42,7 +78,7 @@ function PastEventCard({ event }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          📸 Ver fotos do evento
+          📸 Ver álbum completo
         </a>
       </div>
     </article>

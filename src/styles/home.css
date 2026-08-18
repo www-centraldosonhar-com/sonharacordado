@@ -1964,3 +1964,39 @@ body {
   line-height: 1.45;
   opacity: 0.78;
 }
+
+/* =========================================================
+   AFTER / MEMORIES
+   ========================================================= */
+
+.memory-details {
+  margin-top: 14px;
+}
+
+.memory-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.memory-detail-block {
+  margin-top: 12px;
+}
+
+.memory-detail-block strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.memory-detail-block p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.memory-after-message {
+  margin-top: 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
