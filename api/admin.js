@@ -1,6 +1,7 @@
 import adminDataHandler from '../server/actions/admin-data.js'
 import adminCreateHandler from '../server/actions/admin-create.js'
 import adminUpdateHandler from '../server/actions/admin-update.js'
+import adminRegistrationHandler from '../server/actions/admin-registration.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -15,6 +16,13 @@ export default async function handler(request, response) {
 
   if (action === 'update') {
     return adminUpdateHandler(request, response)
+  }
+
+  if (action === 'registrations') {
+    return adminRegistrationHandler(
+      request,
+      response
+    )
   }
 
   return response.status(404).json({

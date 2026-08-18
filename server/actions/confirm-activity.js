@@ -35,6 +35,7 @@ export default async function handler(request, response) {
     const eventRoles = await sql`
       SELECT
         er.id,
+        er.event_id,
         er.vacancy_limit,
         er.active,
         e.active AS event_active,
@@ -69,6 +70,24 @@ export default async function handler(request, response) {
     if (deadlinePassed) {
       return response.status(400).json({
         error: 'O prazo de confirmação já encerrou.',
+      })
+    }
+
+    const registrations = await sql`
+      SELECT id
+      FROM event_registrations
+      WHERE event_id =
+        ${eventRole.event_id}
+        AND user_id =
+          ${sessionUser.userId}
+        AND status = 'confirmed'
+      LIMIT 1
+    `
+
+    if (!registrations[0]) {
+      return response.status(403).json({
+        error:
+          'Você precisa ter sua inscrição no evento confirmada antes de assumir uma atividade.',
       })
     }
 

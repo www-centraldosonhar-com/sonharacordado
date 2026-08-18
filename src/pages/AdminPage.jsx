@@ -4,6 +4,7 @@ import AdminCreatePanel from '../components/AdminCreatePanel'
 import AdminManageActions from '../components/AdminManageActions'
 import AdminImageUpload from '../components/AdminImageUpload'
 import AdminParticipantAction from '../components/AdminParticipantAction'
+import AdminRegistrationsPanel from '../components/AdminRegistrationsPanel'
 import '../styles/admin.css'
 
 function AdminPage({
@@ -141,6 +142,10 @@ function AdminPage({
 
         <a href="#eventos">
           📅 Eventos
+        </a>
+
+        <a href="#inscricoes">
+          🎟️ Inscrições
         </a>
 
         <a href="#atividades">
@@ -370,6 +375,16 @@ function AdminPage({
             ))}
           </div>
         </section>
+
+        <AdminRegistrationsPanel
+          registrations={
+            data.registrations || []
+          }
+          coupons={
+            data.registrationCoupons || []
+          }
+          onUpdated={reloadAdmin}
+        />
 
         <section
           id="atividades"

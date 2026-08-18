@@ -840,3 +840,100 @@
 .admin-participant-ready {
   opacity: 0.9;
 }
+
+
+/* =========================================================
+   ADMIN REGISTRATIONS
+   ========================================================= */
+
+.admin-registration-summary {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.admin-registration-summary article {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.035);
+}
+
+.admin-registration-summary strong {
+  display: block;
+  font-size: 1.5rem;
+}
+
+.registration-admin-table {
+  display: grid;
+  gap: 10px;
+}
+
+.registration-admin-row {
+  display: grid;
+  grid-template-columns:
+    1fr 1.2fr 1.4fr 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.registration-admin-row > div {
+  min-width: 0;
+}
+
+.registration-admin-row span,
+.registration-admin-row small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.registration-admin-row small {
+  margin-top: 4px;
+  opacity: 0.66;
+}
+
+.registration-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-coupons-box {
+  margin-top: 28px;
+}
+
+.admin-coupon-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.035);
+}
+
+.admin-coupon-row span {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .registration-admin-row {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .registration-admin-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .registration-admin-row,
+  .admin-registration-summary {
+    grid-template-columns: 1fr;
+  }
+}

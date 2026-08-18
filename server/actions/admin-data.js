@@ -86,6 +86,9 @@ export default async function handler(request, response) {
         e.event_time,
         e.location,
         e.confirmation_deadline,
+        e.registration_fee,
+        e.registration_deadline,
+        e.registrations_open,
         e.sympla_link,
         e.drive_link,
         e.event_image_path,
@@ -253,6 +256,76 @@ export default async function handler(request, response) {
         u.name
     `
 
+    const registrationCoupons = await sql`
+      SELECT
+        rc.id,
+        rc.code,
+        rc.usage_limit,
+        rc.active,
+        rc.created_at,
+        COUNT(er.id)::int AS used_count
+      FROM registration_coupons rc
+      LEFT JOIN event_registrations er
+        ON er.coupon_id = rc.id
+        AND er.status IN (
+          'pending_coupon_review',
+          'confirmed'
+        )
+      GROUP BY
+        rc.id,
+        rc.code,
+        rc.usage_limit,
+        rc.active,
+        rc.created_at
+      ORDER BY rc.created_at DESC
+    `
+
+    const registrations = await sql`
+      SELECT
+        er.id,
+        er.event_id,
+        er.user_id,
+        er.email,
+        er.team,
+        er.status,
+        er.payment_receipt_path,
+        er.rejection_reason,
+        er.created_at,
+        er.updated_at,
+        er.reviewed_at,
+        u.name AS user_name,
+        p.name AS project_name,
+        e.name AS event_name,
+        e.event_date,
+        rc.code AS coupon_code,
+        r.name AS activity_name
+      FROM event_registrations er
+      JOIN users u
+        ON er.user_id = u.id
+      JOIN projects p
+        ON u.project_id = p.id
+      JOIN events e
+        ON er.event_id = e.id
+      LEFT JOIN registration_coupons rc
+        ON er.coupon_id = rc.id
+      LEFT JOIN LATERAL (
+        SELECT roles.name
+        FROM confirmations c
+        JOIN event_roles evr
+          ON c.event_role_id = evr.id
+        JOIN roles
+          ON evr.role_id = roles.id
+        WHERE c.user_id = er.user_id
+          AND evr.event_id = er.event_id
+          AND c.status = 'confirmed'
+        ORDER BY roles.name
+        LIMIT 1
+      ) r ON TRUE
+      ORDER BY
+        e.event_date DESC,
+        er.created_at DESC
+    `
+
     const announcements = await sql`
       SELECT
         a.id,
@@ -300,6 +373,8 @@ export default async function handler(request, response) {
       roles,
       eventRoles,
       tasks,
+      registrationCoupons,
+      registrations,
       activityParticipants,
       taskParticipants,
       announcements,

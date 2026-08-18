@@ -151,6 +151,46 @@ function AdminCreatePanel({
 
         <details>
           <summary>
+            🎟️ Criar cupom de gratuidade
+          </summary>
+
+          <form
+            onSubmit={handleSubmit(
+              'coupon'
+            )}
+          >
+            <label>
+              Nome do cupom
+            </label>
+
+            <input
+              name="code"
+              placeholder="SONHADOR2026"
+              required
+            />
+
+            <label>
+              Quantidade de usos
+            </label>
+
+            <input
+              type="number"
+              name="usageLimit"
+              min="1"
+              required
+            />
+
+            <button
+              disabled={isLoading}
+              type="submit"
+            >
+              Criar cupom
+            </button>
+          </form>
+        </details>
+
+        <details>
+          <summary>
             📅 Criar evento
           </summary>
 
@@ -241,6 +281,29 @@ function AdminCreatePanel({
             <input
               type="datetime-local"
               name="confirmationDeadline"
+              required
+            />
+
+            <label>
+              Valor da inscrição
+            </label>
+
+            <input
+              type="number"
+              name="registrationFee"
+              min="0"
+              step="0.01"
+              placeholder="35.00"
+              required
+            />
+
+            <label>
+              Prazo das inscrições
+            </label>
+
+            <input
+              type="datetime-local"
+              name="registrationDeadline"
               required
             />
 

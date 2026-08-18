@@ -27,6 +27,7 @@ export default async function handler(request, response) {
       SELECT
         users.id,
         users.name,
+        users.email,
         users.avatar_path,
         users.user_type,
         users.active,
@@ -120,6 +121,17 @@ export default async function handler(request, response) {
         events.sympla_link,
         events.event_image_path,
         events.confirmation_deadline,
+        events.registration_fee,
+        events.registration_deadline,
+        events.registrations_open,
+        (
+          SELECT COUNT(*)::int
+          FROM event_registrations er_count
+          WHERE er_count.event_id =
+            events.id
+            AND er_count.status =
+              'confirmed'
+        ) AS registration_count,
         projects.name AS project
       FROM events
       LEFT JOIN projects
@@ -171,9 +183,26 @@ export default async function handler(request, response) {
           ORDER BY roles.name
         `
 
+        const registrations = await sql`
+          SELECT
+            id,
+            email,
+            team,
+            status,
+            rejection_reason,
+            created_at
+          FROM event_registrations
+          WHERE event_id = ${event.id}
+            AND user_id =
+              ${currentUser.id}
+          LIMIT 1
+        `
+
         return {
           ...event,
           activities,
+          registration:
+            registrations[0] || null,
         }
       })
     )

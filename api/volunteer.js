@@ -6,6 +6,7 @@ import leaveTaskHandler from '../server/actions/leave-task.js'
 import submitDeliveryHandler from '../server/actions/submit-delivery.js'
 import saveEventDriveHandler from '../server/actions/save-event-drive.js'
 import completePhotoDeliveryHandler from '../server/actions/complete-photo-delivery.js'
+import registrationHandler from '../server/actions/registration.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -40,6 +41,13 @@ export default async function handler(request, response) {
 
   if (action === 'complete-photo-delivery') {
     return completePhotoDeliveryHandler(
+      request,
+      response
+    )
+  }
+
+  if (action === 'registration') {
+    return registrationHandler(
       request,
       response
     )

@@ -1,0 +1,254 @@
+import process from 'node:process'
+import { createClient } from '@supabase/supabase-js'
+import { requireAdmin, sql } from './_admin.js'
+
+const RECEIPT_BUCKET =
+  process.env.REGISTRATION_RECEIPTS_BUCKET ||
+  'sonhar-receipts'
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  )
+}
+
+export default async function handler(
+  request,
+  response
+) {
+  if (request.method !== 'POST') {
+    return response.status(405).json({
+      error: 'Método não permitido.',
+    })
+  }
+
+  const admin =
+    await requireAdmin(request)
+
+  if (!admin) {
+    return response.status(403).json({
+      error:
+        'Acesso administrativo não autorizado.',
+    })
+  }
+
+  const {
+    operation,
+    registrationId,
+    couponId,
+    reason,
+  } = request.body ?? {}
+
+  try {
+    if (
+      operation === 'receipt-url'
+    ) {
+      const rows = await sql`
+        SELECT payment_receipt_path
+        FROM event_registrations
+        WHERE id = ${registrationId}
+        LIMIT 1
+      `
+
+      const path =
+        rows[0]?.payment_receipt_path
+
+      if (!path) {
+        return response.status(404).json({
+          error:
+            'Comprovante não encontrado.',
+        })
+      }
+
+      const supabase =
+        getSupabaseAdmin()
+
+      const {
+        data,
+        error,
+      } = await supabase.storage
+        .from(RECEIPT_BUCKET)
+        .createSignedUrl(
+          path,
+          300
+        )
+
+      if (error) {
+        throw error
+      }
+
+      return response.status(200).json({
+        success: true,
+        url: data.signedUrl,
+      })
+    }
+
+    if (
+      operation === 'approve'
+    ) {
+      const updated = await sql`
+        UPDATE event_registrations
+        SET
+          status = 'confirmed',
+          rejection_reason = NULL,
+          reviewed_at =
+            CURRENT_TIMESTAMP,
+          reviewed_by = ${admin.id},
+          updated_at =
+            CURRENT_TIMESTAMP
+        WHERE id = ${registrationId}
+          AND status IN (
+            'pending_payment_review',
+            'pending_coupon_review',
+            'payment_rejected'
+          )
+        RETURNING id
+      `
+
+      if (!updated[0]) {
+        return response.status(404).json({
+          error:
+            'Inscrição não encontrada ou já processada.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message:
+          'Inscrição confirmada! 🎟️✅',
+      })
+    }
+
+    if (
+      operation === 'reject'
+    ) {
+      const cleanReason =
+        typeof reason === 'string'
+          ? reason.trim()
+          : ''
+
+      if (!cleanReason) {
+        return response.status(400).json({
+          error:
+            'Informe o motivo da rejeição.',
+        })
+      }
+
+      const updated = await sql`
+        UPDATE event_registrations
+        SET
+          status =
+            'payment_rejected',
+          rejection_reason =
+            ${cleanReason},
+          reviewed_at =
+            CURRENT_TIMESTAMP,
+          reviewed_by =
+            ${admin.id},
+          updated_at =
+            CURRENT_TIMESTAMP
+        WHERE id =
+          ${registrationId}
+        RETURNING id
+      `
+
+      if (!updated[0]) {
+        return response.status(404).json({
+          error:
+            'Inscrição não encontrada.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message:
+          'Inscrição devolvida para correção.',
+      })
+    }
+
+    if (
+      operation === 'cancel'
+    ) {
+      const updated = await sql`
+        UPDATE event_registrations
+        SET
+          status = 'cancelled',
+          reviewed_at =
+            CURRENT_TIMESTAMP,
+          reviewed_by =
+            ${admin.id},
+          updated_at =
+            CURRENT_TIMESTAMP
+        WHERE id =
+          ${registrationId}
+        RETURNING id
+      `
+
+      if (!updated[0]) {
+        return response.status(404).json({
+          error:
+            'Inscrição não encontrada.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message:
+          'Inscrição cancelada.',
+      })
+    }
+
+    if (
+      operation === 'toggle-coupon'
+    ) {
+      const updated = await sql`
+        UPDATE registration_coupons
+        SET active =
+          CASE
+            WHEN active = 1 THEN 0
+            ELSE 1
+          END
+        WHERE id = ${couponId}
+        RETURNING active
+      `
+
+      if (!updated[0]) {
+        return response.status(404).json({
+          error:
+            'Cupom não encontrado.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message:
+          Number(updated[0].active) === 1
+            ? 'Cupom ativado! 🎟️'
+            : 'Cupom desativado.',
+      })
+    }
+
+    return response.status(400).json({
+      error:
+        'Operação administrativa desconhecida.',
+    })
+  } catch (error) {
+    console.error(
+      'Admin registration error:',
+      error
+    )
+
+    return response.status(500).json({
+      error:
+        error?.message ||
+        'Não foi possível concluir.',
+    })
+  }
+}

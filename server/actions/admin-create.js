@@ -98,6 +98,62 @@ export default async function handler(request, response) {
       })
     }
 
+    if (action === 'coupon') {
+      const code =
+        typeof data.code === 'string'
+          ? data.code
+              .trim()
+              .toUpperCase()
+          : ''
+
+      const usageLimit =
+        Number(data.usageLimit)
+
+      if (
+        !code ||
+        !Number.isInteger(usageLimit) ||
+        usageLimit < 1
+      ) {
+        return response.status(400).json({
+          error:
+            'Preencha corretamente o cupom.',
+        })
+      }
+
+      const existing = await sql`
+        SELECT id
+        FROM registration_coupons
+        WHERE UPPER(code) = ${code}
+        LIMIT 1
+      `
+
+      if (existing[0]) {
+        return response.status(409).json({
+          error:
+            'Esse cupom já existe.',
+        })
+      }
+
+      await sql`
+        INSERT INTO registration_coupons (
+          code,
+          usage_limit,
+          active
+        )
+        VALUES (
+          ${code},
+          ${usageLimit},
+          1
+        )
+      `
+
+      return response.status(201).json({
+        success: true,
+        message:
+          'Cupom criado! 🎟️',
+      })
+    }
+
     if (action === 'event') {
       const {
         name,
@@ -107,6 +163,8 @@ export default async function handler(request, response) {
         eventTime,
         location,
         confirmationDeadline,
+        registrationFee,
+        registrationDeadline,
         symplaLink,
         driveLink,
       } = data
@@ -116,7 +174,12 @@ export default async function handler(request, response) {
         !eventDate ||
         !eventTime ||
         !location?.trim() ||
-        !confirmationDeadline
+        !confirmationDeadline ||
+        !registrationDeadline ||
+        Number.isNaN(
+          Number(registrationFee)
+        ) ||
+        Number(registrationFee) < 0
       ) {
         return response.status(400).json({
           error: 'Preencha os campos obrigatórios.',
@@ -141,6 +204,9 @@ export default async function handler(request, response) {
           event_time,
           location,
           confirmation_deadline,
+          registration_fee,
+          registration_deadline,
+          registrations_open,
           sympla_link,
           drive_link,
           active
@@ -153,6 +219,9 @@ export default async function handler(request, response) {
           ${eventTime},
           ${location.trim()},
           ${confirmationDeadline},
+          ${Number(registrationFee)},
+          ${registrationDeadline},
+          1,
           ${symplaLink?.trim() || null},
           ${driveLink?.trim() || null},
           1

@@ -9,6 +9,7 @@ import AnnouncementCard from '../components/AnnouncementCard'
 import PastEventCard from '../components/PastEventCard'
 import PhotoDeliveryPanel from '../components/PhotoDeliveryPanel'
 import VolunteerCard from '../components/VolunteerCard'
+import EventRegistrationPanel from '../components/EventRegistrationPanel'
 
 import '../styles/home.css'
 
@@ -187,6 +188,12 @@ function HomePage({
                     key={event.id}
                   >
                     <EventCard event={event} />
+
+                    <EventRegistrationPanel
+                      event={event}
+                      currentUser={currentUser}
+                      onUpdated={loadHome}
+                    />
 
                     <div className="event-activities-block">
                       <div className="event-activities-heading">
