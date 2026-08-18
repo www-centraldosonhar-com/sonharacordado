@@ -79,6 +79,8 @@ export default async function handler(request, response) {
     const myConfirmations = await sql`
       SELECT
         confirmations.id,
+        events.id AS event_id,
+        events.event_date,
         roles.name AS role,
         events.name AS event_name,
         CASE

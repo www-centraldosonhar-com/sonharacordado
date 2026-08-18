@@ -7,6 +7,7 @@ import CommitmentCard from '../components/CommitmentCard'
 import MissionCard from '../components/MissionCard'
 import AnnouncementCard from '../components/AnnouncementCard'
 import PastEventCard from '../components/PastEventCard'
+import PhotoDeliveryPanel from '../components/PhotoDeliveryPanel'
 import VolunteerCard from '../components/VolunteerCard'
 
 import '../styles/home.css'
@@ -228,6 +229,47 @@ function HomePage({
               </div>
             )}
           </section>
+
+          {data.myConfirmations
+            .filter((confirmation) => {
+              const role =
+                confirmation.role
+                  ?.toLowerCase() || ''
+
+              const isPhotography =
+                role.includes('photo') ||
+                role.includes('foto')
+
+              const eventDate =
+                String(
+                  confirmation.event_date
+                ).slice(0, 10)
+
+              const eventAlreadyHappened =
+                eventDate &&
+                new Date(
+                  `${eventDate}T23:59:59`
+                ) < new Date()
+
+              return (
+                isPhotography &&
+                eventAlreadyHappened
+              )
+            })
+            .map((confirmation) => (
+              <PhotoDeliveryPanel
+                key={
+                  `photos-${confirmation.id}`
+                }
+                event={{
+                  id:
+                    confirmation.event_id,
+
+                  name:
+                    confirmation.event_name,
+                }}
+              />
+            ))}
 
           <section
             className="section-block"
