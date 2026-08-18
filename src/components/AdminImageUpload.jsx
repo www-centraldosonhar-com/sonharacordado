@@ -1,10 +1,6 @@
 import { useState } from 'react'
 
 import {
-  supabase,
-} from '../services/supabase'
-
-import {
   processAdminImage,
 } from '../utils/adminImageProcessor'
 
@@ -40,15 +36,12 @@ function AdminImageUpload({
     }
 
     setIsLoading(true)
+    setMessage('✨ Otimizando imagem...')
 
     try {
       // ===================================================
-      // 1. PROCESS IMAGE LOCALLY
+      // 1. PROCESS LOCALLY
       // ===================================================
-
-      setMessage(
-        '✨ Otimizando imagem...'
-      )
 
       const processedFile =
         await processAdminImage(
@@ -61,7 +54,7 @@ function AdminImageUpload({
       )
 
       // ===================================================
-      // 2. ASK SERVER FOR SIGNED UPLOAD TOKEN
+      // 2. REQUEST TEMPORARY SIGNED URL
       // ===================================================
 
       setMessage(
@@ -81,9 +74,7 @@ function AdminImageUpload({
 
             body:
               JSON.stringify({
-                stage:
-                  'prepare',
-
+                stage: 'prepare',
                 target,
                 id,
 
@@ -98,44 +89,83 @@ function AdminImageUpload({
 
       if (!prepareResponse.ok) {
         throw new Error(
-          prepareResult.error ||
-          'Não foi possível preparar o upload.'
+          `PREPARE: ${
+            prepareResult.error ||
+            'Não foi possível preparar o upload.'
+          }`
+        )
+      }
+
+      if (!prepareResult.signedUrl) {
+        throw new Error(
+          'PREPARE: O servidor não retornou a URL de upload.'
         )
       }
 
       // ===================================================
-      // 3. DIRECT BROWSER -> SUPABASE STORAGE
+      // 3. DIRECT UPLOAD
       // ===================================================
-      // The image no longer passes through the Vercel
-      // Function as Base64.
+      // Mirrors Supabase uploadToSignedUrl behavior for
+      // Blob/File: multipart FormData + PUT.
       // ===================================================
 
       setMessage(
         '☁️ Enviando imagem...'
       )
 
-      const {
-        error: uploadError,
-      } = await supabase.storage
-        .from(
-          prepareResult.bucket
-        )
-        .uploadToSignedUrl(
-          prepareResult.storagePath,
-          prepareResult.token,
-          processedFile,
+      const formData =
+        new FormData()
+
+      formData.append(
+        'cacheControl',
+        '3600'
+      )
+
+      formData.append(
+        '',
+        processedFile
+      )
+
+      const uploadResponse =
+        await fetch(
+          prepareResult.signedUrl,
           {
-            contentType:
-              'image/jpeg',
+            method: 'PUT',
+
+            headers: {
+              'x-upsert': 'false',
+            },
+
+            body: formData,
           }
         )
 
-      if (uploadError) {
-        throw uploadError
+      if (!uploadResponse.ok) {
+        let details = ''
+
+        try {
+          const errorData =
+            await uploadResponse.json()
+
+          details =
+            errorData?.message ||
+            errorData?.error ||
+            ''
+        } catch {
+          details =
+            await uploadResponse.text()
+        }
+
+        throw new Error(
+          `UPLOAD: ${
+            details ||
+            `HTTP ${uploadResponse.status}`
+          }`
+        )
       }
 
       // ===================================================
-      // 4. CONFIRM UPLOAD AND SAVE URL IN NEON
+      // 4. SAVE PUBLIC URL IN NEON
       // ===================================================
 
       setMessage(
@@ -155,9 +185,7 @@ function AdminImageUpload({
 
             body:
               JSON.stringify({
-                stage:
-                  'complete',
-
+                stage: 'complete',
                 target,
                 id,
 
@@ -172,8 +200,10 @@ function AdminImageUpload({
 
       if (!completeResponse.ok) {
         throw new Error(
-          completeResult.error ||
-          'A imagem foi enviada, mas não foi possível salvá-la.'
+          `COMPLETE: ${
+            completeResult.error ||
+            'Não foi possível registrar a imagem.'
+          }`
         )
       }
 

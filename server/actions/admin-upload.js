@@ -141,8 +141,8 @@ async function prepareUpload({
   return {
     bucket,
     storagePath,
-    token:
-      data.token,
+    signedUrl:
+      data.signedUrl,
   }
 }
 
