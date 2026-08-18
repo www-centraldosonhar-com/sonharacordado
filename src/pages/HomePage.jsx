@@ -10,6 +10,7 @@ import PastEventCard from '../components/PastEventCard'
 import PhotoDeliveryPanel from '../components/PhotoDeliveryPanel'
 import VolunteerCard from '../components/VolunteerCard'
 import EventRegistrationPanel from '../components/EventRegistrationPanel'
+import VolunteerAreaSelector from '../components/VolunteerAreaSelector'
 
 import '../styles/home.css'
 
@@ -21,6 +22,11 @@ function HomePage({
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+
+  const [
+    selectedArea,
+    setSelectedArea,
+  ] = useState(null)
 
   const loadHome = useCallback(async () => {
     try {
@@ -114,10 +120,58 @@ function HomePage({
   const currentUser =
     data?.currentUser || user
 
+  const volunteerAccess =
+    data?.volunteerAccess
+
+  const defaultArea =
+    volunteerAccess
+      ?.primaryTeam
+      ?.code ||
+    (
+      volunteerAccess
+        ?.mediaSupport
+        ? 'media'
+        : null
+    )
+
+  const activeArea =
+    selectedArea ||
+    defaultArea
+
+  const visibleEvents =
+    data.nextEvents.filter(
+      (event) => {
+        if (
+          activeArea === 'media'
+        ) {
+          return true
+        }
+
+        if (
+          !volunteerAccess
+            ?.project
+            ?.id
+        ) {
+          return false
+        }
+
+        return (
+          event.project_id == null ||
+          Number(
+            event.project_id
+          ) ===
+            Number(
+              volunteerAccess
+                .project.id
+            )
+        )
+      }
+    )
+
   const sameDay =
-    data.nextEvents.length === 2 &&
-    String(data.nextEvents[0].event_date).slice(0, 10) ===
-      String(data.nextEvents[1].event_date).slice(0, 10)
+    visibleEvents.length === 2 &&
+    String(visibleEvents[0].event_date).slice(0, 10) ===
+      String(visibleEvents[1].event_date).slice(0, 10)
 
   return (
     <>
@@ -147,6 +201,12 @@ function HomePage({
           className="app-shell home-main"
           id="inicio"
         >
+          <VolunteerAreaSelector
+            access={volunteerAccess}
+            selectedArea={activeArea}
+            onSelect={setSelectedArea}
+          />
+
           <section className="welcome-strip">
             <div className="welcome-dot" />
 
@@ -180,9 +240,9 @@ function HomePage({
               </div>
             )}
 
-            {data.nextEvents.length > 0 ? (
+            {visibleEvents.length > 0 ? (
               <div className="upcoming-events-grid">
-                {data.nextEvents.map((event) => (
+                {visibleEvents.map((event) => (
                   <div
                     className="upcoming-event-group"
                     key={event.id}

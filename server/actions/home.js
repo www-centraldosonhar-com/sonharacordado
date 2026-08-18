@@ -1,6 +1,6 @@
 import process from 'node:process'
 import { neon } from '@neondatabase/serverless'
-import { getSessionUser } from './_session.js'
+import { requireVolunteer } from './_volunteer-access.js'
 
 const sql = neon(process.env.DATABASE_URL)
 
@@ -11,41 +11,22 @@ export default async function handler(request, response) {
     })
   }
 
-  const sessionUser = await getSessionUser(request)
+  const currentUser =
+    await requireVolunteer(request)
 
-  if (!sessionUser?.userId) {
-    return response.status(401).json({
-      error: 'Sessão inválida ou expirada.',
+  if (!currentUser) {
+    return response.status(403).json({
+      error:
+        'Você não possui acesso à Central do Voluntário.',
     })
   }
 
   try {
-    // =====================================================
-    // CURRENT USER
-    // =====================================================
-    const users = await sql`
-      SELECT
-        users.id,
-        users.name,
-        users.email,
-        users.avatar_path,
-        users.user_type,
-        users.active,
-        projects.name AS project
-      FROM users
-      JOIN projects
-        ON users.project_id = projects.id
-      WHERE users.id = ${sessionUser.userId}
-      LIMIT 1
-    `
+    const hasMediaAccess =
+      currentUser.mediaSupport
 
-    const currentUser = users[0]
-
-    if (!currentUser || !currentUser.active) {
-      return response.status(401).json({
-        error: 'Usuário inativo.',
-      })
-    }
+    const currentProjectId =
+      Number(currentUser.project_id)
 
     // =====================================================
     // ALL CONFIRMED VOLUNTEERS
@@ -115,6 +96,7 @@ export default async function handler(request, response) {
       SELECT
         events.id,
         events.name,
+        events.project_id,
         events.event_date,
         events.event_time,
         events.location,
@@ -137,10 +119,16 @@ export default async function handler(request, response) {
         ON events.project_id = projects.id
       WHERE events.active = 1
         AND events.event_date >= CURRENT_DATE
+        AND (
+          ${hasMediaAccess}
+          OR events.project_id =
+            ${currentProjectId}
+          OR events.project_id IS NULL
+        )
       ORDER BY
         events.event_date ASC,
         events.event_time ASC
-      LIMIT 2
+      LIMIT 8
     `
 
     // Load activities independently for each upcoming event.
@@ -253,6 +241,12 @@ export default async function handler(request, response) {
       WHERE events.event_date < CURRENT_DATE
         AND events.drive_link IS NOT NULL
         AND TRIM(events.drive_link) <> ''
+        AND (
+          ${hasMediaAccess}
+          OR events.project_id =
+            ${currentProjectId}
+          OR events.project_id IS NULL
+        )
       ORDER BY
         events.event_date DESC,
         events.event_time DESC
@@ -356,8 +350,27 @@ export default async function handler(request, response) {
         announcements.created_at DESC
     `
 
+    const volunteerAccess = {
+      project: {
+        id:
+          currentUser.project_id,
+        name:
+          currentUser.project,
+      },
+
+      primaryTeam:
+        currentUser.primaryTeam,
+
+      mediaSupport:
+        currentUser.mediaSupport,
+
+      teams:
+        currentUser.teams,
+    }
+
     return response.status(200).json({
       currentUser,
+      volunteerAccess,
       confirmations,
       myConfirmations,
       nextEvents,

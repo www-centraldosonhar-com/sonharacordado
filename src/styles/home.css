@@ -2154,3 +2154,116 @@ body {
       repeat(2, minmax(0, 1fr));
   }
 }
+
+/* =========================================================
+   VOLUNTEER AREAS
+   ========================================================= */
+
+.volunteer-area-shell {
+  margin-bottom: 22px;
+  padding: 20px;
+
+  border: 1px solid
+    rgba(0, 0, 0, 0.07);
+  border-radius: 22px;
+
+  background:
+    rgba(255, 255, 255, 0.78);
+}
+
+.volunteer-area-heading h2 {
+  margin:
+    5px 0 16px;
+
+  font-size: 1.15rem;
+}
+
+.volunteer-area-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.volunteer-area-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-width: 190px;
+  padding: 13px 15px;
+
+  border: 1px solid
+    rgba(0, 0, 0, 0.08);
+  border-radius: 17px;
+
+  background: #ffffff;
+
+  color: inherit;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.volunteer-area-card:hover {
+  transform:
+    translateY(-1px);
+}
+
+.volunteer-area-card.active {
+  border-color:
+    rgba(49, 132, 198, 0.35);
+
+  box-shadow:
+    0 8px 22px
+    rgba(49, 132, 198, 0.10);
+}
+
+.volunteer-area-icon {
+  display: grid;
+  place-items: center;
+
+  width: 39px;
+  height: 39px;
+
+  border-radius: 13px;
+
+  background:
+    rgba(49, 132, 198, 0.08);
+
+  font-size: 1.2rem;
+}
+
+.volunteer-area-card > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.volunteer-area-card strong {
+  font-size: 0.86rem;
+}
+
+.volunteer-area-card small {
+  opacity: 0.62;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 600px) {
+  .volunteer-area-shell {
+    padding: 16px;
+  }
+
+  .volunteer-area-options {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .volunteer-area-card {
+    width: 100%;
+    min-width: 0;
+  }
+}
