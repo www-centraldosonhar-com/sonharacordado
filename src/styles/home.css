@@ -1939,3 +1939,28 @@ body {
     display: none;
   }
 }
+
+/* =========================================================
+   POST-EVENT DELIVERY STATUS
+   ========================================================= */
+
+.delivery-status-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.delivery-status-title {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.delivery-status-box .card-message {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  opacity: 0.78;
+}

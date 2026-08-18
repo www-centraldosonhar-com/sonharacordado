@@ -9,6 +9,11 @@ function AdminCreatePanel({
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  const [
+    activityRequiresDelivery,
+    setActivityRequiresDelivery,
+  ] = useState(false)
+
   async function submit(action, data, form) {
     setIsLoading(true)
     setMessage('')
@@ -41,6 +46,10 @@ function AdminCreatePanel({
 
       setMessage(result.message)
       form.reset()
+
+      if (action === 'activity') {
+        setActivityRequiresDelivery(false)
+      }
 
       await onCreated()
     } catch (error) {
@@ -356,6 +365,11 @@ function AdminCreatePanel({
             <select
               name="requiresDelivery"
               defaultValue="0"
+              onChange={(event) =>
+                setActivityRequiresDelivery(
+                  event.target.value === '1'
+                )
+              }
             >
               <option value="0">
                 Não exige entrega
@@ -365,6 +379,20 @@ function AdminCreatePanel({
                 Exige entrega
               </option>
             </select>
+
+            {activityRequiresDelivery && (
+              <>
+                <label>
+                  Prazo da entrega
+                </label>
+
+                <input
+                  type="datetime-local"
+                  name="deliveryDeadline"
+                  required
+                />
+              </>
+            )}
 
             <button
               disabled={isLoading}

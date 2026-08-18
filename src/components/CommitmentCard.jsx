@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatDateTimeBr } from '../utils/formatters'
 
 function CommitmentCard({
   confirmation,
@@ -136,6 +137,39 @@ function CommitmentCard({
       <p className="body-copy">
         {confirmation.event_name}
       </p>
+
+      {Number(
+        confirmation.requires_delivery
+      ) === 1 && (
+        <div className="delivery-status-box">
+          {confirmation.photo_submitted_at ? (
+            <>
+              <p className="delivery-status-title">
+                ✅ Material enviado
+              </p>
+
+              <p className="card-message">
+                Aguardando aprovação da equipe.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="delivery-status-title">
+                📦 Entrega pendente
+              </p>
+
+              {confirmation.delivery_deadline && (
+                <p className="card-message">
+                  ⏰ Entrega até{' '}
+                  {formatDateTimeBr(
+                    confirmation.delivery_deadline
+                  )}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {eventAlreadyHappened ? (
         <>

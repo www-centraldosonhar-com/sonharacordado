@@ -172,6 +172,7 @@ export default async function handler(request, response) {
         description,
         vacancyLimit,
         requiresDelivery,
+        deliveryDeadline,
       } = data
 
       const limit = Number(vacancyLimit)
@@ -214,7 +215,8 @@ export default async function handler(request, response) {
           description,
           vacancy_limit,
           active,
-          requires_delivery
+          requires_delivery,
+          delivery_deadline
         )
         VALUES (
           ${eventId},
@@ -222,7 +224,13 @@ export default async function handler(request, response) {
           ${description?.trim() || null},
           ${limit},
           1,
-          ${deliveryRequired}
+          ${deliveryRequired},
+          ${
+            deliveryRequired === 1 &&
+            deliveryDeadline
+              ? deliveryDeadline
+              : null
+          }
         )
       `
 

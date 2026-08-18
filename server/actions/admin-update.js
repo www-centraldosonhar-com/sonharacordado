@@ -366,6 +366,12 @@ export default async function handler(
           ? 1
           : 0
 
+      const deliveryDeadline =
+        requiresDelivery === 1 &&
+        data.deliveryDeadline
+          ? data.deliveryDeadline
+          : null
+
       if (
         !Number.isInteger(vacancyLimit) ||
         vacancyLimit < 1
@@ -401,7 +407,9 @@ export default async function handler(
           vacancy_limit =
             ${vacancyLimit},
           requires_delivery =
-            ${requiresDelivery}
+            ${requiresDelivery},
+          delivery_deadline =
+            ${deliveryDeadline}
         WHERE id = ${recordId}
         RETURNING id
       `

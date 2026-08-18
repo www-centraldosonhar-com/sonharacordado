@@ -82,6 +82,7 @@ export default async function handler(request, response) {
         confirmations.photo_submitted_at,
         confirmations.completed_at,
         event_roles.requires_delivery,
+        event_roles.delivery_deadline,
         events.id AS event_id,
         events.event_date,
         roles.name AS role,
@@ -141,6 +142,7 @@ export default async function handler(request, response) {
             event_roles.vacancy_limit,
             event_roles.description,
             event_roles.requires_delivery,
+            event_roles.delivery_deadline,
             COUNT(confirmations.id)::int AS confirmed_count,
             CASE
               WHEN events.confirmation_deadline >= CURRENT_TIMESTAMP
@@ -164,6 +166,7 @@ export default async function handler(request, response) {
             event_roles.vacancy_limit,
             event_roles.description,
             event_roles.requires_delivery,
+            event_roles.delivery_deadline,
             events.confirmation_deadline
           ORDER BY roles.name
         `

@@ -11,6 +11,13 @@ function AdminManageActions({
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+  const [
+    activityRequiresDelivery,
+    setActivityRequiresDelivery,
+  ] = useState(
+    Number(item.requires_delivery) === 1
+  )
+
   async function sendAction(
     action,
     data = {}
@@ -343,13 +350,14 @@ function AdminManageActions({
 
           <select
             name="requiresDelivery"
-            defaultValue={
-              String(
-                Number(
-                  item.requires_delivery
-                ) === 1
-                  ? 1
-                  : 0
+            value={
+              activityRequiresDelivery
+                ? '1'
+                : '0'
+            }
+            onChange={(event) =>
+              setActivityRequiresDelivery(
+                event.target.value === '1'
               )
             }
           >
@@ -361,6 +369,27 @@ function AdminManageActions({
               Exige entrega
             </option>
           </select>
+
+          {activityRequiresDelivery && (
+            <>
+              <label>
+                Prazo da entrega
+              </label>
+
+              <input
+                type="datetime-local"
+                name="deliveryDeadline"
+                defaultValue={
+                  item.delivery_deadline
+                    ? String(
+                        item.delivery_deadline
+                      ).slice(0, 16)
+                    : ''
+                }
+                required
+              />
+            </>
+          )}
         </>
       )
     }

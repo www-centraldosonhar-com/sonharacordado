@@ -116,6 +116,7 @@ export default async function handler(request, response) {
         er.vacancy_limit,
         er.active,
         er.requires_delivery,
+        er.delivery_deadline,
         e.name AS event_name,
         e.event_date,
         r.name AS role_name,
@@ -136,6 +137,7 @@ export default async function handler(request, response) {
         er.vacancy_limit,
         er.active,
         er.requires_delivery,
+        er.delivery_deadline,
         e.name,
         e.event_date,
         r.name
@@ -195,6 +197,7 @@ export default async function handler(request, response) {
         c.completed_at,
         c.photo_submitted_at,
         er.requires_delivery,
+        er.delivery_deadline,
         u.name AS user_name,
         p.name AS project_name,
         r.name AS role_name,
