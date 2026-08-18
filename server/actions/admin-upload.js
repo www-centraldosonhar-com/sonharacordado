@@ -366,10 +366,18 @@ export default async function handler(
       error
     )
 
+    const numericStatus =
+      Number(error.statusCode)
+
+    const safeStatus =
+      Number.isInteger(numericStatus) &&
+      numericStatus >= 400 &&
+      numericStatus <= 599
+        ? numericStatus
+        : 500
+
     return response
-      .status(
-        error.statusCode || 500
-      )
+      .status(safeStatus)
       .json({
         error:
           error.message ||
