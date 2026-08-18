@@ -214,7 +214,9 @@ export default async function handler(
 
     return response.status(500).json({
       error:
-        'Não foi possível enviar a imagem.',
+        process.env.NODE_ENV === 'production'
+          ? 'Não foi possível enviar a imagem.'
+          : `Não foi possível enviar a imagem: ${error.message}`,
     })
   }
 }
