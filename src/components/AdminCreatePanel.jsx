@@ -636,26 +636,49 @@ function AdminCreatePanel({
             </select>
 
             <label>
-              Equipe
+              Equipe principal
             </label>
 
             <select
-              name="teamIds"
+              name="primaryTeamId"
               defaultValue=""
             >
               <option value="">
-                Sem equipe definida
+                Somente Mídias / sem equipe principal
               </option>
 
-              {teams.map((team) => (
-                <option
-                  key={team.id}
-                  value={team.id}
-                >
-                  {team.name}
-                </option>
-              ))}
+              {teams
+                .filter(
+                  (team) =>
+                    team.code !== 'media'
+                )
+                .map((team) => (
+                  <option
+                    key={team.id}
+                    value={team.id}
+                  >
+                    {team.name}
+                  </option>
+                ))}
             </select>
+
+            <label className="admin-checkbox-field">
+              <input
+                type="checkbox"
+                name="mediaSupport"
+                value="1"
+              />
+
+              <span>
+                📸 Também ajuda em Mídias
+              </span>
+            </label>
+
+            <p className="admin-form-help">
+              Cada voluntário pode ter uma equipe principal.
+              Mídias é a única equipe adicional permitida e
+              atua em APS, PPF e SJ.
+            </p>
 
             <label>
               Senha

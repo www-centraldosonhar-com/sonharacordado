@@ -123,18 +123,92 @@ export default async function handler(
       const userType =
         data.userType
 
-      const normalizedTeamIds =
-        Array.isArray(data.teamIds)
-          ? data.teamIds
-              .map(Number)
-              .filter(Number.isInteger)
-          : data.teamIds
-            ? [
-                Number(data.teamIds),
-              ].filter(
-                Number.isInteger
-              )
-            : []
+      const primaryTeamNumericId =
+        data.primaryTeamId
+          ? Number(
+              data.primaryTeamId
+            )
+          : null
+
+      const wantsMedia =
+        String(
+          data.mediaSupport || ''
+        ) === '1'
+
+      let primaryTeam = null
+
+      if (primaryTeamNumericId) {
+        const primaryTeams = await sql`
+          SELECT
+            id,
+            code,
+            name
+          FROM teams
+          WHERE id =
+            ${primaryTeamNumericId}
+            AND active = 1
+          LIMIT 1
+        `
+
+        primaryTeam =
+          primaryTeams[0]
+
+        if (
+          !primaryTeam ||
+          primaryTeam.code === 'media'
+        ) {
+          return response.status(400).json({
+            error:
+              'Equipe principal inválida.',
+          })
+        }
+      }
+
+      const mediaTeams = await sql`
+        SELECT id
+        FROM teams
+        WHERE code = 'media'
+          AND active = 1
+        LIMIT 1
+      `
+
+      const mediaTeamId =
+        mediaTeams[0]?.id
+
+      if (
+        wantsMedia &&
+        !mediaTeamId
+      ) {
+        return response.status(500).json({
+          error:
+            'Equipe de Mídias não configurada.',
+        })
+      }
+
+      if (
+        userType !== 'admin' &&
+        !primaryTeam &&
+        !wantsMedia
+      ) {
+        return response.status(400).json({
+          error:
+            'Escolha uma equipe principal ou habilite Mídias.',
+        })
+      }
+
+      const normalizedTeamIds = []
+
+      if (primaryTeam) {
+        normalizedTeamIds.push(
+          Number(primaryTeam.id)
+        )
+      }
+
+      if (wantsMedia) {
+        normalizedTeamIds.push(
+          Number(mediaTeamId)
+        )
+      }
 
       if (
         !name ||

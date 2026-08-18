@@ -209,24 +209,68 @@ function AdminManageActions({
           </label>
 
           <select
-            name="teamIds"
+            name="primaryTeamId"
             defaultValue={
-              item.team_ids?.[0] || ''
+              item.team_ids?.find(
+                (teamId) => {
+                  const team =
+                    teams.find(
+                      (candidate) =>
+                        Number(candidate.id) ===
+                        Number(teamId)
+                    )
+
+                  return (
+                    team &&
+                    team.code !== 'media'
+                  )
+                }
+              ) || ''
             }
           >
             <option value="">
-              Sem equipe definida
+              Somente Mídias / sem equipe principal
             </option>
 
-            {teams.map((team) => (
-              <option
-                key={team.id}
-                value={team.id}
-              >
-                {team.name}
-              </option>
-            ))}
+            {teams
+              .filter(
+                (team) =>
+                  team.code !== 'media'
+              )
+              .map((team) => (
+                <option
+                  key={team.id}
+                  value={team.id}
+                >
+                  {team.name}
+                </option>
+              ))}
           </select>
+
+          <label className="admin-checkbox-field">
+            <input
+              type="checkbox"
+              name="mediaSupport"
+              value="1"
+              defaultChecked={
+                Boolean(
+                  teams.find(
+                    (team) =>
+                      team.code === 'media' &&
+                      item.team_ids?.some(
+                        (teamId) =>
+                          Number(teamId) ===
+                          Number(team.id)
+                      )
+                  )
+                )
+              }
+            />
+
+            <span>
+              📸 Também ajuda em Mídias
+            </span>
+          </label>
         </>
       )
     }

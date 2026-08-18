@@ -937,3 +937,43 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   USER TEAM ACCESS
+   ========================================================= */
+
+.admin-checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 8px;
+  padding: 12px 14px;
+
+  border: 1px solid
+    rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+
+  cursor: pointer;
+}
+
+.admin-checkbox-field input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+
+  accent-color: var(--red);
+}
+
+.admin-checkbox-field span {
+  font-weight: 700;
+}
+
+.admin-form-help {
+  margin-top: 4px;
+
+  font-size: 0.78rem;
+  line-height: 1.45;
+
+  opacity: 0.68;
+}

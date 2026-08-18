@@ -373,7 +373,8 @@ export default async function handler(request, response) {
         projectId,
         email,
         userType,
-        teamIds,
+        primaryTeamId,
+        mediaSupport,
         password,
       } = data
 
@@ -527,15 +528,99 @@ export default async function handler(request, response) {
         `
       }
 
-      const normalizedTeamIds =
-        Array.isArray(teamIds)
-          ? teamIds
-              .map(Number)
-              .filter(Number.isInteger)
-          : teamIds
-            ? [Number(teamIds)]
-                .filter(Number.isInteger)
-            : []
+      // =================================================
+      // TEAM RULE
+      // =================================================
+      // Uma pessoa pode ter:
+      // - 1 equipe principal;
+      // - Mídias adicional;
+      // - somente Mídias.
+      //
+      // Nunca duas equipes principais.
+      // =================================================
+
+      const primaryTeamNumericId =
+        primaryTeamId
+          ? Number(primaryTeamId)
+          : null
+
+      const wantsMedia =
+        String(mediaSupport || '') === '1'
+
+      let primaryTeam = null
+
+      if (primaryTeamNumericId) {
+        const primaryTeams = await sql`
+          SELECT
+            id,
+            code,
+            name
+          FROM teams
+          WHERE id =
+            ${primaryTeamNumericId}
+            AND active = 1
+          LIMIT 1
+        `
+
+        primaryTeam =
+          primaryTeams[0]
+
+        if (
+          !primaryTeam ||
+          primaryTeam.code === 'media'
+        ) {
+          return response.status(400).json({
+            error:
+              'Equipe principal inválida.',
+          })
+        }
+      }
+
+      const mediaTeams = await sql`
+        SELECT id
+        FROM teams
+        WHERE code = 'media'
+          AND active = 1
+        LIMIT 1
+      `
+
+      const mediaTeamId =
+        mediaTeams[0]?.id
+
+      if (
+        wantsMedia &&
+        !mediaTeamId
+      ) {
+        return response.status(500).json({
+          error:
+            'Equipe de Mídias não configurada.',
+        })
+      }
+
+      if (
+        userType !== 'admin' &&
+        !primaryTeam &&
+        !wantsMedia
+      ) {
+        return response.status(400).json({
+          error:
+            'Escolha uma equipe principal ou habilite Mídias.',
+        })
+      }
+
+      const normalizedTeamIds = []
+
+      if (primaryTeam) {
+        normalizedTeamIds.push(
+          Number(primaryTeam.id)
+        )
+      }
+
+      if (wantsMedia) {
+        normalizedTeamIds.push(
+          Number(mediaTeamId)
+        )
+      }
 
       for (
         const teamId
