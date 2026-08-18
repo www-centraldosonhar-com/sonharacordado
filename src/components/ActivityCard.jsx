@@ -36,7 +36,7 @@ function ActivityCard({
 
     try {
       const response = await fetch(
-        '/api/confirm-activity',
+        '/api/volunteer?action=confirm-activity',
         {
           method: 'POST',
 

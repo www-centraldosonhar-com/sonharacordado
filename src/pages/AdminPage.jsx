@@ -15,7 +15,7 @@ function AdminPage({
   const [isLoading, setIsLoading] = useState(true)
 
   async function reloadAdmin() {
-    const response = await fetch('/api/admin-data')
+    const response = await fetch('/api/admin?action=data')
     const result = await response.json()
 
     if (!response.ok) {
@@ -31,7 +31,7 @@ function AdminPage({
   useEffect(() => {
     let active = true
 
-    fetch('/api/admin-data')
+    fetch('/api/admin?action=data')
       .then(async (response) => {
         const result = await response.json()
 

@@ -17,7 +17,7 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
 
   const loadHome = useCallback(async () => {
     try {
-      const response = await fetch('/api/home')
+      const response = await fetch('/api/volunteer?action=home')
       const result = await response.json()
 
       if (!response.ok) {
@@ -38,7 +38,7 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
   useEffect(() => {
     let isActive = true
 
-    fetch('/api/home')
+    fetch('/api/volunteer?action=home')
       .then(async (response) => {
         const result = await response.json()
 

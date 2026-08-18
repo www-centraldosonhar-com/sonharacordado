@@ -20,7 +20,7 @@ function AdminManageActions({
 
     try {
       const response = await fetch(
-        '/api/admin-update',
+        '/api/admin?action=update',
         {
           method: 'POST',
 

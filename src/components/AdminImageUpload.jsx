@@ -54,7 +54,7 @@ function AdminImageUpload({
     try {
       const base64 = await fileToBase64(file)
 
-      const response = await fetch('/api/admin-upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
 
         headers: {

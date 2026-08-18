@@ -1,0 +1,23 @@
+import adminDataHandler from '../server/actions/admin-data.js'
+import adminCreateHandler from '../server/actions/admin-create.js'
+import adminUpdateHandler from '../server/actions/admin-update.js'
+
+export default async function handler(request, response) {
+  const action = request.query?.action
+
+  if (action === 'data') {
+    return adminDataHandler(request, response)
+  }
+
+  if (action === 'create') {
+    return adminCreateHandler(request, response)
+  }
+
+  if (action === 'update') {
+    return adminUpdateHandler(request, response)
+  }
+
+  return response.status(404).json({
+    error: 'Ação administrativa não encontrada.',
+  })
+}

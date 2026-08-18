@@ -29,7 +29,7 @@ function LoginPage({ onLogin }) {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/auth?action=login', {
         method: 'POST',
 
         headers: {

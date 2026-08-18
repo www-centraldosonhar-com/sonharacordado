@@ -24,7 +24,7 @@ function CommitmentCard({
 
     try {
       const response = await fetch(
-        '/api/cancel-confirmation',
+        '/api/volunteer?action=cancel-confirmation',
         {
           method: 'POST',
 

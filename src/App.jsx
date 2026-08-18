@@ -18,7 +18,7 @@ function App() {
   useEffect(() => {
     let active = true
 
-    fetch('/api/session')
+    fetch('/api/auth?action=session')
       .then(async (response) => {
         if (!response.ok) {
           return null
@@ -54,7 +54,7 @@ function App() {
 
   async function handleLogout() {
     try {
-      await fetch('/api/logout', {
+      await fetch('/api/auth?action=logout', {
         method: 'POST',
       })
     } finally {

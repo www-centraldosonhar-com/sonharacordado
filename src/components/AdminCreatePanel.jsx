@@ -15,7 +15,7 @@ function AdminCreatePanel({
 
     try {
       const response = await fetch(
-        '/api/admin-create',
+        '/api/admin?action=create',
         {
           method: 'POST',
 

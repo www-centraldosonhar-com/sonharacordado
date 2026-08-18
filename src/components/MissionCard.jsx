@@ -27,7 +27,7 @@ function MissionCard({
 
     try {
       const response = await fetch(
-        '/api/join-task',
+        '/api/volunteer?action=join-task',
         {
           method: 'POST',
 
@@ -75,7 +75,7 @@ function MissionCard({
 
     try {
       const response = await fetch(
-        '/api/leave-task',
+        '/api/volunteer?action=leave-task',
         {
           method: 'POST',
           headers: {
@@ -111,7 +111,7 @@ function MissionCard({
 
     try {
       const response = await fetch(
-        '/api/submit-delivery',
+        '/api/volunteer?action=submit-delivery',
         {
           method: 'POST',
           headers: {
