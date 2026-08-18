@@ -321,7 +321,7 @@ function LoginPage({ onLogin }) {
 
               <p>
                 Escolha seu projeto com o coração.
-                Não existe resposta errada. ❤️
+                Não existe resposta errada. 🤍
               </p>
 
               <input

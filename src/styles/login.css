@@ -648,3 +648,69 @@
 .register-project-select-wrap select:required:invalid {
   padding-left: 16px !important;
 }
+
+/* =========================================================
+   FINAL PROJECT SELECT FIX
+   ========================================================= */
+
+/*
+ * LOGIN:
+ * o coração branco aparece SOMENTE quando nenhum projeto
+ * foi selecionado.
+ *
+ * Quando APS / PPF / SJ estiver selecionado, ele some,
+ * evitando ficar sobre o texto.
+ */
+
+.login-input-wrap-select::before {
+  display: none !important;
+}
+
+.select-heart-white {
+  display: none !important;
+}
+
+/* Coração branco apenas no estado vazio */
+.login-input-wrap-select:has(select:invalid)::before {
+  content: "♥";
+  display: block !important;
+
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  z-index: 3;
+
+  color: #ffffff;
+  font-size: 17px;
+  line-height: 1;
+
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.30);
+
+  pointer-events: none;
+}
+
+/* Espaço maior apenas quando está mostrando placeholder */
+.login-input-wrap-select:has(select:invalid) select {
+  padding-left: 44px !important;
+}
+
+/* Depois que APS / PPF / SJ for selecionado, volta ao normal */
+.login-input-wrap-select select:valid {
+  padding-left: 16px !important;
+}
+
+/*
+ * CADASTRO:
+ * garante que não exista coração solto no começo.
+ */
+.register-select-heart-white {
+  display: none !important;
+}
+
+.register-project-select-wrap select,
+.register-project-select-wrap select:required:invalid {
+  padding-left: 16px !important;
+}
