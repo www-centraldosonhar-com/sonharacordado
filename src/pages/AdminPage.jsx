@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import { formatDateTimeBr } from '../utils/formatters'
+import {
+  formatDateBr,
+  formatDateTimeBr,
+  formatTimeBr,
+} from '../utils/formatters'
 import AdminCreatePanel from '../components/AdminCreatePanel'
 import AdminManageActions from '../components/AdminManageActions'
 import AdminImageUpload from '../components/AdminImageUpload'
@@ -322,12 +326,16 @@ function AdminPage({
                 </h3>
 
                 <p>
-                  📅 {event.event_date}
+                  📅 {formatDateBr(
+                    event.event_date
+                  )}
                 </p>
 
                 <p>
                   🕐 {String(
-                    event.event_time
+                    formatTimeBr(
+                      event.event_time
+                    )
                   ).slice(0, 5)}
                 </p>
 

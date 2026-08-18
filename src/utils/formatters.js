@@ -1,22 +1,43 @@
+// =========================================================
+// DATE / TIME FORMATTERS
+// =========================================================
+// Formatação visual da Central.
+//
+// Exemplos:
+// 2026-08-18T00:00:00.000Z -> 18/08/2026
+// 2026-08-18              -> 18/08/2026
+// 15:00:00                -> 15:00
+// datetime                 -> 18/08/2026 às 15:00
+//
+// Para datas puras vindas do PostgreSQL, evitamos conversão
+// de timezone para não correr o risco de mudar o dia.
+// =========================================================
+
 export function formatDateBr(value) {
   if (!value) {
     return ''
   }
 
-  const date = new Date(`${value}T12:00:00`)
+  const raw =
+    String(value)
 
-  if (Number.isNaN(date.getTime())) {
-    return value
+  const match =
+    raw.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    )
+
+  if (!match) {
+    return raw
   }
 
-  return new Intl.DateTimeFormat(
-    'pt-BR',
-    {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    }
-  ).format(date)
+  const [
+    ,
+    year,
+    month,
+    day,
+  ] = match
+
+  return `${day}/${month}/${year}`
 }
 
 export function formatTimeBr(value) {
@@ -24,7 +45,25 @@ export function formatTimeBr(value) {
     return ''
   }
 
-  return String(value).slice(0, 5)
+  const raw =
+    String(value)
+
+  const match =
+    raw.match(
+      /(?:T|\s)?(\d{2}):(\d{2})/
+    )
+
+  if (!match) {
+    return raw
+  }
+
+  const [
+    ,
+    hour,
+    minute,
+  ] = match
+
+  return `${hour}:${minute}`
 }
 
 export function formatDateTimeBr(value) {
@@ -32,20 +71,41 @@ export function formatDateTimeBr(value) {
     return ''
   }
 
-  const date = new Date(value)
+  const raw =
+    String(value)
 
-  if (Number.isNaN(date.getTime())) {
-    return value
+  const dateMatch =
+    raw.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    )
+
+  const timeMatch =
+    raw.match(
+      /(?:T|\s)(\d{2}):(\d{2})/
+    )
+
+  if (
+    !dateMatch ||
+    !timeMatch
+  ) {
+    return raw
   }
 
-  return new Intl.DateTimeFormat(
-    'pt-BR',
-    {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-  ).format(date)
+  const [
+    ,
+    year,
+    month,
+    day,
+  ] = dateMatch
+
+  const [
+    ,
+    hour,
+    minute,
+  ] = timeMatch
+
+  return (
+    `${day}/${month}/${year}` +
+    ` às ${hour}:${minute}`
+  )
 }
