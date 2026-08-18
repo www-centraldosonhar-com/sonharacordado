@@ -3,21 +3,29 @@ import { useCallback, useEffect, useState } from 'react'
 import AppHeader from '../components/AppHeader'
 import EventCard from '../components/EventCard'
 import ActivityCard from '../components/ActivityCard'
+import CommitmentCard from '../components/CommitmentCard'
 import MissionCard from '../components/MissionCard'
 import AnnouncementCard from '../components/AnnouncementCard'
+import PastEventCard from '../components/PastEventCard'
 import VolunteerCard from '../components/VolunteerCard'
-import CommitmentCard from '../components/CommitmentCard'
 
 import '../styles/home.css'
 
-function HomePage({ user, onLogout, onOpenAdmin }) {
+function HomePage({
+  user,
+  onLogout,
+  onOpenAdmin,
+}) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
   const loadHome = useCallback(async () => {
     try {
-      const response = await fetch('/api/volunteer?action=home')
+      const response = await fetch(
+        '/api/volunteer?action=home'
+      )
+
       const result = await response.json()
 
       if (!response.ok) {
@@ -36,7 +44,7 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
   }, [])
 
   useEffect(() => {
-    let isActive = true
+    let active = true
 
     fetch('/api/volunteer?action=home')
       .then(async (response) => {
@@ -49,23 +57,23 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
           )
         }
 
-        if (isActive) {
+        if (active) {
           setData(result)
         }
       })
       .catch((loadError) => {
-        if (isActive) {
+        if (active) {
           setError(loadError.message)
         }
       })
       .finally(() => {
-        if (isActive) {
+        if (active) {
           setIsLoading(false)
         }
       })
 
     return () => {
-      isActive = false
+      active = false
     }
   }, [])
 
@@ -73,13 +81,9 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
     return (
       <main className="screen-center">
         <div className="loading-card">
-          <div className="brand-hearts">
-            <span className="heart-red">♥</span>
-            <span className="heart-orange">♥</span>
-            <span className="heart-blue">♥</span>
-          </div>
-
-          <p>Abrindo a Central... ✨</p>
+          <p>
+            Abrindo a Central... ✨
+          </p>
         </div>
       </main>
     )
@@ -108,6 +112,11 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
   const currentUser =
     data?.currentUser || user
 
+  const sameDay =
+    data.nextEvents.length === 2 &&
+    String(data.nextEvents[0].event_date).slice(0, 10) ===
+      String(data.nextEvents[1].event_date).slice(0, 10)
+
   return (
     <>
       <AppHeader
@@ -120,33 +129,14 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
         <aside className="home-sidebar">
           <div className="home-sidebar-card">
             <nav className="sidebar-nav">
-              <a href="#inicio">
-                🏠 Início
-              </a>
-
-              <a href="#evento">
-                📅 Próximo encontro
-              </a>
-
-              <a href="#atividades">
-                🙋 Atividades
-              </a>
-
-              <a href="#minhas-missoes">
-                🚀 Minhas missões
-              </a>
-
-              <a href="#missoes">
-                💡 Missões
-              </a>
-
-              <a href="#mural">
-                📢 Mural
-              </a>
-
-              <a href="#equipe">
-                🫶 Equipe
-              </a>
+              <a href="#inicio">🏠 Início</a>
+              <a href="#eventos">📅 Encontros</a>
+              <a href="#combinados">🤝 Combinados</a>
+              <a href="#minhas-missoes">🚀 Minhas missões</a>
+              <a href="#missoes">💡 Missões</a>
+              <a href="#mural">📢 Mural</a>
+              <a href="#memorias">📸 Memórias</a>
+              <a href="#equipe">🫶 Equipe</a>
             </nav>
           </div>
         </aside>
@@ -170,59 +160,70 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
 
           <section
             className="section-block"
-            id="evento"
+            id="eventos"
           >
             <div className="section-heading">
-              <div>
-                <p className="eyebrow">
-                  PRÓXIMO ENCONTRO
-                </p>
+              <p className="eyebrow">
+                PRÓXIMOS ENCONTROS
+              </p>
 
-                <h2>
-                  Tem coisa boa chegando ✨
-                </h2>
-              </div>
+              <h2>
+                Tem coisa boa chegando ✨
+              </h2>
             </div>
 
-            <EventCard
-              event={data.nextEvent}
-            />
-          </section>
-
-          <section
-            className="section-block"
-            id="atividades"
-          >
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow eyebrow-red">
-                  ATIVIDADES DO EVENTO
-                </p>
-
-                <h2>
-                  Escolha onde você quer somar ❤️
-                </h2>
+            {sameDay && (
+              <div className="same-day-banner">
+                ✨ Dois encontros acontecendo no mesmo dia!
               </div>
-            </div>
+            )}
 
-            {data.eventRoles.length > 0 ? (
-              <div className="cards-grid">
-                {data.eventRoles.map((activity) => (
-                  <ActivityCard
-                    key={activity.id}
-                    activity={activity}
-                    onUpdated={loadHome}
-                  />
+            {data.nextEvents.length > 0 ? (
+              <div className="upcoming-events-grid">
+                {data.nextEvents.map((event) => (
+                  <div
+                    className="upcoming-event-group"
+                    key={event.id}
+                  >
+                    <EventCard event={event} />
+
+                    <div className="event-activities-block">
+                      <div className="event-activities-heading">
+                        <span>🙋</span>
+
+                        <strong>
+                          Atividades deste encontro
+                        </strong>
+                      </div>
+
+                      {event.activities.length > 0 ? (
+                        <div className="cards-grid">
+                          {event.activities.map(
+                            (activity) => (
+                              <ActivityCard
+                                key={activity.id}
+                                activity={activity}
+                                onUpdated={loadHome}
+                              />
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <div className="empty-state">
+                          <p>
+                            Nenhuma atividade aberta
+                            para este encontro.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
               <div className="empty-state">
-                <span className="empty-icon">
-                  ✨
-                </span>
-
                 <p>
-                  Nenhuma atividade aberta agora.
+                  Nenhum encontro programado agora.
                 </p>
               </div>
             )}
@@ -233,15 +234,13 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
             id="combinados"
           >
             <div className="section-heading">
-              <div>
-                <p className="eyebrow eyebrow-red">
-                  MEUS COMBINADOS
-                </p>
+              <p className="eyebrow eyebrow-red">
+                MEUS COMBINADOS
+              </p>
 
-                <h2>
-                  Onde você já disse “conta comigo” 🤝
-                </h2>
-              </div>
+              <h2>
+                Onde você já disse “conta comigo” 🤝
+              </h2>
             </div>
 
             {data.myConfirmations.length > 0 ? (
@@ -258,10 +257,6 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
               </div>
             ) : (
               <div className="empty-state">
-                <span className="empty-icon">
-                  🌱
-                </span>
-
                 <p>
                   Você ainda não confirmou nenhuma atividade.
                 </p>
@@ -274,15 +269,13 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
             id="minhas-missoes"
           >
             <div className="section-heading">
-              <div>
-                <p className="eyebrow eyebrow-blue">
-                  MINHAS MISSÕES
-                </p>
+              <p className="eyebrow eyebrow-blue">
+                MINHAS MISSÕES
+              </p>
 
-                <h2>
-                  Tudo que você topou ajudar a tirar do papel 🚀
-                </h2>
-              </div>
+              <h2>
+                Tudo que você topou ajudar a tirar do papel 🚀
+              </h2>
             </div>
 
             {data.myTasks.length > 0 ? (
@@ -298,10 +291,6 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
               </div>
             ) : (
               <div className="empty-state">
-                <span className="empty-icon">
-                  🌱
-                </span>
-
                 <p>
                   Você ainda não pegou nenhuma missão.
                 </p>
@@ -314,15 +303,13 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
             id="missoes"
           >
             <div className="section-heading">
-              <div>
-                <p className="eyebrow eyebrow-blue">
-                  MISSÕES DISPONÍVEIS
-                </p>
+              <p className="eyebrow eyebrow-blue">
+                MISSÕES DISPONÍVEIS
+              </p>
 
-                <h2>
-                  Tem algo aqui que combina com você? ✨
-                </h2>
-              </div>
+              <h2>
+                Tem algo aqui que combina com você? ✨
+              </h2>
             </div>
 
             {data.tasks.length > 0 ? (
@@ -337,10 +324,6 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
               </div>
             ) : (
               <div className="empty-state">
-                <span className="empty-icon">
-                  🌈
-                </span>
-
                 <p>
                   Nenhuma missão disponível agora.
                 </p>
@@ -353,15 +336,13 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
             id="mural"
           >
             <div className="section-heading">
-              <div>
-                <p className="eyebrow eyebrow-orange">
-                  MURAL DO SONHAR
-                </p>
+              <p className="eyebrow eyebrow-orange">
+                MURAL DO SONHAR
+              </p>
 
-                <h2>
-                  Recados importantes para ninguém ficar de fora 📢
-                </h2>
-              </div>
+              <h2>
+                Recados importantes para ninguém ficar de fora 📢
+              </h2>
             </div>
 
             {data.announcements.length > 0 ? (
@@ -377,12 +358,45 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
               </div>
             ) : (
               <div className="empty-state">
+                <p>
+                  O mural está tranquilo por enquanto.
+                </p>
+              </div>
+            )}
+          </section>
+
+          <section
+            className="section-block"
+            id="memorias"
+          >
+            <div className="section-heading">
+              <p className="eyebrow eyebrow-orange">
+                MEMÓRIAS
+              </p>
+
+              <h2>
+                Reviva um pouquinho do que aconteceu por aqui 📸
+              </h2>
+            </div>
+
+            {data.pastEvents.length > 0 ? (
+              <div className="memories-grid">
+                {data.pastEvents.map((event) => (
+                  <PastEventCard
+                    key={event.id}
+                    event={event}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
                 <span className="empty-icon">
-                  💬
+                  📷
                 </span>
 
                 <p>
-                  O mural está tranquilo por enquanto.
+                  Assim que as fotos forem disponibilizadas,
+                  elas aparecem aqui.
                 </p>
               </div>
             )}
@@ -393,15 +407,13 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
             id="equipe"
           >
             <div className="section-heading">
-              <div>
-                <p className="eyebrow eyebrow-red">
-                  QUEM VAI ESTAR LÁ?
-                </p>
+              <p className="eyebrow eyebrow-red">
+                QUEM VAI ESTAR LÁ?
+              </p>
 
-                <h2>
-                  Gente que já disse “eu vou” 🫶
-                </h2>
-              </div>
+              <h2>
+                Gente que já disse “eu vou” 🫶
+              </h2>
             </div>
 
             {data.confirmations.length > 0 ? (
@@ -417,31 +429,22 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
               </div>
             ) : (
               <div className="empty-state">
-                <span className="empty-icon">
-                  🫶
-                </span>
-
-                <p>
-                  Ninguém confirmado ainda.
-                </p>
+                <p>Ninguém confirmado ainda.</p>
               </div>
             )}
           </section>
         </main>
       </div>
 
-      <nav
-        className="mobile-bottom-nav"
-        aria-label="Navegação principal"
-      >
+      <nav className="mobile-bottom-nav">
         <a href="#inicio">
           <span>🏠</span>
           <small>Início</small>
         </a>
 
-        <a href="#atividades">
-          <span>🙋</span>
-          <small>Atividades</small>
+        <a href="#eventos">
+          <span>📅</span>
+          <small>Eventos</small>
         </a>
 
         <a href="#missoes">
@@ -449,9 +452,9 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
           <small>Missões</small>
         </a>
 
-        <a href="#mural">
-          <span>📢</span>
-          <small>Mural</small>
+        <a href="#memorias">
+          <span>📸</span>
+          <small>Memórias</small>
         </a>
 
         <a href="#equipe">
@@ -459,18 +462,6 @@ function HomePage({ user, onLogout, onOpenAdmin }) {
           <small>Equipe</small>
         </a>
       </nav>
-
-      <footer className="app-footer">
-        <div className="brand-hearts footer-hearts">
-          <span className="heart-red">♥</span>
-          <span className="heart-orange">♥</span>
-          <span className="heart-blue">♥</span>
-        </div>
-
-        <p>
-          Feito para ajudar quem ajuda.
-        </p>
-      </footer>
     </>
   )
 }

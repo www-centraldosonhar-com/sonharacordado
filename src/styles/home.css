@@ -1307,3 +1307,162 @@ body {
     box-sizing: border-box;
   }
 }
+
+/* =========================================================
+   MULTIPLE UPCOMING EVENTS
+   ========================================================= */
+
+.upcoming-events-grid {
+  display: grid;
+  gap: 22px;
+}
+
+.upcoming-event-group {
+  display: grid;
+  gap: 12px;
+}
+
+.event-activities-block {
+  padding: 14px;
+
+  border: 1px solid var(--line);
+  border-radius: 18px;
+
+  background:
+    rgba(255, 255, 255, 0.65);
+}
+
+.event-activities-heading {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 12px;
+
+  color: var(--ink-soft);
+
+  font-size: 0.82rem;
+}
+
+.same-day-banner {
+  margin-bottom: 14px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #f4d8b7;
+  border-radius: 14px;
+
+  background: #fff7eb;
+  color: #9b611d;
+
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+/* =========================================================
+   EVENT MEMORIES
+   ========================================================= */
+
+.memories-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+.memory-card {
+  overflow: hidden;
+
+  border: 1px solid var(--line);
+  border-radius: 20px;
+
+  background: white;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.memory-card-image,
+.memory-card-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.memory-card-image {
+  display: block;
+
+  object-fit: cover;
+}
+
+.memory-card-placeholder {
+  display: grid;
+  place-items: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff0e7,
+      #eef7fd
+    );
+
+  font-size: 2rem;
+}
+
+.memory-card-content {
+  height: calc(100% - auto);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  padding: 16px;
+}
+
+.memory-card-content h3 {
+  margin: 2px 0 8px;
+}
+
+.memory-card-content p {
+  margin: 5px 0;
+
+  color: var(--ink-soft);
+
+  font-size: 0.84rem;
+}
+
+.memory-button {
+  width: 100%;
+  min-height: 44px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 9px 12px;
+
+  border: 1px solid rgba(49, 132, 198, 0.24);
+  border-radius: 13px;
+
+  background: var(--surface-blue);
+  color: var(--blue-dark);
+
+  text-decoration: none;
+
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+@media (max-width: 700px) {
+  .memories-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-activities-block {
+    padding: 12px;
+  }
+}

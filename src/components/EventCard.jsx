@@ -4,20 +4,6 @@ import {
 } from '../utils/formatters'
 
 function EventCard({ event }) {
-  if (!event) {
-    return (
-      <div className="empty-state">
-        <span className="empty-icon">
-          🌤️
-        </span>
-
-        <p>
-          Nenhum encontro programado por enquanto.
-        </p>
-      </div>
-    )
-  }
-
   return (
     <article className="event-card featured-card">
       <div className="event-accent" />
@@ -75,35 +61,20 @@ function EventCard({ event }) {
           <div className="meta-item full-row">
             <span>📍</span>
 
-            <span>
-              {event.location}
-            </span>
+            <span>{event.location}</span>
           </div>
         </div>
 
-        <div className="event-links">
-          {event.sympla_link && (
-            <a
-              className="text-link"
-              href={event.sympla_link}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Abrir informações do evento →
-            </a>
-          )}
-
-          {event.drive_link && (
-            <a
-              className="drive-link"
-              href={event.drive_link}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              📸 Ver fotos do evento
-            </a>
-          )}
-        </div>
+        {event.sympla_link && (
+          <a
+            className="text-link"
+            href={event.sympla_link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir informações do evento →
+          </a>
+        )}
       </div>
     </article>
   )

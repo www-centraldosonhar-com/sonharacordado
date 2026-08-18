@@ -1,47 +1,8 @@
 import process from 'node:process'
 import { neon } from '@neondatabase/serverless'
-import { jwtVerify } from 'jose'
+import { getSessionUser } from './_session.js'
 
 const sql = neon(process.env.DATABASE_URL)
-
-function getCookie(request, cookieName) {
-  const cookieHeader = request.headers.cookie || ''
-
-  const cookies = cookieHeader.split(';').map((cookie) => cookie.trim())
-
-  const targetCookie = cookies.find((cookie) =>
-    cookie.startsWith(`${cookieName}=`)
-  )
-
-  if (!targetCookie) {
-    return null
-  }
-
-  return targetCookie.substring(cookieName.length + 1)
-}
-
-async function getSessionUser(request) {
-  const token = getCookie(request, 'central_session')
-
-  if (!token) {
-    return null
-  }
-
-  const secret = new TextEncoder().encode(
-    process.env.AUTH_SECRET
-  )
-
-  try {
-    const { payload } = await jwtVerify(
-      token,
-      secret
-    )
-
-    return payload
-  } catch {
-    return null
-  }
-}
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') {
@@ -59,6 +20,9 @@ export default async function handler(request, response) {
   }
 
   try {
+    // =====================================================
+    // CURRENT USER
+    // =====================================================
     const users = await sql`
       SELECT
         users.id,
@@ -82,6 +46,9 @@ export default async function handler(request, response) {
       })
     }
 
+    // =====================================================
+    // ALL CONFIRMED VOLUNTEERS
+    // =====================================================
     const confirmations = await sql`
       SELECT
         users.name,
@@ -106,6 +73,9 @@ export default async function handler(request, response) {
         users.name
     `
 
+    // =====================================================
+    // CURRENT USER CONFIRMATIONS
+    // =====================================================
     const myConfirmations = await sql`
       SELECT
         confirmations.id,
@@ -130,7 +100,10 @@ export default async function handler(request, response) {
         roles.name
     `
 
-    const events = await sql`
+    // =====================================================
+    // NEXT TWO EVENTS
+    // =====================================================
+    const upcomingEvents = await sql`
       SELECT
         events.id,
         events.name,
@@ -138,7 +111,6 @@ export default async function handler(request, response) {
         events.event_time,
         events.location,
         events.sympla_link,
-        events.drive_link,
         events.event_image_path,
         events.confirmation_deadline,
         projects.name AS project
@@ -150,47 +122,79 @@ export default async function handler(request, response) {
       ORDER BY
         events.event_date ASC,
         events.event_time ASC
-      LIMIT 1
+      LIMIT 2
     `
 
-    const nextEvent = events[0] || null
+    // Load activities independently for each upcoming event.
+    const nextEvents = await Promise.all(
+      upcomingEvents.map(async (event) => {
+        const activities = await sql`
+          SELECT
+            event_roles.id,
+            roles.name,
+            event_roles.vacancy_limit,
+            event_roles.description,
+            COUNT(confirmations.id)::int AS confirmed_count,
+            CASE
+              WHEN events.confirmation_deadline >= CURRENT_TIMESTAMP
+              THEN 1
+              ELSE 0
+            END AS confirmation_open
+          FROM event_roles
+          JOIN roles
+            ON event_roles.role_id = roles.id
+          JOIN events
+            ON event_roles.event_id = events.id
+          LEFT JOIN confirmations
+            ON confirmations.event_role_id = event_roles.id
+            AND confirmations.status = 'confirmed'
+          WHERE event_roles.event_id = ${event.id}
+            AND event_roles.active = 1
+            AND events.active = 1
+          GROUP BY
+            event_roles.id,
+            roles.name,
+            event_roles.vacancy_limit,
+            event_roles.description,
+            events.confirmation_deadline
+          ORDER BY roles.name
+        `
 
-    let eventRoles = []
+        return {
+          ...event,
+          activities,
+        }
+      })
+    )
 
-    if (nextEvent) {
-      eventRoles = await sql`
-        SELECT
-          event_roles.id,
-          roles.name,
-          event_roles.vacancy_limit,
-          event_roles.description,
-          COUNT(confirmations.id)::int AS confirmed_count,
-          CASE
-            WHEN events.confirmation_deadline >= CURRENT_TIMESTAMP
-            THEN 1
-            ELSE 0
-          END AS confirmation_open
-        FROM event_roles
-        JOIN roles
-          ON event_roles.role_id = roles.id
-        JOIN events
-          ON event_roles.event_id = events.id
-        LEFT JOIN confirmations
-          ON confirmations.event_role_id = event_roles.id
-          AND confirmations.status = 'confirmed'
-        WHERE event_roles.event_id = ${nextEvent.id}
-          AND event_roles.active = 1
-          AND events.active = 1
-        GROUP BY
-          event_roles.id,
-          roles.name,
-          event_roles.vacancy_limit,
-          event_roles.description,
-          events.confirmation_deadline
-        ORDER BY roles.name
-      `
-    }
+    // =====================================================
+    // AFTER — PAST EVENTS WITH PHOTOS
+    // =====================================================
+    const pastEvents = await sql`
+      SELECT
+        events.id,
+        events.name,
+        events.event_date,
+        events.event_time,
+        events.location,
+        events.event_image_path,
+        events.drive_link,
+        projects.name AS project
+      FROM events
+      LEFT JOIN projects
+        ON events.project_id = projects.id
+      WHERE events.event_date < CURRENT_DATE
+        AND events.drive_link IS NOT NULL
+        AND TRIM(events.drive_link) <> ''
+      ORDER BY
+        events.event_date DESC,
+        events.event_time DESC
+      LIMIT 8
+    `
 
+    // =====================================================
+    // AVAILABLE TASKS
+    // =====================================================
     const tasks = await sql`
       SELECT
         tasks.id,
@@ -236,6 +240,9 @@ export default async function handler(request, response) {
         tasks.deadline ASC
     `
 
+    // =====================================================
+    // CURRENT USER TASKS
+    // =====================================================
     const myTasks = await sql`
       SELECT
         task_users.id AS participation_id,
@@ -256,6 +263,9 @@ export default async function handler(request, response) {
       ORDER BY tasks.deadline ASC
     `
 
+    // =====================================================
+    // ANNOUNCEMENTS
+    // =====================================================
     const announcements = await sql`
       SELECT
         announcements.id,
@@ -281,8 +291,8 @@ export default async function handler(request, response) {
       currentUser,
       confirmations,
       myConfirmations,
-      nextEvent,
-      eventRoles,
+      nextEvents,
+      pastEvents,
       tasks,
       myTasks,
       announcements,
