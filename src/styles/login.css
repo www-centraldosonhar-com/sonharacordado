@@ -470,3 +470,64 @@
 .create-account-hearts .heart-blue {
   color: #2787c8;
 }
+
+/* =========================================================
+   LOGIN HEARTS — FINAL POLISH
+   ========================================================= */
+
+/* Coração branco dentro dos botões existentes */
+.button-heart-white,
+.create-account-heart-white {
+  display: inline-block;
+  margin-left: 7px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+/* Select do login */
+.login-input-wrap-select {
+  position: relative;
+}
+
+.select-heart-white {
+  position: absolute;
+  z-index: 2;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.login-input-wrap-select select {
+  padding-left: 40px;
+}
+
+/* Select do autocadastro */
+.register-project-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.register-project-select-wrap select {
+  width: 100%;
+}
+
+.register-select-heart-white {
+  position: absolute;
+  z-index: 2;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* Reserva espaço apenas enquanto aparece o coração branco */
+.register-project-select-wrap select:required:invalid {
+  padding-left: 34px;
+}

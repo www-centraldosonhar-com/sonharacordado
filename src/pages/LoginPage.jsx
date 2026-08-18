@@ -207,6 +207,13 @@ function LoginPage({ onLogin }) {
               </label>
 
               <div className="login-input-wrap login-input-wrap-select">
+                <span
+                  className="select-heart-white"
+                  aria-hidden="true"
+                >
+                  ♥
+                </span>
+
                 <select
                   id="project"
                   name="project"
@@ -255,7 +262,17 @@ function LoginPage({ onLogin }) {
             >
               {isLoading
                 ? 'Entrando...'
-                : 'Entrar na Central ❤️'}
+                : (
+                  <>
+                    Entrar na Central
+                    <span
+                      className="button-heart-white"
+                      aria-hidden="true"
+                    >
+                      ♥
+                    </span>
+                  </>
+                )}
             </button>
           </form>
 
@@ -280,12 +297,10 @@ function LoginPage({ onLogin }) {
                 }
               >
                 <span
-                  className="create-account-hearts"
+                  className="create-account-heart-white"
                   aria-hidden="true"
                 >
-                  <span className="heart-red">♥</span>
-                  <span className="heart-orange">♥</span>
-                  <span className="heart-blue">♥</span>
+                  ♥
                 </span>
 
                 Criar minha conta
@@ -327,38 +342,49 @@ function LoginPage({ onLogin }) {
                 required
               />
 
-              <select
-                value={
-                  registerData.project
-                }
-                onChange={(event) =>
-                  setRegisterData(
-                    (current) => ({
-                      ...current,
-                      project:
-                        event.target
-                          .value,
-                    })
-                  )
-                }
-                required
-              >
+              <div className="register-project-select-wrap">
+                {!registerData.project && (
+                  <span
+                    className="register-select-heart-white"
+                    aria-hidden="true"
+                  >
+                    ♥
+                  </span>
+                )}
+
+                <select
+                  value={
+                    registerData.project
+                  }
+                  onChange={(event) =>
+                    setRegisterData(
+                      (current) => ({
+                        ...current,
+                        project:
+                          event.target
+                            .value,
+                      })
+                    )
+                  }
+                  required
+                >
                 <option value="">
                   Escolha com o coração ❤️
                 </option>
 
                 <option value="APS">
-                  APS — energia das crianças
+                  ❤️ APS — energia das crianças
                 </option>
 
                 <option value="PPF">
-                  PPF — acompanhar sonhos crescendo
+                  💙 PPF — acompanhar sonhos crescendo
                 </option>
 
                 <option value="SJ">
-                  SJ — inclusão, vínculo e alegria
+                  🧡 SJ — inclusão, vínculo e alegria
                 </option>
-              </select>
+                </select>
+              </div>
 
               <input
                 type="password"
