@@ -38,6 +38,9 @@ function AdminImageUpload({
     setIsLoading(true)
     setMessage('✨ Otimizando imagem...')
 
+    let currentStage =
+      'PROCESS'
+
     try {
       // ===================================================
       // 1. PROCESS LOCALLY
@@ -73,6 +76,9 @@ function AdminImageUpload({
         '🔐 Preparando envio seguro...'
       )
 
+      currentStage =
+        'PREPARE FETCH'
+
       const prepareResponse =
         await fetch(
           '/api/upload',
@@ -95,6 +101,9 @@ function AdminImageUpload({
               }),
           }
         )
+
+      currentStage =
+        'PREPARE JSON'
 
       const prepareResult =
         await prepareResponse.json()
@@ -125,6 +134,9 @@ function AdminImageUpload({
         '☁️ Enviando imagem...'
       )
 
+      currentStage =
+        'UPLOAD FORM DATA'
+
       const formData =
         new FormData()
 
@@ -137,6 +149,9 @@ function AdminImageUpload({
         '',
         processedFile
       )
+
+      currentStage =
+        'UPLOAD FETCH'
 
       const uploadResponse =
         await fetch(
@@ -184,6 +199,9 @@ function AdminImageUpload({
         '💾 Salvando imagem...'
       )
 
+      currentStage =
+        'COMPLETE FETCH'
+
       const completeResponse =
         await fetch(
           '/api/upload',
@@ -206,6 +224,9 @@ function AdminImageUpload({
               }),
           }
         )
+
+      currentStage =
+        'COMPLETE JSON'
 
       const completeResult =
         await completeResponse.json()
@@ -231,8 +252,10 @@ function AdminImageUpload({
       )
 
       setMessage(
-        error.message ||
-        'Não foi possível enviar esta imagem.'
+        `${currentStage}: ${
+          error.message ||
+          'Não foi possível enviar esta imagem.'
+        }`
       )
     } finally {
       setIsLoading(false)
