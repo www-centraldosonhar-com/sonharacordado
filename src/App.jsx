@@ -1,43 +1,55 @@
 import { useEffect, useState } from 'react'
+
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
+import AdminPage from './pages/AdminPage'
 
 function App() {
   const [user, setUser] = useState(null)
 
-  const [isCheckingSession, setIsCheckingSession] =
-    useState(true)
+  const [currentPage, setCurrentPage] =
+    useState('home')
+
+  const [
+    isCheckingSession,
+    setIsCheckingSession,
+  ] = useState(true)
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const response = await fetch(
-          '/api/session'
-        )
+    let active = true
 
+    fetch('/api/session')
+      .then(async (response) => {
         if (!response.ok) {
-          return
+          return null
         }
 
-        const data = await response.json()
-
+        return response.json()
+      })
+      .then((data) => {
         if (
-          data.authenticated &&
+          active &&
+          data?.authenticated &&
           data.user
         ) {
           setUser(data.user)
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error(
           'Session check error:',
           error
         )
-      } finally {
-        setIsCheckingSession(false)
-      }
-    }
+      })
+      .finally(() => {
+        if (active) {
+          setIsCheckingSession(false)
+        }
+      })
 
-    checkSession()
+    return () => {
+      active = false
+    }
   }, [])
 
   async function handleLogout() {
@@ -47,6 +59,18 @@ function App() {
       })
     } finally {
       setUser(null)
+      setCurrentPage('home')
+    }
+  }
+
+  function handleLogin(loggedUser) {
+    setUser(loggedUser)
+    setCurrentPage('home')
+  }
+
+  function handleOpenAdmin() {
+    if (user?.userType === 'admin') {
+      setCurrentPage('admin')
     }
   }
 
@@ -69,7 +93,22 @@ function App() {
   if (!user) {
     return (
       <LoginPage
-        onLogin={setUser}
+        onLogin={handleLogin}
+      />
+    )
+  }
+
+  if (
+    currentPage === 'admin' &&
+    user.userType === 'admin'
+  ) {
+    return (
+      <AdminPage
+        user={user}
+        onBack={() =>
+          setCurrentPage('home')
+        }
+        onLogout={handleLogout}
       />
     )
   }
@@ -78,6 +117,7 @@ function App() {
     <HomePage
       user={user}
       onLogout={handleLogout}
+      onOpenAdmin={handleOpenAdmin}
     />
   )
 }

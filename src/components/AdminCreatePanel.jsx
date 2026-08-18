@@ -1,0 +1,549 @@
+import { useState } from 'react'
+
+function AdminCreatePanel({
+  projects,
+  events,
+  roles,
+  onCreated,
+}) {
+  const [message, setMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function submit(action, data, form) {
+    setIsLoading(true)
+    setMessage('')
+
+    try {
+      const response = await fetch(
+        '/api/admin-create',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            action,
+            data,
+          }),
+        }
+      )
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível concluir.'
+        )
+      }
+
+      setMessage(result.message)
+      form.reset()
+
+      await onCreated()
+    } catch (error) {
+      setMessage(error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  function handleSubmit(action) {
+    return async (event) => {
+      event.preventDefault()
+
+      const form = event.currentTarget
+      const formData = new FormData(form)
+
+      const data =
+        Object.fromEntries(
+          formData.entries()
+        )
+
+      await submit(
+        action,
+        data,
+        form
+      )
+    }
+  }
+
+  return (
+    <section className="admin-section admin-create-hub">
+      <p className="admin-eyebrow">
+        CRIAR E ORGANIZAR
+      </p>
+
+      <h2>
+        ✨ Novos itens
+      </h2>
+
+      {message && (
+        <div className="admin-feedback">
+          {message}
+        </div>
+      )}
+
+      <div className="admin-create-grid">
+
+        <details>
+          <summary>
+            📢 Novo comunicado
+          </summary>
+
+          <form
+            onSubmit={handleSubmit(
+              'announcement'
+            )}
+          >
+            <label>Título</label>
+
+            <input
+              name="title"
+              required
+            />
+
+            <label>Mensagem</label>
+
+            <textarea
+              name="message"
+              required
+            />
+
+            <label>Prioridade</label>
+
+            <select
+              name="priority"
+              defaultValue="normal"
+            >
+              <option value="normal">
+                Normal
+              </option>
+
+              <option value="important">
+                Importante
+              </option>
+
+              <option value="urgent">
+                Urgente
+              </option>
+            </select>
+
+            <button
+              disabled={isLoading}
+              type="submit"
+            >
+              Publicar comunicado
+            </button>
+          </form>
+        </details>
+
+        <details>
+          <summary>
+            📅 Criar evento
+          </summary>
+
+          <form
+            onSubmit={handleSubmit('event')}
+          >
+            <label>
+              Nome
+            </label>
+
+            <input
+              name="name"
+              required
+            />
+
+            <label>
+              Projeto
+            </label>
+
+            <select
+              name="projectId"
+              defaultValue=""
+            >
+              <option value="">
+                Evento geral da ONG
+              </option>
+
+              {projects.map((project) => (
+                <option
+                  key={project.id}
+                  value={project.id}
+                >
+                  {project.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
+              Tipo
+            </label>
+
+            <select
+              name="eventType"
+              defaultValue="specific"
+            >
+              <option value="specific">
+                Específico
+              </option>
+
+              <option value="general">
+                Geral
+              </option>
+            </select>
+
+            <label>
+              Data
+            </label>
+
+            <input
+              type="date"
+              name="eventDate"
+              required
+            />
+
+            <label>
+              Horário
+            </label>
+
+            <input
+              type="time"
+              name="eventTime"
+              required
+            />
+
+            <label>
+              Local
+            </label>
+
+            <input
+              name="location"
+              required
+            />
+
+            <label>
+              Prazo de confirmação
+            </label>
+
+            <input
+              type="datetime-local"
+              name="confirmationDeadline"
+              required
+            />
+
+            <label>
+              Link do Sympla
+            </label>
+
+            <input
+              type="url"
+              name="symplaLink"
+            />
+
+            <button
+              disabled={isLoading}
+              type="submit"
+            >
+              Criar evento
+            </button>
+          </form>
+        </details>
+
+        <details>
+          <summary>
+            🙋 Abrir atividade
+          </summary>
+
+          <form
+            onSubmit={handleSubmit(
+              'activity'
+            )}
+          >
+            <label>
+              Evento
+            </label>
+
+            <select
+              name="eventId"
+              required
+              defaultValue=""
+            >
+              <option
+                value=""
+                disabled
+              >
+                Selecione
+              </option>
+
+              {events
+                .filter(
+                  (event) =>
+                    Number(event.active) === 1
+                )
+                .map((event) => (
+                  <option
+                    key={event.id}
+                    value={event.id}
+                  >
+                    {event.name}
+                  </option>
+                ))}
+            </select>
+
+            <label>
+              Atividade
+            </label>
+
+            <select
+              name="roleId"
+              required
+              defaultValue=""
+            >
+              <option
+                value=""
+                disabled
+              >
+                Selecione
+              </option>
+
+              {roles.map((role) => (
+                <option
+                  key={role.id}
+                  value={role.id}
+                >
+                  {role.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
+              Descrição
+            </label>
+
+            <textarea
+              name="description"
+            />
+
+            <label>
+              Quantidade de vagas
+            </label>
+
+            <input
+              type="number"
+              name="vacancyLimit"
+              min="1"
+              required
+            />
+
+            <button
+              disabled={isLoading}
+              type="submit"
+            >
+              Abrir atividade
+            </button>
+          </form>
+        </details>
+
+        <details>
+          <summary>
+            🚀 Criar missão
+          </summary>
+
+          <form
+            onSubmit={handleSubmit('task')}
+          >
+            <label>
+              Título
+            </label>
+
+            <input
+              name="title"
+              required
+            />
+
+            <label>
+              Descrição
+            </label>
+
+            <textarea
+              name="description"
+            />
+
+            <label>
+              Evento relacionado
+            </label>
+
+            <select
+              name="eventId"
+              defaultValue=""
+            >
+              <option value="">
+                Missão independente
+              </option>
+
+              {events
+                .filter(
+                  (event) =>
+                    Number(event.active) === 1
+                )
+                .map((event) => (
+                  <option
+                    key={event.id}
+                    value={event.id}
+                  >
+                    {event.name}
+                  </option>
+                ))}
+            </select>
+
+            <label>
+              Prazo
+            </label>
+
+            <input
+              type="datetime-local"
+              name="deadline"
+              required
+            />
+
+            <label>
+              Prioridade
+            </label>
+
+            <select
+              name="priority"
+              defaultValue="normal"
+            >
+              <option value="normal">
+                Normal
+              </option>
+
+              <option value="important">
+                Importante
+              </option>
+
+              <option value="urgent">
+                Urgente
+              </option>
+            </select>
+
+            <label>
+              Pessoas necessárias
+            </label>
+
+            <input
+              type="number"
+              name="volunteerLimit"
+              defaultValue="1"
+              min="1"
+              required
+            />
+
+            <button
+              disabled={isLoading}
+              type="submit"
+            >
+              Criar missão
+            </button>
+          </form>
+        </details>
+
+        <details>
+          <summary>
+            👤 Cadastrar pessoa
+          </summary>
+
+          <form
+            onSubmit={handleSubmit('user')}
+          >
+            <label>
+              Usuário
+            </label>
+
+            <input
+              name="name"
+              required
+            />
+
+            <label>
+              Projeto
+            </label>
+
+            <select
+              name="projectId"
+              required
+              defaultValue=""
+            >
+              <option
+                value=""
+                disabled
+              >
+                Selecione
+              </option>
+
+              {projects.map((project) => (
+                <option
+                  key={project.id}
+                  value={project.id}
+                >
+                  {project.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
+              E-mail
+            </label>
+
+            <input
+              type="email"
+              name="email"
+            />
+
+            <label>
+              Tipo
+            </label>
+
+            <select
+              name="userType"
+              defaultValue="volunteer"
+            >
+              <option value="volunteer">
+                Voluntário
+              </option>
+
+              <option value="admin">
+                Administrador
+              </option>
+            </select>
+
+            <label>
+              Senha
+            </label>
+
+            <input
+              type="password"
+              name="password"
+              minLength="4"
+              required
+            />
+
+            <button
+              disabled={isLoading}
+              type="submit"
+            >
+              Cadastrar pessoa
+            </button>
+          </form>
+        </details>
+
+      </div>
+    </section>
+  )
+}
+
+export default AdminCreatePanel

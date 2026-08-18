@@ -10,7 +10,7 @@ import CommitmentCard from '../components/CommitmentCard'
 
 import '../styles/home.css'
 
-function HomePage({ user, onLogout }) {
+function HomePage({ user, onLogout, onOpenAdmin }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -113,6 +113,7 @@ function HomePage({ user, onLogout }) {
       <AppHeader
         user={currentUser}
         onLogout={onLogout}
+        onOpenAdmin={onOpenAdmin}
       />
 
       <div className="home-layout">
