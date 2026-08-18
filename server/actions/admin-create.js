@@ -171,9 +171,15 @@ export default async function handler(request, response) {
         roleId,
         description,
         vacancyLimit,
+        requiresDelivery,
       } = data
 
       const limit = Number(vacancyLimit)
+
+      const deliveryRequired =
+        Number(requiresDelivery) === 1
+          ? 1
+          : 0
 
       if (
         !eventId ||
@@ -207,14 +213,16 @@ export default async function handler(request, response) {
           role_id,
           description,
           vacancy_limit,
-          active
+          active,
+          requires_delivery
         )
         VALUES (
           ${eventId},
           ${roleId},
           ${description?.trim() || null},
           ${limit},
-          1
+          1,
+          ${deliveryRequired}
         )
       `
 

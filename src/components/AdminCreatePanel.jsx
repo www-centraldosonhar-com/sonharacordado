@@ -349,6 +349,23 @@ function AdminCreatePanel({
               required
             />
 
+            <label>
+              Entrega após o evento
+            </label>
+
+            <select
+              name="requiresDelivery"
+              defaultValue="0"
+            >
+              <option value="0">
+                Não exige entrega
+              </option>
+
+              <option value="1">
+                Exige entrega
+              </option>
+            </select>
+
             <button
               disabled={isLoading}
               type="submit"

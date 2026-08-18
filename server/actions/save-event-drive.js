@@ -91,8 +91,7 @@ export default async function saveEventDriveHandler(
           ${eventId}
         AND confirmations.status =
           'confirmed'
-        AND LOWER(roles.name) =
-          'photography'
+        AND event_roles.requires_delivery = 1
       LIMIT 1
     `
 

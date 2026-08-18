@@ -15,6 +15,14 @@ function MissionCard({
   const [deliveryLink, setDeliveryLink] =
     useState(mission.delivery_link || '')
 
+  // Delivered missions start minimized so old work
+  // does not take over the volunteer's Home.
+  const [isCollapsed, setIsCollapsed] =
+    useState(Boolean(mission.submitted_at))
+
+  const isDelivered =
+    Boolean(mission.submitted_at)
+
   const priorityLabel = {
     urgent: 'Urgente',
     important: 'Importante',
@@ -135,6 +143,11 @@ function MissionCard({
       }
 
       setMessage(result.message)
+
+      // The delivery was saved successfully.
+      // Minimize the card immediately.
+      setIsCollapsed(true)
+
       await onUpdated()
     } catch (error) {
       setMessage(error.message)
@@ -149,7 +162,40 @@ function MissionCard({
       Number(mission.volunteer_limit || 0)
 
   return (
-    <article className="modern-card interactive-card">
+    <article
+      className={`modern-card interactive-card${
+        mine && isDelivered && isCollapsed
+          ? ' mission-card-collapsed'
+          : ''
+      }`}
+    >
+      {mine && isDelivered && isCollapsed ? (
+        <button
+          type="button"
+          className="mission-collapsed-button"
+          onClick={() => setIsCollapsed(false)}
+        >
+          <span className="mission-collapsed-check">
+            ✓
+          </span>
+
+          <span className="mission-collapsed-content">
+            <strong>{mission.title}</strong>
+
+            <small>
+              Entrega enviada
+            </small>
+          </span>
+
+          <span
+            className="mission-collapsed-arrow"
+            aria-hidden="true"
+          >
+            ▾
+          </span>
+        </button>
+      ) : (
+        <>
       <div className="card-topline">
         <span className="card-icon">
           {mine ? '📝' : '💡'}
@@ -190,9 +236,27 @@ function MissionCard({
 
       {mine && (
         <div className="delivery-box">
-          <p className="delivery-title">
-            📁 Minha entrega
-          </p>
+          <div className="delivery-heading-row">
+            <p className="delivery-title">
+              📁 Minha entrega
+            </p>
+
+            {isDelivered && (
+              <span className="mission-delivered-pill">
+                ✓ Enviada
+              </span>
+            )}
+          </div>
+
+          {isDelivered && (
+            <button
+              type="button"
+              className="mission-minimize-button"
+              onClick={() => setIsCollapsed(true)}
+            >
+              Minimizar ↑
+            </button>
+          )}
 
           <input
             className="delivery-input"
@@ -255,6 +319,8 @@ function MissionCard({
         <p className="action-message">
           {message}
         </p>
+      )}
+        </>
       )}
     </article>
   )

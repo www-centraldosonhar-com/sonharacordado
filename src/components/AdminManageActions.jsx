@@ -336,6 +336,31 @@ function AdminManageActions({
             }
             required
           />
+
+          <label>
+            Entrega após o evento
+          </label>
+
+          <select
+            name="requiresDelivery"
+            defaultValue={
+              String(
+                Number(
+                  item.requires_delivery
+                ) === 1
+                  ? 1
+                  : 0
+              )
+            }
+          >
+            <option value="0">
+              Não exige entrega
+            </option>
+
+            <option value="1">
+              Exige entrega
+            </option>
+          </select>
         </>
       )
     }

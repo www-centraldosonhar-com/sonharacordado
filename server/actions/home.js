@@ -80,6 +80,8 @@ export default async function handler(request, response) {
       SELECT
         confirmations.id,
         confirmations.photo_submitted_at,
+        confirmations.completed_at,
+        event_roles.requires_delivery,
         events.id AS event_id,
         events.event_date,
         roles.name AS role,
@@ -98,6 +100,7 @@ export default async function handler(request, response) {
         ON event_roles.event_id = events.id
       WHERE confirmations.user_id = ${currentUser.id}
         AND confirmations.status = 'confirmed'
+        AND confirmations.completed_at IS NULL
       ORDER BY
         events.event_date,
         roles.name
@@ -137,6 +140,7 @@ export default async function handler(request, response) {
             roles.name,
             event_roles.vacancy_limit,
             event_roles.description,
+            event_roles.requires_delivery,
             COUNT(confirmations.id)::int AS confirmed_count,
             CASE
               WHEN events.confirmation_deadline >= CURRENT_TIMESTAMP
@@ -159,6 +163,7 @@ export default async function handler(request, response) {
             roles.name,
             event_roles.vacancy_limit,
             event_roles.description,
+            event_roles.requires_delivery,
             events.confirmation_deadline
           ORDER BY roles.name
         `
@@ -251,6 +256,7 @@ export default async function handler(request, response) {
         task_users.id AS participation_id,
         task_users.delivery_link,
         task_users.submitted_at,
+        task_users.completed_at,
         tasks.id AS task_id,
         tasks.title,
         tasks.description,
@@ -262,6 +268,7 @@ export default async function handler(request, response) {
         ON task_users.task_id = tasks.id
       WHERE task_users.user_id = ${currentUser.id}
         AND task_users.status = 'active'
+        AND task_users.completed_at IS NULL
         AND tasks.active = 1
       ORDER BY tasks.deadline ASC
     `

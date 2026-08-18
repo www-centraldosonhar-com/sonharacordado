@@ -115,6 +115,7 @@ export default async function handler(request, response) {
         er.description,
         er.vacancy_limit,
         er.active,
+        er.requires_delivery,
         e.name AS event_name,
         e.event_date,
         r.name AS role_name,
@@ -134,6 +135,7 @@ export default async function handler(request, response) {
         er.description,
         er.vacancy_limit,
         er.active,
+        er.requires_delivery,
         e.name,
         e.event_date,
         r.name
@@ -174,6 +176,77 @@ export default async function handler(request, response) {
         e.name
       ORDER BY
         t.deadline DESC
+    `
+
+    // =====================================================
+    // ACTIVITY PARTICIPANTS
+    // =====================================================
+    // Lista individualmente os voluntários confirmados nas
+    // atividades dos eventos. O completed_at será usado pelo
+    // admin para controlar a conclusão de cada participação.
+    // =====================================================
+
+    const activityParticipants = await sql`
+      SELECT
+        c.id AS confirmation_id,
+        c.event_role_id,
+        c.user_id,
+        c.status,
+        c.completed_at,
+        c.photo_submitted_at,
+        er.requires_delivery,
+        u.name AS user_name,
+        p.name AS project_name,
+        r.name AS role_name,
+        e.name AS event_name
+      FROM confirmations c
+      JOIN users u
+        ON c.user_id = u.id
+      JOIN projects p
+        ON u.project_id = p.id
+      JOIN event_roles er
+        ON c.event_role_id = er.id
+      JOIN roles r
+        ON er.role_id = r.id
+      JOIN events e
+        ON er.event_id = e.id
+      WHERE c.status = 'confirmed'
+      ORDER BY
+        e.event_date DESC,
+        r.name,
+        u.name
+    `
+
+    // =====================================================
+    // MISSION PARTICIPANTS
+    // =====================================================
+    // Lista quem assumiu cada missão e permite que o Admin
+    // acompanhe entrega e conclusão individual.
+    // =====================================================
+
+    const taskParticipants = await sql`
+      SELECT
+        tu.id AS participation_id,
+        tu.task_id,
+        tu.user_id,
+        tu.status,
+        tu.delivery_link,
+        tu.submitted_at,
+        tu.completed_at,
+        u.name AS user_name,
+        p.name AS project_name,
+        t.title AS task_title
+      FROM task_users tu
+      JOIN users u
+        ON tu.user_id = u.id
+      JOIN projects p
+        ON u.project_id = p.id
+      JOIN tasks t
+        ON tu.task_id = t.id
+      WHERE tu.status = 'active'
+      ORDER BY
+        t.deadline DESC,
+        u.name
     `
 
     const announcements = await sql`
@@ -223,6 +296,8 @@ export default async function handler(request, response) {
       roles,
       eventRoles,
       tasks,
+      activityParticipants,
+      taskParticipants,
       announcements,
       confirmations,
     })

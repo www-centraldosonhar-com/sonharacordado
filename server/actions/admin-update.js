@@ -361,6 +361,11 @@ export default async function handler(
       const vacancyLimit =
         Number(data.vacancyLimit)
 
+      const requiresDelivery =
+        Number(data.requiresDelivery) === 1
+          ? 1
+          : 0
+
       if (
         !Number.isInteger(vacancyLimit) ||
         vacancyLimit < 1
@@ -394,7 +399,9 @@ export default async function handler(
           description =
             ${description || null},
           vacancy_limit =
-            ${vacancyLimit}
+            ${vacancyLimit},
+          requires_delivery =
+            ${requiresDelivery}
         WHERE id = ${recordId}
         RETURNING id
       `
@@ -408,6 +415,79 @@ export default async function handler(
       return response.status(200).json({
         success: true,
         message: 'Atividade atualizada! 🙋',
+      })
+    }
+
+    // =====================================================
+    // ACTIVITY PARTICIPANT WORKFLOW
+    // =====================================================
+    // Permite ao Admin marcar individualmente a participação
+    // de um voluntário em uma atividade como concluída.
+    // Se já estiver concluída, a ação desfaz a conclusão.
+    // =====================================================
+
+    if (action === 'toggle-activity-participant') {
+      const activityData = await sql`
+        SELECT
+          c.id,
+          c.photo_submitted_at,
+          er.requires_delivery
+        FROM confirmations c
+        JOIN event_roles er
+          ON c.event_role_id = er.id
+        WHERE c.id = ${recordId}
+          AND c.status = 'confirmed'
+        LIMIT 1
+      `
+
+      const activityParticipation =
+        activityData[0]
+
+      if (!activityParticipation) {
+        return response.status(404).json({
+          error:
+            'Participação na atividade não encontrada.',
+        })
+      }
+
+      if (
+        Number(
+          activityParticipation.requires_delivery
+        ) === 1 &&
+        !activityParticipation.photo_submitted_at
+      ) {
+        return response.status(400).json({
+          error:
+            'Essa atividade exige entrega antes da finalização.',
+        })
+      }
+
+      const confirmations = await sql`
+        UPDATE confirmations
+        SET completed_at =
+          CASE
+            WHEN completed_at IS NULL
+              THEN CURRENT_TIMESTAMP
+            ELSE NULL
+          END
+        WHERE id = ${recordId}
+          AND status = 'confirmed'
+        RETURNING id, completed_at
+      `
+
+      if (!confirmations[0]) {
+        return response.status(404).json({
+          error:
+            'Participação na atividade não encontrada.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message:
+          confirmations[0].completed_at
+            ? 'Participação concluída! ✅'
+            : 'Conclusão removida.',
       })
     }
 
@@ -520,6 +600,71 @@ export default async function handler(
       return response.status(200).json({
         success: true,
         message: 'Missão atualizada! 🚀',
+      })
+    }
+
+    // =====================================================
+    // MISSION PARTICIPANT WORKFLOW
+    // =====================================================
+    // Permite ao Admin finalizar individualmente a
+    // participação de um voluntário em uma missão.
+    // Isso não conclui a missão inteira.
+    // =====================================================
+
+    if (action === 'toggle-task-participant') {
+      const taskData = await sql`
+        SELECT
+          id,
+          submitted_at
+        FROM task_users
+        WHERE id = ${recordId}
+          AND status = 'active'
+        LIMIT 1
+      `
+
+      const taskParticipation =
+        taskData[0]
+
+      if (!taskParticipation) {
+        return response.status(404).json({
+          error:
+            'Participação na missão não encontrada.',
+        })
+      }
+
+      if (!taskParticipation.submitted_at) {
+        return response.status(400).json({
+          error:
+            'A missão ainda não possui uma entrega para aprovar.',
+        })
+      }
+
+      const participations = await sql`
+        UPDATE task_users
+        SET completed_at =
+          CASE
+            WHEN completed_at IS NULL
+              THEN CURRENT_TIMESTAMP
+            ELSE NULL
+          END
+        WHERE id = ${recordId}
+          AND status = 'active'
+        RETURNING id, completed_at
+      `
+
+      if (!participations[0]) {
+        return response.status(404).json({
+          error:
+            'Participação na missão não encontrada.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message:
+          participations[0].completed_at
+            ? 'Participação na missão concluída! ✅'
+            : 'Conclusão da missão removida.',
       })
     }
 

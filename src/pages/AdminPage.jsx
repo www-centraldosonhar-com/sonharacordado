@@ -3,6 +3,7 @@ import { formatDateTimeBr } from '../utils/formatters'
 import AdminCreatePanel from '../components/AdminCreatePanel'
 import AdminManageActions from '../components/AdminManageActions'
 import AdminImageUpload from '../components/AdminImageUpload'
+import AdminParticipantAction from '../components/AdminParticipantAction'
 import '../styles/admin.css'
 
 function AdminPage({
@@ -435,6 +436,51 @@ function AdminPage({
                     item={activity}
                     onUpdated={reloadAdmin}
                   />
+
+                  {data.activityParticipants
+                    ?.filter(
+                      (participant) =>
+                        Number(participant.event_role_id) ===
+                        Number(activity.id)
+                    )
+                    .length > 0 && (
+                    <div className="admin-participants">
+                      <h4>
+                        👥 Participantes
+                      </h4>
+
+                      {data.activityParticipants
+                        .filter(
+                          (participant) =>
+                            Number(participant.event_role_id) ===
+                            Number(activity.id)
+                        )
+                        .map((participant) => (
+                          <div
+                            className="admin-participant"
+                            key={
+                              participant.confirmation_id
+                            }
+                          >
+                            <div>
+                              <strong>
+                                {participant.user_name}
+                              </strong>
+
+                              <span>
+                                {participant.project_name}
+                              </span>
+                            </div>
+
+                            <AdminParticipantAction
+                              type="activity"
+                              participant={participant}
+                              onUpdated={reloadAdmin}
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </article>
               )
             })}
@@ -497,6 +543,63 @@ function AdminPage({
                   events={data.events}
                   onUpdated={reloadAdmin}
                 />
+
+                {data.taskParticipants
+                  ?.filter(
+                    (participant) =>
+                      Number(participant.task_id) ===
+                      Number(task.id)
+                  )
+                  .length > 0 && (
+                  <div className="admin-participants">
+                    <h4>
+                      👥 Participantes
+                    </h4>
+
+                    {data.taskParticipants
+                      .filter(
+                        (participant) =>
+                          Number(participant.task_id) ===
+                          Number(task.id)
+                      )
+                      .map((participant) => (
+                        <div
+                          className="admin-participant"
+                          key={
+                            participant.participation_id
+                          }
+                        >
+                          <div>
+                            <strong>
+                              {participant.user_name}
+                            </strong>
+
+                            <span>
+                              {participant.project_name}
+                            </span>
+
+                            {participant.delivery_link && (
+                              <a
+                                href={
+                                  participant.delivery_link
+                                }
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                🔗 Ver entrega
+                              </a>
+                            )}
+                          </div>
+
+                          <AdminParticipantAction
+                            type="task"
+                            participant={participant}
+                            onUpdated={reloadAdmin}
+                          />
+                        </div>
+                      ))}
+                  </div>
+                )}
               </article>
             ))}
           </div>

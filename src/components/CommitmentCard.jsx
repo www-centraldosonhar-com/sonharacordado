@@ -11,6 +11,30 @@ function CommitmentCard({
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+  // =====================================================
+  // PAST EVENT / COLLAPSED STATE
+  // =====================================================
+  // Combinados de eventos que já aconteceram começam
+  // minimizados, mas continuam disponíveis para consulta.
+  // =====================================================
+
+  const eventAlreadyHappened =
+    confirmation.event_date &&
+    new Date(
+      `${confirmation.event_date}T23:59:59`
+    ) < new Date()
+
+  const waitingForApproval =
+    Number(
+      confirmation.requires_delivery
+    ) === 1 &&
+    Boolean(
+      confirmation.photo_submitted_at
+    )
+
+  const [isCollapsed, setIsCollapsed] =
+    useState(waitingForApproval)
+
   async function handleCancel() {
     if (!reason.trim()) {
       setMessage(
@@ -29,7 +53,8 @@ function CommitmentCard({
           method: 'POST',
 
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type':
+              'application/json',
           },
 
           body: JSON.stringify({
@@ -56,13 +81,53 @@ function CommitmentCard({
     }
   }
 
+  // =====================================================
+  // COLLAPSED PAST COMMITMENT
+  // =====================================================
+
+  if (isCollapsed) {
+    return (
+      <button
+        type="button"
+        className="commitment-collapsed-button"
+        onClick={() => setIsCollapsed(false)}
+      >
+        <span className="commitment-collapsed-check">
+          ✓
+        </span>
+
+        <span className="commitment-collapsed-content">
+          <strong>
+            {confirmation.role}
+          </strong>
+
+          <small>
+            {confirmation.event_name}
+          </small>
+        </span>
+
+        <span className="commitment-collapsed-label">
+          Aguardando aprovação
+        </span>
+
+        <span className="commitment-collapsed-arrow">
+          ↓
+        </span>
+      </button>
+    )
+  }
+
   return (
     <article className="modern-card commitment-card">
       <div className="card-topline">
-        <span className="card-icon">🤝</span>
+        <span className="card-icon">
+          🤝
+        </span>
 
         <span className="status-pill status-complete">
-          Confirmado
+          {eventAlreadyHappened
+            ? 'Concluído'
+            : 'Confirmado'}
         </span>
       </div>
 
@@ -72,13 +137,29 @@ function CommitmentCard({
         {confirmation.event_name}
       </p>
 
-      {confirmation.cancellation_open ? (
+      {eventAlreadyHappened ? (
+        <>
+          <p className="card-message">
+            ✨ Esse combinado já foi realizado.
+          </p>
+
+          <button
+            type="button"
+            className="commitment-minimize-button"
+            onClick={() => setIsCollapsed(true)}
+          >
+            ↑ Minimizar combinado
+          </button>
+        </>
+      ) : confirmation.cancellation_open ? (
         <>
           {!isCancelling ? (
             <button
               type="button"
               className="danger-outline-button"
-              onClick={() => setIsCancelling(true)}
+              onClick={() =>
+                setIsCancelling(true)
+              }
             >
               Preciso desistir
             </button>

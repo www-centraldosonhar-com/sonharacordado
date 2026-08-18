@@ -232,13 +232,12 @@ function HomePage({
 
           {data.myConfirmations
             .filter((confirmation) => {
-              const role =
-                confirmation.role
-                  ?.toLowerCase() || ''
-
-              const isPhotography =
-                role.includes('photo') ||
-                role.includes('foto')
+              // A entrega não depende mais do nome da função.
+              // O Admin define essa regra ao criar a atividade.
+              const requiresDelivery =
+                Number(
+                  confirmation.requires_delivery
+                ) === 1
 
               const eventDate =
                 String(
@@ -252,7 +251,7 @@ function HomePage({
                 ) < new Date()
 
               return (
-                isPhotography &&
+                requiresDelivery &&
                 eventAlreadyHappened
               )
             })

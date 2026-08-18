@@ -48,7 +48,8 @@ export default async function handler(request, response) {
       SELECT
         c.id,
         c.photo_submitted_at,
-        r.name AS role_name
+        r.name AS role_name,
+        er.requires_delivery
       FROM confirmations c
       INNER JOIN event_roles er
         ON c.event_role_id = er.id
@@ -71,13 +72,13 @@ export default async function handler(request, response) {
     }
 
     if (
-      confirmation.role_name
-        ?.trim()
-        .toLowerCase() !== 'photography'
+      Number(
+        confirmation.requires_delivery
+      ) !== 1
     ) {
       return response.status(403).json({
         error:
-          'Esta confirmação não é de fotografia.',
+          'Esta atividade não possui entrega pós-evento.',
       })
     }
 
