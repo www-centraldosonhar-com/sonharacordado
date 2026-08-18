@@ -43,11 +43,23 @@ function AdminImageUpload({
       // 1. PROCESS LOCALLY
       // ===================================================
 
-      const processedFile =
-        await processAdminImage(
-          originalFile,
-          target
+      let processedFile
+
+      try {
+        processedFile =
+          await processAdminImage(
+            originalFile,
+            target
+          )
+      } catch (error) {
+        throw new Error(
+          `PROCESS: ${
+            error.message ||
+            'Falha ao processar a imagem.'
+          }`,
+          { cause: error }
         )
+      }
 
       setMessage(
         `✨ ${formatMb(originalFile.size)} MB → ${formatMb(processedFile.size)} MB`
