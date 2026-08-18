@@ -87,6 +87,7 @@ export default async function handler(request, response) {
         e.location,
         e.confirmation_deadline,
         e.sympla_link,
+        e.drive_link,
         e.event_image_path,
         e.active,
         p.name AS project

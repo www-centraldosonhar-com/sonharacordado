@@ -272,6 +272,9 @@ export default async function handler(
       const symplaLink =
         cleanText(data.symplaLink)
 
+      const driveLink =
+        cleanText(data.driveLink)
+
       if (
         !name ||
         !eventDate ||
@@ -302,7 +305,8 @@ export default async function handler(
           location = ${location},
           confirmation_deadline =
             ${confirmationDeadline},
-          sympla_link = ${symplaLink || null}
+          sympla_link = ${symplaLink || null},
+          drive_link = ${driveLink || null}
         WHERE id = ${recordId}
         RETURNING id
       `

@@ -298,6 +298,17 @@ function AdminManageActions({
               item.sympla_link || ''
             }
           />
+
+          <label>Fotos no Google Drive</label>
+
+          <input
+            type="url"
+            name="driveLink"
+            defaultValue={
+              item.drive_link || ''
+            }
+            placeholder="https://drive.google.com/..."
+          />
         </>
       )
     }

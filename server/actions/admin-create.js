@@ -108,6 +108,7 @@ export default async function handler(request, response) {
         location,
         confirmationDeadline,
         symplaLink,
+        driveLink,
       } = data
 
       if (
@@ -141,6 +142,7 @@ export default async function handler(request, response) {
           location,
           confirmation_deadline,
           sympla_link,
+          drive_link,
           active
         )
         VALUES (
@@ -152,6 +154,7 @@ export default async function handler(request, response) {
           ${location.trim()},
           ${confirmationDeadline},
           ${symplaLink?.trim() || null},
+          ${driveLink?.trim() || null},
           1
         )
       `

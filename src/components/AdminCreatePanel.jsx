@@ -244,6 +244,16 @@ function AdminCreatePanel({
               name="symplaLink"
             />
 
+            <label>
+              Link das fotos no Google Drive
+            </label>
+
+            <input
+              type="url"
+              name="driveLink"
+              placeholder="https://drive.google.com/..."
+            />
+
             <button
               disabled={isLoading}
               type="submit"

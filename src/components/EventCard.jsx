@@ -81,16 +81,29 @@ function EventCard({ event }) {
           </div>
         </div>
 
-        {event.sympla_link && (
-          <a
-            className="text-link"
-            href={event.sympla_link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Abrir informações do evento →
-          </a>
-        )}
+        <div className="event-links">
+          {event.sympla_link && (
+            <a
+              className="text-link"
+              href={event.sympla_link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Abrir informações do evento →
+            </a>
+          )}
+
+          {event.drive_link && (
+            <a
+              className="drive-link"
+              href={event.drive_link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📸 Ver fotos do evento
+            </a>
+          )}
+        </div>
       </div>
     </article>
   )
