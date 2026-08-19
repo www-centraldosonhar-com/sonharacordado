@@ -252,10 +252,30 @@ function AdminRegistrationsPanel({
   async function openReceipt(
     registration
   ) {
-    setIsLoading(true)
     setMessage('')
 
+    // Abre a nova aba imediatamente a partir do clique.
+    // Isso evita bloqueio de popup em navegadores mobile.
+    const receiptWindow =
+      window.open(
+        'about:blank',
+        '_blank'
+      )
+
+    if (!receiptWindow) {
+      setMessage(
+        'O navegador bloqueou a nova aba. Permita pop-ups para abrir o comprovante.'
+      )
+      return
+    }
+
     try {
+      receiptWindow.document.title =
+        'Abrindo comprovante...'
+
+      receiptWindow.document.body.innerHTML =
+        '<p style="font-family: sans-serif; padding: 20px;">Abrindo comprovante...</p>'
+
       const response =
         await fetch(
           '/api/admin?action=registrations',
@@ -294,15 +314,19 @@ function AdminRegistrationsPanel({
         )
       }
 
-      window.location.assign(
+      receiptWindow.location.href =
         result.url
-      )
     } catch (error) {
-      setMessage(
-        error.message
-      )
+      try {
+        receiptWindow.close()
+      } catch {
+        // Nada a fazer.
+      }
 
-      setIsLoading(false)
+      setMessage(
+        error.message ||
+        'Não foi possível abrir o comprovante.'
+      )
     }
   }
 
