@@ -602,3 +602,121 @@ export async function adminCanUseContentScope(
     )
   )
 }
+
+
+// =========================================================
+// EVENT REGISTRATION MANAGEMENT
+// =========================================================
+// Quem administra inscrições:
+//
+// Admin Geral:
+// - todos os projetos.
+//
+// Admin de Projeto:
+// - próprio projeto.
+//
+// Admin da Equipe de Voluntários:
+// - próprio projeto.
+//
+// Outros Admins de Equipe:
+// - não administram inscrições.
+// =========================================================
+
+export function isVolunteerTeamAdmin(
+  admin
+) {
+  return (
+    isTeamAdmin(admin) &&
+    (
+      admin?.teams || []
+    ).some(
+      (team) =>
+        team.code ===
+        'volunteers'
+    )
+  )
+}
+
+export async function adminCanManageRegistration(
+  admin,
+  registrationId
+) {
+  const numericId =
+    Number(registrationId)
+
+  if (
+    !admin ||
+    !Number.isInteger(
+      numericId
+    )
+  ) {
+    return false
+  }
+
+  const rows = await sql`
+    SELECT
+      er.id,
+      e.project_id
+    FROM event_registrations er
+
+    JOIN events e
+      ON e.id =
+        er.event_id
+
+    WHERE er.id =
+      ${numericId}
+
+    LIMIT 1
+  `
+
+  const registration =
+    rows[0]
+
+  if (!registration) {
+    return false
+  }
+
+  // Admin Geral.
+  if (isGlobalAdmin(admin)) {
+    return true
+  }
+
+  // Eventos gerais ficam com
+  // Administração Geral.
+  if (
+    registration.project_id ===
+    null
+  ) {
+    return false
+  }
+
+  // Admin de Projeto.
+  if (
+    isProjectAdmin(admin)
+  ) {
+    return (
+      Number(
+        registration.project_id
+      ) ===
+      Number(
+        admin.projectId
+      )
+    )
+  }
+
+  // Admin da Equipe de Voluntários.
+  if (
+    isVolunteerTeamAdmin(admin)
+  ) {
+    return (
+      Number(
+        registration.project_id
+      ) ===
+      Number(
+        admin.projectId
+      )
+    )
+  }
+
+  return false
+}

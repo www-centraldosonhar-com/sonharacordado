@@ -149,9 +149,12 @@ function AdminPage({
           📅 Eventos
         </a>
 
-        <a href="#inscricoes">
-          🎟️ Inscrições
-        </a>
+        {data.adminAccess
+          ?.canManageRegistrations && (
+          <a href="#inscricoes">
+            🎟️ Inscrições
+          </a>
+        )}
 
         <a href="#atividades">
           🙋 Atividades
@@ -411,15 +414,23 @@ function AdminPage({
           </div>
         </section>
 
-        <AdminRegistrationsPanel
-          registrations={
-            data.registrations || []
-          }
-          coupons={
-            data.registrationCoupons || []
-          }
-          onUpdated={reloadAdmin}
-        />
+        {data.adminAccess
+          ?.canManageRegistrations && (
+          <AdminRegistrationsPanel
+            registrations={
+              data.registrations || []
+            }
+            coupons={
+              data.registrationCoupons || []
+            }
+            canManageCoupons={
+              data.adminAccess
+                ?.canManageCoupons ||
+              false
+            }
+            onUpdated={reloadAdmin}
+          />
+        )}
 
         <section
           id="atividades"

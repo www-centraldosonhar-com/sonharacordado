@@ -1,10 +1,21 @@
-import { useState } from 'react'
-import { formatDateTimeBr } from '../utils/formatters'
-import { getTeamLabel } from '../constants/registrationTeams'
+import {
+  useMemo,
+  useState,
+} from 'react'
+
+import {
+  formatDateBr,
+  formatDateTimeBr,
+} from '../utils/formatters'
+
+import {
+  getTeamLabel,
+} from '../constants/registrationTeams'
 
 function AdminRegistrationsPanel({
   registrations = [],
   coupons = [],
+  canManageCoupons = false,
   onUpdated,
 }) {
   const [message, setMessage] =
@@ -12,6 +23,58 @@ function AdminRegistrationsPanel({
 
   const [isLoading, setIsLoading] =
     useState(false)
+
+
+  // =====================================================
+  // GROUP BY EVENT
+  // =====================================================
+
+  const eventGroups =
+    useMemo(() => {
+      const groups =
+        new Map()
+
+      for (
+        const registration
+        of registrations
+      ) {
+        const key =
+          Number(
+            registration.event_id
+          )
+
+        if (!groups.has(key)) {
+          groups.set(
+            key,
+            {
+              eventId:
+                registration.event_id,
+
+              eventName:
+                registration.event_name,
+
+              eventDate:
+                registration.event_date,
+
+              projectName:
+                registration.project_name,
+
+              registrations: [],
+            }
+          )
+        }
+
+        groups
+          .get(key)
+          .registrations
+          .push(registration)
+      }
+
+      return Array.from(
+        groups.values()
+      )
+    }, [registrations])
+
 
   async function action(
     operation,
@@ -64,6 +127,7 @@ function AdminRegistrationsPanel({
     }
   }
 
+
   async function openReceipt(
     registration
   ) {
@@ -85,12 +149,13 @@ function AdminRegistrationsPanel({
     }
   }
 
+
   async function approve(
     registration
   ) {
     if (
       !window.confirm(
-        `Confirmar inscrição de ${registration.user_name}?`
+        `Confirmar inscrição de ${registration.user_name} em ${registration.event_name}?`
       )
     ) {
       return
@@ -105,12 +170,13 @@ function AdminRegistrationsPanel({
     )
   }
 
+
   async function reject(
     registration
   ) {
     const reason =
       window.prompt(
-        'Motivo da rejeição/correção:'
+        `Motivo da rejeição/correção para ${registration.user_name}:`
       )
 
     if (!reason?.trim()) {
@@ -122,10 +188,12 @@ function AdminRegistrationsPanel({
       {
         registrationId:
           registration.id,
+
         reason,
       }
     )
   }
+
 
   const confirmedCount =
     registrations.filter(
@@ -142,6 +210,7 @@ function AdminRegistrationsPanel({
         item.status ===
           'pending_coupon_review'
     ).length
+
 
   return (
     <section
@@ -161,6 +230,7 @@ function AdminRegistrationsPanel({
           <strong>
             {confirmedCount}
           </strong>
+
           <span>
             confirmados
           </span>
@@ -170,11 +240,23 @@ function AdminRegistrationsPanel({
           <strong>
             {pendingCount}
           </strong>
+
           <span>
             aguardando análise
           </span>
         </article>
+
+        <article>
+          <strong>
+            {eventGroups.length}
+          </strong>
+
+          <span>
+            eventos
+          </span>
+        </article>
       </div>
+
 
       {message && (
         <p className="admin-action-message">
@@ -182,162 +264,264 @@ function AdminRegistrationsPanel({
         </p>
       )}
 
-      <div className="registration-admin-table">
-        {registrations.length === 0 ? (
+
+      {eventGroups.length === 0 ? (
+        <div className="empty-state">
           <p>
-            Nenhuma inscrição ainda.
+            Nenhuma inscrição disponível.
           </p>
-        ) : (
-          registrations.map(
-            (registration) => (
-              <article
-                key={registration.id}
-                className="registration-admin-row"
-              >
-                <div>
+        </div>
+      ) : (
+        <div className="admin-registration-events">
+          {eventGroups.map(
+            (group) => {
+              const eventConfirmed =
+                group.registrations.filter(
+                  (item) =>
+                    item.status ===
+                    'confirmed'
+                ).length
+
+              const eventPending =
+                group.registrations.filter(
+                  (item) =>
+                    item.status ===
+                      'pending_payment_review' ||
+                    item.status ===
+                      'pending_coupon_review'
+                ).length
+
+              return (
+                <section
+                  key={group.eventId}
+                  className="admin-registration-event"
+                >
+                  <header className="admin-registration-event-header">
+                    <div>
+                      <p className="admin-eyebrow">
+                        EVENTO
+                      </p>
+
+                      <h3>
+                        {group.eventName}
+                      </h3>
+
+                      <p>
+                        {group.projectName}
+                        {' · '}
+                        {formatDateBr(
+                          group.eventDate
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="admin-registration-event-counts">
+                      <span>
+                        ⏳ {eventPending}
+                      </span>
+
+                      <span>
+                        ✅ {eventConfirmed}
+                      </span>
+                    </div>
+                  </header>
+
+
+                  <div className="registration-admin-table">
+                    {group.registrations.map(
+                      (registration) => (
+                        <article
+                          key={
+                            registration.id
+                          }
+                          className="registration-admin-row"
+                        >
+                          <div>
+                            <strong>
+                              {
+                                registration.user_name
+                              }
+                            </strong>
+
+                            <span>
+                              {
+                                registration.project_name
+                              }
+                            </span>
+                          </div>
+
+
+                          <div>
+                            <span>
+                              {getTeamLabel(
+                                registration.team
+                              )}
+                            </span>
+
+                            <small>
+                              {
+                                registration.activity_name
+                                  ? `🙋 ${registration.activity_name}`
+                                  : 'Sem atividade específica'
+                              }
+                            </small>
+                          </div>
+
+
+                          <div>
+                            <span>
+                              {
+                                registration.email
+                              }
+                            </span>
+
+                            <small>
+                              Inscrito em{' '}
+                              {formatDateTimeBr(
+                                registration.created_at
+                              )}
+                            </small>
+                          </div>
+
+
+                          <div>
+                            <strong>
+                              {
+                                registration.status
+                              }
+                            </strong>
+
+                            {registration.rejection_reason && (
+                              <small>
+                                ❌ {
+                                  registration.rejection_reason
+                                }
+                              </small>
+                            )}
+                          </div>
+
+
+                          <div className="registration-admin-actions">
+                            {registration.payment_receipt_path && (
+                              <button
+                                type="button"
+                                disabled={
+                                  isLoading
+                                }
+                                onClick={() =>
+                                  openReceipt(
+                                    registration
+                                  )
+                                }
+                              >
+                                📎 Comprovante
+                              </button>
+                            )}
+
+
+                            {registration.coupon_code && (
+                              <span className="admin-tag">
+                                🎟️ {
+                                  registration.coupon_code
+                                }
+                              </span>
+                            )}
+
+
+                            {registration.status !==
+                              'confirmed' &&
+                              registration.status !==
+                              'cancelled' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      isLoading
+                                    }
+                                    onClick={() =>
+                                      approve(
+                                        registration
+                                      )
+                                    }
+                                  >
+                                    ✅ Aprovar
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      isLoading
+                                    }
+                                    onClick={() =>
+                                      reject(
+                                        registration
+                                      )
+                                    }
+                                  >
+                                    ❌ Rejeitar
+                                  </button>
+                                </>
+                              )}
+                          </div>
+                        </article>
+                      )
+                    )}
+                  </div>
+                </section>
+              )
+            }
+          )}
+        </div>
+      )}
+
+
+      {canManageCoupons &&
+        coupons.length > 0 && (
+          <div className="admin-coupons-box">
+            <h3>
+              🎫 Cupons de gratuidade
+            </h3>
+
+            {coupons.map(
+              (coupon) => (
+                <div
+                  key={coupon.id}
+                  className="admin-coupon-row"
+                >
                   <strong>
-                    {registration.user_name}
+                    {coupon.code}
                   </strong>
 
                   <span>
-                    {registration.project_name}
-                  </span>
-                </div>
-
-                <div>
-                  <span>
-                    {registration.event_name}
+                    {coupon.used_count}
+                    {' / '}
+                    {coupon.usage_limit}
                   </span>
 
-                  <small>
-                    {getTeamLabel(
-                      registration.team
-                    )}
-                  </small>
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() =>
+                      action(
+                        'toggle-coupon',
+                        {
+                          couponId:
+                            coupon.id,
+                        }
+                      )
+                    }
+                  >
+                    {Number(
+                      coupon.active
+                    ) === 1
+                      ? '⚪ Desativar'
+                      : '🟢 Ativar'}
+                  </button>
                 </div>
-
-                <div>
-                  <span>
-                    {registration.email}
-                  </span>
-
-                  <small>
-                    {registration.activity_name
-                      ? `🙋 ${registration.activity_name}`
-                      : 'Sem atividade específica'}
-                  </small>
-                </div>
-
-                <div>
-                  <span>
-                    {formatDateTimeBr(
-                      registration.created_at
-                    )}
-                  </span>
-
-                  <small>
-                    {registration.status}
-                  </small>
-                </div>
-
-                <div className="registration-admin-actions">
-                  {registration.payment_receipt_path && (
-                    <button
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() =>
-                        openReceipt(
-                          registration
-                        )
-                      }
-                    >
-                      📎 Comprovante
-                    </button>
-                  )}
-
-                  {registration.coupon_code && (
-                    <span className="admin-tag">
-                      🎟️ {registration.coupon_code}
-                    </span>
-                  )}
-
-                  {registration.status !==
-                    'confirmed' &&
-                    registration.status !==
-                    'cancelled' && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={isLoading}
-                          onClick={() =>
-                            approve(
-                              registration
-                            )
-                          }
-                        >
-                          ✅ Aprovar
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={isLoading}
-                          onClick={() =>
-                            reject(
-                              registration
-                            )
-                          }
-                        >
-                          ❌ Rejeitar
-                        </button>
-                      </>
-                    )}
-                </div>
-              </article>
-            )
-          )
-        )}
-      </div>
-
-      <div className="admin-coupons-box">
-        <h3>
-          🎫 Cupons de gratuidade
-        </h3>
-
-        {coupons.map((coupon) => (
-          <div
-            key={coupon.id}
-            className="admin-coupon-row"
-          >
-            <strong>
-              {coupon.code}
-            </strong>
-
-            <span>
-              {coupon.used_count}
-              {' / '}
-              {coupon.usage_limit}
-            </span>
-
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() =>
-                action(
-                  'toggle-coupon',
-                  {
-                    couponId:
-                      coupon.id,
-                  }
-                )
-              }
-            >
-              {Number(coupon.active) === 1
-                ? '⚪ Desativar'
-                : '🟢 Ativar'}
-            </button>
+              )
+            )}
           </div>
-        ))}
-      </div>
+        )}
     </section>
   )
 }

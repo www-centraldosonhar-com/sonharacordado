@@ -1,23 +1,19 @@
 export const REGISTRATION_TEAMS = [
   {
-    value: 'participant',
-    label: '🤝 Sem equipe específica',
-  },
-  {
     value: 'activities',
     label: '🎨 Equipe de Atividades',
-  },
-  {
-    value: 'volunteers',
-    label: '🙋 Equipe de Voluntárias',
   },
   {
     value: 'assisted',
     label: '🧒 Equipe de Assistidos',
   },
   {
+    value: 'volunteers',
+    label: '🫶 Equipe de Voluntários',
+  },
+  {
     value: 'food',
-    label: '🍽️ Equipe de Alimentação',
+    label: '🍎 Equipe de Alimentação',
   },
   {
     value: 'media',
@@ -28,7 +24,8 @@ export const REGISTRATION_TEAMS = [
 export function getTeamLabel(value) {
   return (
     REGISTRATION_TEAMS.find(
-      (team) => team.value === value
+      (team) =>
+        team.value === value
     )?.label || value
   )
 }

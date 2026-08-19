@@ -3,6 +3,7 @@ import {
   isGlobalAdmin,
   isMediaAdmin,
   isProjectAdmin,
+  isVolunteerTeamAdmin,
   requireAdmin,
   sql,
 } from './_admin.js'
@@ -45,6 +46,14 @@ export default async function handler(request, response) {
 
     const mediaAdmin =
       isMediaAdmin(admin)
+
+    const volunteerTeamAdmin =
+      isVolunteerTeamAdmin(admin)
+
+    const canManageRegistrations =
+      globalAdmin ||
+      projectAdmin ||
+      volunteerTeamAdmin
 
     const unrestrictedProjects =
       globalAdmin ||
@@ -424,7 +433,9 @@ export default async function handler(request, response) {
         u.name
     `
 
-    const registrationCoupons = await sql`
+    const registrationCoupons =
+      globalAdmin
+        ? await sql`
       SELECT
         rc.id,
         rc.code,
@@ -447,6 +458,8 @@ export default async function handler(request, response) {
         rc.created_at
       ORDER BY rc.created_at DESC
     `
+
+        : []
 
     const registrations = await sql`
       SELECT
@@ -491,9 +504,12 @@ export default async function handler(request, response) {
       ) r ON TRUE
 
       WHERE
-        ${unrestrictedProjects}
-        OR e.project_id =
-          ${admin.projectId}
+        ${canManageRegistrations}
+        AND (
+          ${globalAdmin}
+          OR e.project_id =
+            ${admin.projectId}
+        )
 
       ORDER BY
         e.event_date DESC,
@@ -570,6 +586,11 @@ export default async function handler(request, response) {
 
         teams:
           admin.teams || [],
+
+        canManageRegistrations,
+
+        canManageCoupons:
+          globalAdmin,
       },
       users,
       events,

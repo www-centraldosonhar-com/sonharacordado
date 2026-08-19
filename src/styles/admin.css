@@ -1044,3 +1044,66 @@
   gap: 9px;
   margin-top: 12px;
 }
+
+
+/* =========================================================
+   REGISTRATIONS BY EVENT
+   ========================================================= */
+
+.admin-registration-events {
+  display: grid;
+  gap: 22px;
+  margin-top: 20px;
+}
+
+.admin-registration-event {
+  padding: 18px;
+
+  border: 1px solid var(--line);
+  border-radius: 22px;
+
+  background: var(--surface);
+}
+
+.admin-registration-event-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  margin-bottom: 16px;
+}
+
+.admin-registration-event-header h3 {
+  margin: 2px 0 5px;
+}
+
+.admin-registration-event-header p {
+  margin: 0;
+}
+
+.admin-registration-event-counts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-registration-event-counts span {
+  padding: 7px 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+@media (max-width: 700px) {
+  .admin-registration-event {
+    padding: 13px;
+  }
+
+  .admin-registration-event-header {
+    display: grid;
+  }
+}

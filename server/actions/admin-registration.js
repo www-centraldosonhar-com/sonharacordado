@@ -1,7 +1,10 @@
+import {
+  logAdminAction,
+} from './_admin-audit.js'
 import process from 'node:process'
 import { createClient } from '@supabase/supabase-js'
 import {
-  adminCanAccessRegistration,
+  adminCanManageRegistration,
   isGlobalAdmin,
   requireAdmin,
   sql,
@@ -10,6 +13,40 @@ import {
 const RECEIPT_BUCKET =
   process.env.REGISTRATION_RECEIPTS_BUCKET ||
   'sonhar-receipts'
+
+async function getRegistrationAuditContext(
+  registrationId
+) {
+  const rows = await sql`
+    SELECT
+      er.id,
+      er.event_id,
+      er.user_id,
+      er.status,
+      er.team,
+
+      e.project_id,
+      e.name AS event_name,
+
+      u.name AS user_name
+
+    FROM event_registrations er
+
+    JOIN events e
+      ON e.id = er.event_id
+
+    JOIN users u
+      ON u.id = er.user_id
+
+    WHERE er.id =
+      ${registrationId}
+
+    LIMIT 1
+  `
+
+  return rows[0] || null
+}
+
 
 function getSupabaseAdmin() {
   return createClient(
@@ -65,7 +102,7 @@ export default async function handler(
       )
     ) {
       const allowed =
-        await adminCanAccessRegistration(
+        await adminCanManageRegistration(
           admin,
           registrationId
         )
@@ -77,6 +114,16 @@ export default async function handler(
         })
       }
     }
+
+    const registrationContext =
+      registrationOperations.includes(
+        operation
+      )
+        ? await getRegistrationAuditContext(
+            registrationId
+          )
+        : null
+
 
     if (
       operation === 'receipt-url'
@@ -115,6 +162,28 @@ export default async function handler(
         throw error
       }
 
+      await logAdminAction({
+        admin,
+        action:
+          'registration_receipt_viewed',
+        entityType:
+          'event_registration',
+        entityId:
+          Number(registrationId),
+        projectId:
+          registrationContext?.project_id ||
+          null,
+        eventId:
+          registrationContext?.event_id ||
+          null,
+        details: {
+          userName:
+            registrationContext?.user_name,
+          eventName:
+            registrationContext?.event_name,
+        },
+      })
+
       return response.status(200).json({
         success: true,
         url: data.signedUrl,
@@ -149,6 +218,30 @@ export default async function handler(
             'Inscrição não encontrada ou já processada.',
         })
       }
+
+      await logAdminAction({
+        admin,
+        action:
+          'registration_approved',
+        entityType:
+          'event_registration',
+        entityId:
+          Number(registrationId),
+        projectId:
+          registrationContext?.project_id ||
+          null,
+        eventId:
+          registrationContext?.event_id ||
+          null,
+        details: {
+          userName:
+            registrationContext?.user_name,
+          eventName:
+            registrationContext?.event_name,
+          team:
+            registrationContext?.team,
+        },
+      })
 
       return response.status(200).json({
         success: true,
@@ -197,6 +290,30 @@ export default async function handler(
         })
       }
 
+      await logAdminAction({
+        admin,
+        action:
+          'registration_rejected',
+        entityType:
+          'event_registration',
+        entityId:
+          Number(registrationId),
+        projectId:
+          registrationContext?.project_id ||
+          null,
+        eventId:
+          registrationContext?.event_id ||
+          null,
+        details: {
+          userName:
+            registrationContext?.user_name,
+          eventName:
+            registrationContext?.event_name,
+          reason:
+            cleanReason,
+        },
+      })
+
       return response.status(200).json({
         success: true,
         message:
@@ -228,6 +345,28 @@ export default async function handler(
             'Inscrição não encontrada.',
         })
       }
+
+      await logAdminAction({
+        admin,
+        action:
+          'registration_cancelled',
+        entityType:
+          'event_registration',
+        entityId:
+          Number(registrationId),
+        projectId:
+          registrationContext?.project_id ||
+          null,
+        eventId:
+          registrationContext?.event_id ||
+          null,
+        details: {
+          userName:
+            registrationContext?.user_name,
+          eventName:
+            registrationContext?.event_name,
+        },
+      })
 
       return response.status(200).json({
         success: true,

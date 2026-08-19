@@ -7,12 +7,11 @@ import { getSessionUser } from './_session.js'
 const sql = neon(process.env.DATABASE_URL)
 
 const TEAMS = new Set([
-  'participant',
   'activities',
-  'volunteers',
   'assisted',
-  'food',
   'media',
+  'food',
+  'volunteers',
 ])
 
 const RECEIPT_BUCKET =
