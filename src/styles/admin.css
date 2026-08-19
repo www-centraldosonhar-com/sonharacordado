@@ -977,3 +977,70 @@
 
   opacity: 0.68;
 }
+
+
+/* =========================================================
+   ACTIVITY CHECKLISTS
+   ========================================================= */
+
+.admin-checklist-panel {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-checklist-panel h4 {
+  margin:
+    0 0 12px;
+}
+
+.admin-checklist-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 11px 12px;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+
+  background:
+    var(--surface-soft);
+}
+
+.admin-checklist-item div {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-checklist-item span {
+  font-size: 0.78rem;
+  opacity: 0.72;
+}
+
+.admin-checklist-item small {
+  white-space: nowrap;
+  font-weight: 800;
+}
+
+.admin-checklist-create {
+  margin-top: 10px;
+}
+
+.admin-checklist-create summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.admin-checklist-create form {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}

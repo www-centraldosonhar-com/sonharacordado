@@ -8,6 +8,7 @@ import AdminCreatePanel from '../components/AdminCreatePanel'
 import AdminManageActions from '../components/AdminManageActions'
 import AdminImageUpload from '../components/AdminImageUpload'
 import AdminParticipantAction from '../components/AdminParticipantAction'
+import AdminChecklistPanel from '../components/AdminChecklistPanel'
 import AdminRegistrationsPanel from '../components/AdminRegistrationsPanel'
 import '../styles/admin.css'
 
@@ -483,7 +484,13 @@ function AdminPage({
                   <AdminManageActions
                     type="activity"
                     item={activity}
+                    teams={data.teams || []}
                     onUpdated={reloadAdmin}
+                  />
+
+                  <AdminChecklistPanel
+                    activity={activity}
+                    users={data.users || []}
                   />
 
                   {data.activityParticipants
