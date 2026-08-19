@@ -8,7 +8,6 @@ import MissionCard from '../components/MissionCard'
 import AnnouncementCard from '../components/AnnouncementCard'
 import PastEventCard from '../components/PastEventCard'
 import PhotoDeliveryPanel from '../components/PhotoDeliveryPanel'
-import VolunteerCard from '../components/VolunteerCard'
 import EventRegistrationPanel from '../components/EventRegistrationPanel'
 import VolunteerChecklistPanel from '../components/VolunteerChecklistPanel'
 import VolunteerAreaSelector from '../components/VolunteerAreaSelector'
@@ -27,7 +26,7 @@ function HomePage({
   const [
     selectedArea,
     setSelectedArea,
-  ] = useState(null)
+  ] = useState('general')
 
   const loadHome = useCallback(async () => {
     try {
@@ -124,37 +123,61 @@ function HomePage({
   const volunteerAccess =
     data?.volunteerAccess
 
-  const defaultArea =
-    volunteerAccess
-      ?.primaryTeam
-      ?.code ||
+  // =====================================================
+  // HOME VIEWS
+  // =====================================================
+  //
+  // general:
+  // - página principal da Central;
+  // - todos os próximos eventos;
+  // - atividades de Mídias;
+  // - conteúdo geral da ONG;
+  //
+  // team:
+  // - apenas o projeto do voluntário;
+  // - apenas sua equipe principal;
+  // - inscrição do evento;
+  // - checklists, combinados e tarefas pessoais.
+  // =====================================================
+
+  const activeView =
+    selectedArea === 'team'
+      ? 'team'
+      : 'general'
+
+  const isGeneralView =
+    activeView === 'general'
+
+  const isTeamView =
+    activeView === 'team'
+
+  const currentProjectId =
+    Number(
+      volunteerAccess?.project?.id
+    )
+
+  const primaryTeam =
+    volunteerAccess?.primaryTeam ||
     volunteerAccess
       ?.availableTeams
       ?.find(
         (team) =>
           team.code !== 'media'
-      )
-      ?.code ||
-    'media'
+      ) ||
+    null
 
-  const activeArea =
-    selectedArea ||
-    defaultArea
+  const primaryTeamCode =
+    primaryTeam?.code || null
 
   // =====================================================
-  // CONTENT SCOPE
+  // GENERAL CONTENT
   // =====================================================
-  //
-  // Eventos continuam visíveis para todo mundo.
-  //
-  // Atividades, missões e comunicados respeitam:
-  // - área selecionada;
-  // - projeto do voluntário;
-  // - Mídias transversal;
-  // - conteúdo global sem equipe/projeto.
+  // Conteúdo geral inclui:
+  // - Mídias;
+  // - conteúdo realmente global.
   // =====================================================
 
-  function contentMatchesArea(item) {
+  function matchesGeneralContent(item) {
     const teamCode =
       item?.team_code || null
 
@@ -164,84 +187,120 @@ function HomePage({
         ? null
         : Number(item.project_id)
 
-    // Conteúdo antigo/global sem equipe aparece
-    // independentemente da aba.
-    if (!teamCode) {
-      if (projectId === null) {
-        return true
-      }
-
-      if (
-        volunteerAccess?.adminScope ===
-        'global'
-      ) {
-        return true
-      }
-
-      return (
-        projectId ===
-        Number(
-          volunteerAccess?.project?.id
-        )
-      )
-    }
-
-    // Só mostra conteúdo da área atualmente aberta.
-    if (teamCode !== activeArea) {
-      return false
-    }
-
-    // Mídias é transversal entre APS, PPF e SJ.
     if (teamCode === 'media') {
       return true
     }
 
-    // Admin Geral pode navegar por todo o conteúdo.
-    if (
-      volunteerAccess?.adminScope ===
-      'global'
-    ) {
-      return true
-    }
-
-    // Demais áreas ficam presas ao projeto.
     return (
-      projectId === null ||
-      projectId ===
-        Number(
-          volunteerAccess?.project?.id
-        )
+      teamCode === null &&
+      projectId === null
     )
   }
 
-  // Eventos são encontros da ONG:
-  // todos continuam disponíveis.
-  const visibleEvents =
-    data.nextEvents.map(
-      (event) => ({
-        ...event,
+  // =====================================================
+  // TEAM CONTENT
+  // =====================================================
+  // Conteúdo da equipe precisa:
+  // - pertencer ao projeto do voluntário;
+  // - pertencer à equipe principal dele.
+  //
+  // Conteúdo de projeto sem equipe também pode aparecer.
+  // =====================================================
 
-        activities:
-          event.activities.filter(
-            contentMatchesArea
-          ),
-      })
+  function matchesTeamContent(item) {
+    const teamCode =
+      item?.team_code || null
+
+    const projectId =
+      item?.project_id === null ||
+      item?.project_id === undefined
+        ? null
+        : Number(item.project_id)
+
+    if (
+      projectId !== currentProjectId
+    ) {
+      return false
+    }
+
+    if (!teamCode) {
+      return true
+    }
+
+    return (
+      primaryTeamCode &&
+      teamCode === primaryTeamCode
     )
+  }
+
+  // =====================================================
+  // EVENTS
+  // =====================================================
+
+  const visibleEvents =
+    isGeneralView
+      ? data.nextEvents.map(
+          (event) => ({
+            ...event,
+
+            // Na página geral mostramos somente
+            // atividades de Mídias.
+            activities:
+              event.activities.filter(
+                (activity) =>
+                  activity.team_code ===
+                  'media'
+              ),
+          })
+        )
+      : data.nextEvents
+          .filter(
+            (event) =>
+              Number(
+                event.project_id
+              ) === currentProjectId
+          )
+          .map(
+            (event) => ({
+              ...event,
+
+              // Na página da equipe mostramos somente
+              // atividades da equipe principal.
+              activities:
+                event.activities.filter(
+                  (activity) =>
+                    activity.team_code ===
+                    primaryTeamCode
+                ),
+            })
+          )
+
+  // =====================================================
+  // MISSIONS / ANNOUNCEMENTS
+  // =====================================================
 
   const visibleTasks =
     data.tasks.filter(
-      contentMatchesArea
+      isGeneralView
+        ? matchesGeneralContent
+        : matchesTeamContent
     )
 
   const visibleAnnouncements =
     data.announcements.filter(
-      contentMatchesArea
+      isGeneralView
+        ? matchesGeneralContent
+        : matchesTeamContent
     )
 
   const sameDay =
     visibleEvents.length === 2 &&
-    String(visibleEvents[0].event_date).slice(0, 10) ===
-      String(visibleEvents[1].event_date).slice(0, 10)
+    String(
+      visibleEvents[0].event_date
+    ).slice(0, 10) ===
+      String(
+        visibleEvents[1].event_date
+      ).slice(0, 10)
 
   return (
     <>
@@ -256,13 +315,36 @@ function HomePage({
           <div className="home-sidebar-card">
             <nav className="sidebar-nav">
               <a href="#inicio">🏠 Início</a>
-              <a href="#eventos">📅 Encontros</a>
-              <a href="#combinados">🤝 Combinados</a>
-              <a href="#minhas-missoes">🚀 Minhas missões</a>
-              <a href="#missoes">💡 Missões</a>
-              <a href="#mural">📢 Mural</a>
-              <a href="#memorias">📸 Memórias</a>
-              <a href="#equipe">🫶 Equipe</a>
+
+              <a href="#eventos">
+                📅 Encontros
+              </a>
+
+              {isTeamView && (
+                <>
+                  <a href="#combinados">
+                    🤝 Combinados
+                  </a>
+
+                  <a href="#minhas-missoes">
+                    🚀 Minhas missões
+                  </a>
+                </>
+              )}
+
+              <a href="#missoes">
+                💡 Missões
+              </a>
+
+              <a href="#mural">
+                📢 Mural
+              </a>
+
+              {isGeneralView && (
+                <a href="#memorias">
+                  📸 Memórias
+                </a>
+              )}
             </nav>
           </div>
         </aside>
@@ -273,11 +355,13 @@ function HomePage({
         >
           <VolunteerAreaSelector
             access={volunteerAccess}
-            selectedArea={activeArea}
+            selectedArea={activeView}
             onSelect={setSelectedArea}
           />
 
-          <VolunteerChecklistPanel />
+          {isTeamView && (
+            <VolunteerChecklistPanel />
+          )}
 
           <section className="welcome-strip">
             <div className="welcome-dot" />
@@ -321,11 +405,13 @@ function HomePage({
                   >
                     <EventCard event={event} />
 
-                    <EventRegistrationPanel
-                      event={event}
-                      currentUser={currentUser}
-                      onUpdated={loadHome}
-                    />
+                    {isTeamView && (
+                      <EventRegistrationPanel
+                        event={event}
+                        currentUser={currentUser}
+                        onUpdated={loadHome}
+                      />
+                    )}
 
                     <div className="event-activities-block">
                       <div className="event-activities-heading">
@@ -369,55 +455,56 @@ function HomePage({
             )}
           </section>
 
-          {data.myConfirmations
-            .filter((confirmation) => {
-              // A entrega não depende mais do nome da função.
-              // O Admin define essa regra ao criar a atividade.
-              const requiresDelivery =
-                Number(
-                  confirmation.requires_delivery
-                ) === 1
+          {isGeneralView &&
+            data.myConfirmations
+              .filter((confirmation) => {
+                // Entregas ficam na área geral / Mídias.
+                const requiresDelivery =
+                  Number(
+                    confirmation.requires_delivery
+                  ) === 1
 
-              const eventDate =
-                String(
-                  confirmation.event_date
-                ).slice(0, 10)
+                const eventDate =
+                  String(
+                    confirmation.event_date
+                  ).slice(0, 10)
 
-              const eventAlreadyHappened =
-                eventDate &&
-                new Date(
-                  `${eventDate}T23:59:59`
-                ) < new Date()
+                const eventAlreadyHappened =
+                  eventDate &&
+                  new Date(
+                    `${eventDate}T23:59:59`
+                  ) < new Date()
 
-              return (
-                requiresDelivery &&
-                eventAlreadyHappened
-              )
-            })
-            .map((confirmation) => (
-              <PhotoDeliveryPanel
-                key={
-                  `photos-${confirmation.id}`
-                }
-                event={{
-                  id:
-                    confirmation.event_id,
+                return (
+                  requiresDelivery &&
+                  eventAlreadyHappened
+                )
+              })
+              .map((confirmation) => (
+                <PhotoDeliveryPanel
+                  key={
+                    `photos-${confirmation.id}`
+                  }
+                  event={{
+                    id:
+                      confirmation.event_id,
 
-                  name:
-                    confirmation.event_name,
-                }}
-                photographerName={
-                  data.currentUser.name
-                }
-                confirmationId={
-                  confirmation.id
-                }
-                photoSubmittedAt={
-                  confirmation.photo_submitted_at
-                }
-              />
-            ))}
+                    name:
+                      confirmation.event_name,
+                  }}
+                  photographerName={
+                    data.currentUser.name
+                  }
+                  confirmationId={
+                    confirmation.id
+                  }
+                  photoSubmittedAt={
+                    confirmation.photo_submitted_at
+                  }
+                />
+              ))}
 
+          {isTeamView && (
           <section
             className="section-block"
             id="combinados"
@@ -452,7 +539,9 @@ function HomePage({
               </div>
             )}
           </section>
+          )}
 
+          {isTeamView && (
           <section
             className="section-block"
             id="minhas-missoes"
@@ -486,6 +575,7 @@ function HomePage({
               </div>
             )}
           </section>
+          )}
 
           <section
             className="section-block"
@@ -554,6 +644,7 @@ function HomePage({
             )}
           </section>
 
+          {isGeneralView && (
           <section
             className="section-block"
             id="memorias"
@@ -590,38 +681,8 @@ function HomePage({
               </div>
             )}
           </section>
+          )}
 
-          <section
-            className="section-block last-section"
-            id="equipe"
-          >
-            <div className="section-heading">
-              <p className="eyebrow eyebrow-red">
-                QUEM VAI ESTAR LÁ?
-              </p>
-
-              <h2>
-                Gente que já disse “eu vou” 🫶
-              </h2>
-            </div>
-
-            {data.confirmations.length > 0 ? (
-              <div className="people-list">
-                {data.confirmations.map(
-                  (volunteer, index) => (
-                    <VolunteerCard
-                      key={`${volunteer.name}-${volunteer.role}-${index}`}
-                      volunteer={volunteer}
-                    />
-                  )
-                )}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <p>Ninguém confirmado ainda.</p>
-              </div>
-            )}
-          </section>
         </main>
       </div>
 
@@ -636,20 +697,24 @@ function HomePage({
           <small>Eventos</small>
         </a>
 
+        {isTeamView && (
+          <a href="#combinados">
+            <span>🤝</span>
+            <small>Combinados</small>
+          </a>
+        )}
+
         <a href="#missoes">
           <span>🚀</span>
           <small>Missões</small>
         </a>
 
-        <a href="#memorias">
-          <span>📸</span>
-          <small>Memórias</small>
-        </a>
-
-        <a href="#equipe">
-          <span>🫶</span>
-          <small>Equipe</small>
-        </a>
+        {isGeneralView && (
+          <a href="#memorias">
+            <span>📸</span>
+            <small>Memórias</small>
+          </a>
+        )}
       </nav>
     </>
   )
