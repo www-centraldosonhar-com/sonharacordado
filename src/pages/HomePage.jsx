@@ -360,7 +360,9 @@ function HomePage({
           />
 
           {isTeamView && (
-            <VolunteerChecklistPanel />
+            <VolunteerChecklistPanel
+              onUpdated={loadHome}
+            />
           )}
 
           <section className="welcome-strip">

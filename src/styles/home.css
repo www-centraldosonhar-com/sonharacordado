@@ -2664,3 +2664,69 @@ body {
     margin-top: -2px;
   }
 }
+
+/* =========================================================
+   FIX — CHECKLIST SEARCH OVERLAP
+   ========================================================= */
+
+.checklist-search-box {
+  position: relative;
+  z-index: 0;
+
+  margin-top: 14px;
+  margin-bottom: 12px;
+
+  min-height: 46px;
+}
+
+.checklist-search-box input {
+  position: relative;
+  z-index: 0;
+
+  min-height: 44px;
+  line-height: 44px;
+}
+
+.checklist-filter-row {
+  position: relative;
+  z-index: 0;
+
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.checklist-mobile-list {
+  position: relative;
+  z-index: 0;
+
+  margin-top: 4px;
+}
+
+/* Garante que nenhuma linha da checklist invada a busca */
+.checklist-person {
+  position: relative;
+  z-index: 0;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .checklist-search-box {
+    margin-top: 12px;
+    margin-bottom: 10px;
+
+    min-height: 44px;
+  }
+
+  .checklist-search-box input {
+    min-height: 42px;
+    line-height: normal;
+  }
+
+  .checklist-filter-row {
+    margin-bottom: 10px;
+  }
+
+  .checklist-mobile-list {
+    margin-top: 2px;
+  }
+}

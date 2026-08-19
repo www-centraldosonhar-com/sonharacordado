@@ -15,7 +15,9 @@ function normalizeSearch(value) {
     .trim()
 }
 
-function VolunteerChecklistPanel() {
+function VolunteerChecklistPanel({
+  onUpdated,
+}) {
   const [
     checklists,
     setChecklists,
@@ -291,6 +293,10 @@ function VolunteerChecklistPanel() {
           result.error ||
           'Não foi possível atualizar.'
         )
+      }
+
+      if (onUpdated) {
+        await onUpdated()
       }
     } catch (error) {
       // Desfaz atualização visual
