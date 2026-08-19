@@ -5,17 +5,12 @@ import {
 
 function AdminChecklistPanel({
   activity,
-  users = [],
+  participants = [],
 }) {
   const [
     checklists,
     setChecklists,
   ] = useState([])
-
-  const [
-    title,
-    setTitle,
-  ] = useState('')
 
   const [
     assignedUserId,
@@ -33,42 +28,19 @@ function AdminChecklistPanel({
   ] = useState(false)
 
 
-  async function loadChecklists() {
-    try {
-      const params =
-        new URLSearchParams({
-          operation:
-            'list-activity',
+  const activityParticipants =
+    participants.filter(
+      (participant) =>
+        Number(
+          participant.event_role_id
+        ) ===
+        Number(activity.id)
+    )
 
-          eventRoleId:
-            String(activity.id),
-        })
 
-      const response =
-        await fetch(
-          `/api/checklist?${params}`
-        )
-
-      const result =
-        await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          'Não foi possível carregar as checklists.'
-        )
-      }
-
-      setChecklists(
-        result.checklists || []
-      )
-    } catch (error) {
-      setMessage(
-        error.message
-      )
-    }
-  }
-
+  // =====================================================
+  // INITIAL LOAD
+  // =====================================================
 
   useEffect(() => {
     let active = true
@@ -92,13 +64,28 @@ function AdminChecklistPanel({
         if (!response.ok) {
           throw new Error(
             result.error ||
-            'Não foi possível carregar as checklists.'
+            'Não foi possível carregar o check-in.'
           )
         }
 
-        if (active) {
-          setChecklists(
-            result.checklists || []
+        if (!active) {
+          return
+        }
+
+        const loaded =
+          result.checklists || []
+
+        setChecklists(loaded)
+
+        if (
+          loaded[0]
+            ?.assigned_user_id
+        ) {
+          setAssignedUserId(
+            String(
+              loaded[0]
+                .assigned_user_id
+            )
           )
         }
       })
@@ -116,10 +103,45 @@ function AdminChecklistPanel({
   }, [activity.id])
 
 
-  async function handleCreate(
+  // =====================================================
+  // ASSISTIDOS
+  // =====================================================
+
+  if (
+    activity.role_name ===
+    'Recepção e Check-in de Assistidos'
+  ) {
+    return (
+      <div className="admin-checklist-panel">
+        <h4>
+          🧒 Check-in de Assistidos
+        </h4>
+
+        <p className="admin-form-help">
+          A função de check-in está habilitada,
+          mas a lista será conectada ao cadastro
+          de assistidos na próxima etapa.
+        </p>
+      </div>
+    )
+  }
+
+
+  // =====================================================
+  // VOLUNTEERS
+  // =====================================================
+
+  async function handleAssign(
     event
   ) {
     event.preventDefault()
+
+    if (!assignedUserId) {
+      setMessage(
+        'Escolha o responsável pelo check-in.'
+      )
+      return
+    }
 
     setIsLoading(true)
     setMessage('')
@@ -139,16 +161,15 @@ function AdminChecklistPanel({
             body:
               JSON.stringify({
                 operation:
-                  'create',
+                  'assign',
 
                 eventRoleId:
                   activity.id,
 
-                title,
-
                 assignedUserId:
-                  assignedUserId ||
-                  null,
+                  Number(
+                    assignedUserId
+                  ),
               }),
           }
         )
@@ -159,18 +180,17 @@ function AdminChecklistPanel({
       if (!response.ok) {
         throw new Error(
           result.error ||
-          'Não foi possível criar a checklist.'
+          'Não foi possível definir o responsável.'
         )
       }
 
-      setMessage(
-        '✅ Checklist criada!'
+      setChecklists(
+        [result.checklist]
       )
 
-      setTitle('')
-      setAssignedUserId('')
-
-      await loadChecklists()
+      setMessage(
+        '✅ Responsável pelo check-in definido!'
+      )
     } catch (error) {
       setMessage(
         error.message
@@ -181,70 +201,42 @@ function AdminChecklistPanel({
   }
 
 
+  const checklist =
+    checklists[0] || null
+
+
   return (
     <div className="admin-checklist-panel">
       <h4>
-        ☑️ Checklists da atividade
+        ☑️ Check-in de Voluntários
       </h4>
 
-      {checklists.length > 0 && (
-        <div className="admin-checklist-list">
-          {checklists.map(
-            (checklist) => (
-              <div
-                key={checklist.id}
-                className="admin-checklist-item"
-              >
-                <div>
-                  <strong>
-                    {checklist.title}
-                  </strong>
+      <p className="admin-form-help">
+        A lista é formada automaticamente
+        pelos voluntários com inscrição
+        confirmada neste evento.
+      </p>
 
-                  <span>
-                    👤{' '}
-                    {checklist
-                      .assigned_user_name ||
-                      'Sem responsável'}
-                  </span>
-                </div>
+      {activityParticipants.length === 0 ? (
+        <div className="admin-checklist-item">
+          <div>
+            <strong>
+              Aguardando responsável
+            </strong>
 
-                <small>
-                  ✅{' '}
-                  {checklist.checked_items}
-                  {' / '}
-                  {checklist.total_items}
-                </small>
-              </div>
-            )
-          )}
+            <span>
+              Primeiro alguém precisa confirmar
+              participação nesta atividade.
+            </span>
+          </div>
         </div>
-      )}
-
-      <details className="admin-checklist-create">
-        <summary>
-          ➕ Criar checklist
-        </summary>
-
+      ) : (
         <form
-          onSubmit={handleCreate}
+          onSubmit={handleAssign}
+          className="admin-checklist-create"
         >
           <label>
-            Nome da checklist
-          </label>
-
-          <input
-            value={title}
-            onChange={(event) =>
-              setTitle(
-                event.target.value
-              )
-            }
-            placeholder="Ex.: Conferência de voluntários"
-            required
-          />
-
-          <label>
-            Responsável
+            Responsável pelo check-in
           </label>
 
           <select
@@ -254,45 +246,62 @@ function AdminChecklistPanel({
                 event.target.value
               )
             }
+            required
           >
             <option value="">
-              Definir depois
+              Selecione
             </option>
 
-            {users
-              .filter(
-                (user) =>
-                  Number(user.active) === 1
-              )
-              .map((user) => (
+            {activityParticipants.map(
+              (participant) => (
                 <option
-                  key={user.id}
-                  value={user.id}
+                  key={
+                    participant.user_id
+                  }
+                  value={
+                    participant.user_id
+                  }
                 >
-                  {user.name}
+                  {participant.user_name}
                   {' — '}
-                  {user.project}
+                  {participant.project_name}
                 </option>
-              ))}
+              )
+            )}
           </select>
-
-          <p className="admin-form-help">
-            A lista será preenchida
-            automaticamente com os
-            voluntários confirmados
-            neste evento.
-          </p>
 
           <button
             type="submit"
             disabled={isLoading}
           >
             {isLoading
-              ? 'Criando...'
-              : 'Criar checklist'}
+              ? 'Salvando...'
+              : checklist
+                ? 'Atualizar responsável'
+                : 'Definir responsável'}
           </button>
         </form>
-      </details>
+      )}
+
+      {checklist && (
+        <div className="admin-checklist-item">
+          <div>
+            <strong>
+              ✅ Check-in preparado
+            </strong>
+
+            <span>
+              Acesso liberado ao responsável.
+            </span>
+          </div>
+
+          <small>
+            {checklist.checked_items !== undefined
+              ? `${checklist.checked_items} / ${checklist.total_items}`
+              : 'Ativo'}
+          </small>
+        </div>
+      )}
 
       {message && (
         <p className="admin-form-help">

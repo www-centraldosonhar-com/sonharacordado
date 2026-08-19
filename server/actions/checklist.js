@@ -275,6 +275,183 @@ export default async function handler(
 
 
     // =====================================================
+    // ASSIGN CHECK-IN RESPONSIBLE — ADMIN
+    // =====================================================
+    // O Admin escolhe um participante confirmado da própria
+    // atividade. A checklist é criada automaticamente caso
+    // ainda não exista.
+    // =====================================================
+
+    if (operation === 'assign') {
+      const numericEventRoleId =
+        Number(eventRoleId)
+
+      const numericAssignedUserId =
+        Number(assignedUserId)
+
+      const admin =
+        await requireAdmin(request)
+
+      if (
+        !admin ||
+        !Number.isInteger(
+          numericEventRoleId
+        ) ||
+        !Number.isInteger(
+          numericAssignedUserId
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Atividade ou responsável inválido.',
+        })
+      }
+
+      const allowed =
+        await adminCanAccessActivity(
+          admin,
+          numericEventRoleId
+        )
+
+      if (!allowed) {
+        return response.status(403).json({
+          error:
+            'Você não pode administrar esta atividade.',
+        })
+      }
+
+      const activityRows = await sql`
+        SELECT
+          er.id,
+          er.event_id,
+          r.name AS role_name,
+          r.allows_checklist
+        FROM event_roles er
+        JOIN roles r
+          ON r.id = er.role_id
+        WHERE er.id =
+          ${numericEventRoleId}
+        LIMIT 1
+      `
+
+      const activity =
+        activityRows[0]
+
+      if (
+        !activity ||
+        Number(
+          activity.allows_checklist
+        ) !== 1
+      ) {
+        return response.status(400).json({
+          error:
+            'Essa atividade não possui check-in.',
+        })
+      }
+
+      // Nesta versão, somente o check-in de voluntários
+      // utiliza event_registrations.
+      if (
+        activity.role_name !==
+        'Recepção e Check-in de Voluntários'
+      ) {
+        return response.status(400).json({
+          error:
+            'O check-in de assistidos será configurado na etapa de Assistidos.',
+        })
+      }
+
+      // O responsável precisa estar confirmado exatamente
+      // nesta atividade.
+      const participation = await sql`
+        SELECT c.id
+        FROM confirmations c
+        WHERE
+          c.event_role_id =
+            ${numericEventRoleId}
+          AND c.user_id =
+            ${numericAssignedUserId}
+          AND c.status = 'confirmed'
+        LIMIT 1
+      `
+
+      if (!participation[0]) {
+        return response.status(400).json({
+          error:
+            'O responsável precisa estar confirmado nesta atividade.',
+        })
+      }
+
+      const existingRows = await sql`
+        SELECT *
+        FROM activity_checklists
+        WHERE
+          event_role_id =
+            ${numericEventRoleId}
+          AND active = 1
+        ORDER BY id
+        LIMIT 1
+      `
+
+      let checklist =
+        existingRows[0]
+
+      if (checklist) {
+        const updated = await sql`
+          UPDATE activity_checklists
+          SET
+            title =
+              'Check-in de Voluntários',
+            source_type =
+              'event_registrations',
+            assigned_user_id =
+              ${numericAssignedUserId}
+          WHERE id =
+            ${checklist.id}
+          RETURNING *
+        `
+
+        checklist =
+          updated[0]
+      } else {
+        const created = await sql`
+          INSERT INTO activity_checklists (
+            event_role_id,
+            title,
+            source_type,
+            assigned_user_id,
+            active
+          )
+          VALUES (
+            ${numericEventRoleId},
+            'Check-in de Voluntários',
+            'event_registrations',
+            ${numericAssignedUserId},
+            1
+          )
+          RETURNING *
+        `
+
+        checklist =
+          created[0]
+      }
+
+      await syncChecklist({
+        ...checklist,
+        event_id:
+          activity.event_id,
+      })
+
+      return response.status(200).json({
+        success: true,
+        checklist,
+        message:
+          'Responsável pelo check-in definido! ✅',
+      })
+    }
+
+
+    // =====================================================
     // CREATE — ADMIN
     // =====================================================
 

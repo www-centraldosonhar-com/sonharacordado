@@ -493,7 +493,10 @@ function AdminPage({
                   ) === 1 && (
                     <AdminChecklistPanel
                       activity={activity}
-                      users={data.users || []}
+                      participants={
+                        data.activityParticipants ||
+                        []
+                      }
                     />
                   )}
 
