@@ -240,7 +240,17 @@ function VolunteerChecklistPanel({
         ? 0
         : 1
 
-    // Atualização visual imediata.
+    // =====================================================
+    // OPTIMISTIC CHECK-IN
+    // =====================================================
+    // Atualiza imediatamente:
+    // - a pessoa na lista;
+    // - o contador da checklist;
+    //
+    // Não precisamos esperar uma nova leitura do banco para
+    // mostrar a presença na interface.
+    // =====================================================
+
     setItems(
       (current) =>
         current.map(
@@ -253,6 +263,40 @@ function VolunteerChecklistPanel({
                     newChecked,
                 }
               : candidate
+        )
+    )
+
+    setChecklists(
+      (current) =>
+        current.map(
+          (candidate) => {
+            if (
+              Number(candidate.id) !==
+              Number(selectedChecklistId)
+            ) {
+              return candidate
+            }
+
+            const currentChecked =
+              Number(
+                candidate.checked_items ||
+                0
+              )
+
+            const nextChecked =
+              newChecked === 1
+                ? currentChecked + 1
+                : Math.max(
+                    0,
+                    currentChecked - 1
+                  )
+
+            return {
+              ...candidate,
+              checked_items:
+                nextChecked,
+            }
+          }
         )
     )
 
@@ -313,6 +357,40 @@ function VolunteerChecklistPanel({
                       item.checked,
                   }
                 : candidate
+          )
+      )
+
+      setChecklists(
+        (current) =>
+          current.map(
+            (candidate) => {
+              if (
+                Number(candidate.id) !==
+                Number(selectedChecklistId)
+              ) {
+                return candidate
+              }
+
+              const currentChecked =
+                Number(
+                  candidate.checked_items ||
+                  0
+                )
+
+              const restoredChecked =
+                newChecked === 1
+                  ? Math.max(
+                      0,
+                      currentChecked - 1
+                    )
+                  : currentChecked + 1
+
+              return {
+                ...candidate,
+                checked_items:
+                  restoredChecked,
+              }
+            }
           )
       )
 
