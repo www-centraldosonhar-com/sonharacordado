@@ -5,12 +5,94 @@ import {
 
 import {
   formatDateBr,
-  formatDateTimeBr,
 } from '../utils/formatters'
 
 import {
   getTeamLabel,
 } from '../constants/registrationTeams'
+
+
+const STATUS_INFO = {
+  pending_payment_review: {
+    label: 'Aguardando análise',
+    icon: '🟡',
+    className: 'status-review',
+  },
+
+  pending_coupon_review: {
+    label: 'Cupom em análise',
+    icon: '🎟️',
+    className: 'status-review',
+  },
+
+  payment_rejected: {
+    label: 'Correção necessária',
+    icon: '🟠',
+    className: 'status-correction',
+  },
+
+  confirmed: {
+    label: 'Confirmada',
+    icon: '✅',
+    className: 'status-confirmed',
+  },
+
+  cancelled: {
+    label: 'Cancelada',
+    icon: '⚪',
+    className: 'status-cancelled',
+  },
+}
+
+
+function getStatusInfo(status) {
+  return (
+    STATUS_INFO[status] || {
+      label: 'Em processamento',
+      icon: '🔵',
+      className: '',
+    }
+  )
+}
+
+
+function getStatusOrder(status) {
+  if (
+    status === 'pending_payment_review' ||
+    status === 'pending_coupon_review'
+  ) {
+    return 1
+  }
+
+  if (status === 'payment_rejected') {
+    return 2
+  }
+
+  if (status === 'confirmed') {
+    return 3
+  }
+
+  if (status === 'cancelled') {
+    return 4
+  }
+
+  return 5
+}
+
+
+function formatMoney(value) {
+  const number =
+    Number(value || 0)
+
+  return new Intl.NumberFormat(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL',
+    }
+  ).format(number)
+}
+
 
 function AdminRegistrationsPanel({
   registrations = [],
@@ -26,7 +108,9 @@ function AdminRegistrationsPanel({
 
 
   // =====================================================
-  // GROUP BY EVENT
+  // AGRUPAMENTO POR EVENTO
+  // =====================================================
+  // Nunca misturamos aprovações de eventos diferentes.
   // =====================================================
 
   const eventGroups =
@@ -38,26 +122,21 @@ function AdminRegistrationsPanel({
         const registration
         of registrations
       ) {
-        const key =
+        const eventId =
           Number(
             registration.event_id
           )
 
-        if (!groups.has(key)) {
+        if (!groups.has(eventId)) {
           groups.set(
-            key,
+            eventId,
             {
-              eventId:
-                registration.event_id,
-
+              eventId,
               eventName:
                 registration.event_name,
 
               eventDate:
                 registration.event_date,
-
-              projectName:
-                registration.project_name,
 
               registrations: [],
             }
@@ -65,16 +144,46 @@ function AdminRegistrationsPanel({
         }
 
         groups
-          .get(key)
+          .get(eventId)
           .registrations
           .push(registration)
       }
 
-      return Array.from(
-        groups.values()
-      )
+
+      const result =
+        Array.from(
+          groups.values()
+        )
+
+
+      // Pendentes ficam sempre no topo.
+      // Confirmados vão para o fim.
+      for (const group of result) {
+        group.registrations.sort(
+          (a, b) => {
+            const statusDifference =
+              getStatusOrder(a.status) -
+              getStatusOrder(b.status)
+
+            if (statusDifference !== 0) {
+              return statusDifference
+            }
+
+            return (
+              new Date(a.created_at) -
+              new Date(b.created_at)
+            )
+          }
+        )
+      }
+
+      return result
     }, [registrations])
 
+
+  // =====================================================
+  // AÇÃO ADMINISTRATIVA
+  // =====================================================
 
   async function action(
     operation,
@@ -120,7 +229,10 @@ function AdminRegistrationsPanel({
 
       return result
     } catch (error) {
-      setMessage(error.message)
+      setMessage(
+        error.message
+      )
+
       return null
     } finally {
       setIsLoading(false)
@@ -128,24 +240,69 @@ function AdminRegistrationsPanel({
   }
 
 
+  // =====================================================
+  // COMPROVANTE
+  // =====================================================
+  // Navegamos na própria aba.
+  //
+  // Isso evita o bloqueio de popup que acontece
+  // principalmente no Safari/iPhone.
+  // =====================================================
+
   async function openReceipt(
     registration
   ) {
-    const result =
-      await action(
-        'receipt-url',
-        {
-          registrationId:
-            registration.id,
-        }
+    setIsLoading(true)
+    setMessage('')
+
+    try {
+      const response =
+        await fetch(
+          '/api/admin?action=registrations',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                operation:
+                  'receipt-url',
+
+                registrationId:
+                  registration.id,
+              }),
+          }
+        )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível abrir o comprovante.'
+        )
+      }
+
+      if (!result.url) {
+        throw new Error(
+          'Comprovante indisponível.'
+        )
+      }
+
+      window.location.assign(
+        result.url
+      )
+    } catch (error) {
+      setMessage(
+        error.message
       )
 
-    if (result?.url) {
-      window.open(
-        result.url,
-        '_blank',
-        'noopener,noreferrer'
-      )
+      setIsLoading(false)
     }
   }
 
@@ -155,7 +312,7 @@ function AdminRegistrationsPanel({
   ) {
     if (
       !window.confirm(
-        `Confirmar inscrição de ${registration.user_name} em ${registration.event_name}?`
+        `Aprovar a inscrição de ${registration.user_name} em ${registration.event_name}?`
       )
     ) {
       return
@@ -176,7 +333,7 @@ function AdminRegistrationsPanel({
   ) {
     const reason =
       window.prompt(
-        `Motivo da rejeição/correção para ${registration.user_name}:`
+        `O que precisa ser corrigido por ${registration.user_name}?`
       )
 
     if (!reason?.trim()) {
@@ -195,23 +352,6 @@ function AdminRegistrationsPanel({
   }
 
 
-  const confirmedCount =
-    registrations.filter(
-      (item) =>
-        item.status ===
-        'confirmed'
-    ).length
-
-  const pendingCount =
-    registrations.filter(
-      (item) =>
-        item.status ===
-          'pending_payment_review' ||
-        item.status ===
-          'pending_coupon_review'
-    ).length
-
-
   return (
     <section
       id="inscricoes"
@@ -225,37 +365,10 @@ function AdminRegistrationsPanel({
         🎟️ Inscrições
       </h2>
 
-      <div className="admin-registration-summary">
-        <article>
-          <strong>
-            {confirmedCount}
-          </strong>
-
-          <span>
-            confirmados
-          </span>
-        </article>
-
-        <article>
-          <strong>
-            {pendingCount}
-          </strong>
-
-          <span>
-            aguardando análise
-          </span>
-        </article>
-
-        <article>
-          <strong>
-            {eventGroups.length}
-          </strong>
-
-          <span>
-            eventos
-          </span>
-        </article>
-      </div>
+      <p className="admin-form-help">
+        Cada evento possui sua própria fila
+        de análise.
+      </p>
 
 
       {message && (
@@ -267,174 +380,161 @@ function AdminRegistrationsPanel({
 
       {eventGroups.length === 0 ? (
         <div className="empty-state">
-          <p>
-            Nenhuma inscrição disponível.
-          </p>
+          Nenhuma inscrição aguardando
+          administração.
         </div>
       ) : (
-        <div className="admin-registration-events">
+        <div className="registration-event-list">
           {eventGroups.map(
             (group) => {
-              const eventConfirmed =
+              const pending =
                 group.registrations.filter(
-                  (item) =>
-                    item.status ===
-                    'confirmed'
+                  (registration) =>
+                    getStatusOrder(
+                      registration.status
+                    ) <= 2
                 ).length
 
-              const eventPending =
+              const confirmed =
                 group.registrations.filter(
-                  (item) =>
-                    item.status ===
-                      'pending_payment_review' ||
-                    item.status ===
-                      'pending_coupon_review'
+                  (registration) =>
+                    registration.status ===
+                    'confirmed'
                 ).length
 
               return (
                 <section
                   key={group.eventId}
-                  className="admin-registration-event"
+                  className="registration-event-card"
                 >
-                  <header className="admin-registration-event-header">
+                  <header className="registration-event-header">
                     <div>
-                      <p className="admin-eyebrow">
-                        EVENTO
-                      </p>
-
                       <h3>
                         {group.eventName}
                       </h3>
 
-                      <p>
-                        {group.projectName}
-                        {' · '}
+                      <small>
+                        📅{' '}
                         {formatDateBr(
                           group.eventDate
                         )}
-                      </p>
+                      </small>
                     </div>
 
-                    <div className="admin-registration-event-counts">
-                      <span>
-                        ⏳ {eventPending}
-                      </span>
+                    <div className="registration-event-badges">
+                      {pending > 0 && (
+                        <span className="registration-count-pending">
+                          🟡 {pending} para analisar
+                        </span>
+                      )}
 
                       <span>
-                        ✅ {eventConfirmed}
+                        ✅ {confirmed}
                       </span>
                     </div>
                   </header>
 
 
-                  <div className="registration-admin-table">
+                  <div className="registration-compact-list">
                     {group.registrations.map(
-                      (registration) => (
-                        <article
-                          key={
-                            registration.id
-                          }
-                          className="registration-admin-row"
-                        >
-                          <div>
-                            <strong>
-                              {
-                                registration.user_name
-                              }
-                            </strong>
+                      (registration) => {
+                        const status =
+                          getStatusInfo(
+                            registration.status
+                          )
 
-                            <span>
-                              {
-                                registration.project_name
-                              }
-                            </span>
-                          </div>
+                        const actionable =
+                          registration.status !==
+                            'confirmed' &&
+                          registration.status !==
+                            'cancelled'
 
+                        return (
+                          <article
+                            key={
+                              registration.id
+                            }
+                            className={
+                              `registration-compact-row ${
+                                registration.status ===
+                                'confirmed'
+                                  ? 'registration-row-confirmed'
+                                  : ''
+                              }`
+                            }
+                          >
+                            <div className="registration-person">
+                              <strong>
+                                {
+                                  registration.user_name
+                                }
+                              </strong>
 
-                          <div>
-                            <span>
-                              {getTeamLabel(
-                                registration.team
-                              )}
-                            </span>
-
-                            <small>
-                              {
-                                registration.activity_name
-                                  ? `🙋 ${registration.activity_name}`
-                                  : 'Sem atividade específica'
-                              }
-                            </small>
-                          </div>
-
-
-                          <div>
-                            <span>
-                              {
-                                registration.email
-                              }
-                            </span>
-
-                            <small>
-                              Inscrito em{' '}
-                              {formatDateTimeBr(
-                                registration.created_at
-                              )}
-                            </small>
-                          </div>
-
-
-                          <div>
-                            <strong>
-                              {
-                                registration.status
-                              }
-                            </strong>
-
-                            {registration.rejection_reason && (
                               <small>
-                                ❌ {
-                                  registration.rejection_reason
+                                {
+                                  registration.project_name
                                 }
+                                {' · '}
+                                {getTeamLabel(
+                                  registration.team
+                                )}
                               </small>
-                            )}
-                          </div>
+                            </div>
 
 
-                          <div className="registration-admin-actions">
-                            {registration.payment_receipt_path && (
-                              <button
-                                type="button"
-                                disabled={
-                                  isLoading
-                                }
-                                onClick={() =>
-                                  openReceipt(
-                                    registration
-                                  )
-                                }
-                              >
-                                📎 Comprovante
-                              </button>
-                            )}
+                            <div className="registration-payment">
+                              {registration.coupon_code ? (
+                                <>
+                                  <strong>
+                                    🎟️ Cupom
+                                  </strong>
+
+                                  <small>
+                                    {
+                                      registration.coupon_code
+                                    }
+                                  </small>
+                                </>
+                              ) : (
+                                <>
+                                  <strong>
+                                    {formatMoney(
+                                      registration.registration_fee
+                                    )}
+                                  </strong>
+
+                                  <small>
+                                    inscrição
+                                  </small>
+                                </>
+                              )}
+                            </div>
 
 
-                            {registration.coupon_code && (
-                              <span className="admin-tag">
-                                🎟️ {
-                                  registration.coupon_code
-                                }
-                              </span>
-                            )}
+                            <div className="registration-compact-actions">
+                              {registration.payment_receipt_path && (
+                                <button
+                                  type="button"
+                                  className="registration-receipt-button"
+                                  disabled={
+                                    isLoading
+                                  }
+                                  onClick={() =>
+                                    openReceipt(
+                                      registration
+                                    )
+                                  }
+                                >
+                                  📎 Ver
+                                </button>
+                              )}
 
 
-                            {registration.status !==
-                              'confirmed' &&
-                              registration.status !==
-                              'cancelled' && (
+                              {actionable && (
                                 <>
                                   <button
                                     type="button"
+                                    className="registration-approve-button"
                                     disabled={
                                       isLoading
                                     }
@@ -444,11 +544,15 @@ function AdminRegistrationsPanel({
                                       )
                                     }
                                   >
-                                    ✅ Aprovar
+                                    ✅
+                                    <span>
+                                      Aprovar
+                                    </span>
                                   </button>
 
                                   <button
                                     type="button"
+                                    className="registration-reject-button"
                                     disabled={
                                       isLoading
                                     }
@@ -458,13 +562,42 @@ function AdminRegistrationsPanel({
                                       )
                                     }
                                   >
-                                    ❌ Rejeitar
+                                    ❌
+                                    <span>
+                                      Rejeitar
+                                    </span>
                                   </button>
                                 </>
                               )}
-                          </div>
-                        </article>
-                      )
+                            </div>
+
+
+                            <div
+                              className={
+                                `registration-status-pill ${status.className}`
+                              }
+                            >
+                              <span>
+                                {status.icon}
+                              </span>
+
+                              <strong>
+                                {status.label}
+                              </strong>
+                            </div>
+
+
+                            {registration.rejection_reason && (
+                              <div className="registration-correction-message">
+                                💬{' '}
+                                {
+                                  registration.rejection_reason
+                                }
+                              </div>
+                            )}
+                          </article>
+                        )
+                      }
                     )}
                   </div>
                 </section>
@@ -477,10 +610,10 @@ function AdminRegistrationsPanel({
 
       {canManageCoupons &&
         coupons.length > 0 && (
-          <div className="admin-coupons-box">
-            <h3>
-              🎫 Cupons de gratuidade
-            </h3>
+          <details className="admin-coupons-box">
+            <summary>
+              🎫 Gerenciar cupons
+            </summary>
 
             {coupons.map(
               (coupon) => (
@@ -514,13 +647,13 @@ function AdminRegistrationsPanel({
                     {Number(
                       coupon.active
                     ) === 1
-                      ? '⚪ Desativar'
-                      : '🟢 Ativar'}
+                      ? 'Desativar'
+                      : 'Ativar'}
                   </button>
                 </div>
               )
             )}
-          </div>
+          </details>
         )}
     </section>
   )

@@ -478,6 +478,7 @@ export default async function handler(request, response) {
         p.name AS project_name,
         e.name AS event_name,
         e.event_date,
+        e.registration_fee,
         rc.code AS coupon_code,
         r.name AS activity_name
       FROM event_registrations er

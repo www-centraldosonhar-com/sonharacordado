@@ -1107,3 +1107,249 @@
     display: grid;
   }
 }
+
+
+/* =========================================================
+   COMPACT EVENT REGISTRATIONS V2
+   ========================================================= */
+
+.registration-event-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.registration-event-card {
+  overflow: hidden;
+
+  border: 1px solid var(--line);
+  border-radius: 18px;
+
+  background: var(--surface);
+}
+
+.registration-event-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 16px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.registration-event-header h3 {
+  margin: 0 0 3px;
+  font-size: 1rem;
+}
+
+.registration-event-header small {
+  opacity: 0.7;
+}
+
+.registration-event-badges {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.registration-event-badges span {
+  padding: 5px 8px;
+
+  border-radius: 999px;
+
+  background: rgba(0, 0, 0, 0.04);
+
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.registration-count-pending {
+  font-weight: 900 !important;
+}
+
+.registration-compact-list {
+  display: grid;
+}
+
+.registration-compact-row {
+  display: grid;
+
+  grid-template-columns:
+    minmax(150px, 1.5fr)
+    minmax(90px, 0.7fr)
+    auto
+    minmax(130px, auto);
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 11px 16px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.registration-compact-row:last-child {
+  border-bottom: 0;
+}
+
+.registration-row-confirmed {
+  opacity: 0.65;
+}
+
+.registration-person,
+.registration-payment {
+  display: grid;
+  gap: 2px;
+}
+
+.registration-person strong,
+.registration-payment strong {
+  font-size: 0.9rem;
+}
+
+.registration-person small,
+.registration-payment small {
+  font-size: 0.74rem;
+  opacity: 0.68;
+}
+
+.registration-compact-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.registration-compact-actions button {
+  min-height: 34px;
+
+  padding: 6px 9px;
+
+  border-radius: 10px;
+
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.registration-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  padding: 6px 8px;
+
+  border-radius: 999px;
+
+  font-size: 0.72rem;
+
+  white-space: nowrap;
+}
+
+.status-review {
+  background: rgba(255, 190, 0, 0.13);
+}
+
+.status-correction {
+  background: rgba(255, 120, 0, 0.12);
+}
+
+.status-confirmed {
+  background: rgba(40, 180, 90, 0.12);
+}
+
+.status-cancelled {
+  background: rgba(100, 100, 100, 0.08);
+}
+
+.registration-correction-message {
+  grid-column: 1 / -1;
+
+  padding: 7px 9px;
+
+  border-radius: 9px;
+
+  background: rgba(255, 120, 0, 0.08);
+
+  font-size: 0.76rem;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .registration-event-card {
+    border-radius: 15px;
+  }
+
+  .registration-event-header {
+    padding: 11px 12px;
+  }
+
+  .registration-event-header h3 {
+    font-size: 0.94rem;
+  }
+
+  .registration-event-badges {
+    justify-content: flex-end;
+  }
+
+  .registration-compact-row {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+
+    gap: 7px 10px;
+
+    padding: 10px 12px;
+  }
+
+  .registration-person {
+    min-width: 0;
+  }
+
+  .registration-person strong {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .registration-payment {
+    text-align: right;
+  }
+
+  .registration-compact-actions {
+    grid-column: 1;
+
+    gap: 5px;
+  }
+
+  .registration-status-pill {
+    grid-column: 2;
+    grid-row: 2;
+
+    justify-self: end;
+  }
+
+  .registration-compact-actions button {
+    min-height: 32px;
+
+    padding: 5px 8px;
+  }
+
+  .registration-approve-button span,
+  .registration-reject-button span {
+    display: none;
+  }
+
+  .registration-correction-message {
+    grid-column: 1 / -1;
+  }
+}
