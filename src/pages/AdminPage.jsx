@@ -488,10 +488,14 @@ function AdminPage({
                     onUpdated={reloadAdmin}
                   />
 
-                  <AdminChecklistPanel
-                    activity={activity}
-                    users={data.users || []}
-                  />
+                  {Number(
+                    activity.allows_checklist
+                  ) === 1 && (
+                    <AdminChecklistPanel
+                      activity={activity}
+                      users={data.users || []}
+                    />
+                  )}
 
                   {data.activityParticipants
                     ?.filter(

@@ -232,6 +232,7 @@ export default async function handler(request, response) {
         r.id,
         r.name,
         r.team_id,
+        r.allows_checklist,
         t.code AS team_code,
         t.name AS team_name
       FROM roles r
@@ -258,6 +259,7 @@ export default async function handler(request, response) {
         e.name AS event_name,
         e.event_date,
         r.name AS role_name,
+        r.allows_checklist,
         COUNT(c.id)::int AS confirmed_count
       FROM event_roles er
       JOIN events e
@@ -289,7 +291,8 @@ export default async function handler(request, response) {
         team.name,
         e.name,
         e.event_date,
-        r.name
+        r.name,
+        r.allows_checklist
       ORDER BY
         e.event_date DESC,
         r.name
