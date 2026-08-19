@@ -136,6 +136,10 @@ export default async function handler(request, response) {
             event_roles.description,
             event_roles.requires_delivery,
             event_roles.delivery_deadline,
+            event_roles.team_id,
+            teams.code AS team_code,
+            teams.name AS team_name,
+            events.project_id,
             COUNT(confirmations.id)::int AS confirmed_count,
             CASE
               WHEN events.confirmation_deadline >= CURRENT_TIMESTAMP
@@ -147,6 +151,8 @@ export default async function handler(request, response) {
             ON event_roles.role_id = roles.id
           JOIN events
             ON event_roles.event_id = events.id
+          LEFT JOIN teams
+            ON teams.id = event_roles.team_id
           LEFT JOIN confirmations
             ON confirmations.event_role_id = event_roles.id
             AND confirmations.status = 'confirmed'
@@ -160,6 +166,10 @@ export default async function handler(request, response) {
             event_roles.description,
             event_roles.requires_delivery,
             event_roles.delivery_deadline,
+            event_roles.team_id,
+            teams.code,
+            teams.name,
+            events.project_id,
             events.confirmation_deadline
           ORDER BY roles.name
         `
@@ -255,6 +265,10 @@ export default async function handler(request, response) {
         tasks.id,
         tasks.title,
         tasks.description,
+        tasks.project_id,
+        tasks.team_id,
+        teams.code AS team_code,
+        teams.name AS team_name,
         tasks.deadline,
         tasks.priority,
         tasks.status,
@@ -266,6 +280,8 @@ export default async function handler(request, response) {
           ELSE 0
         END AS overdue
       FROM tasks
+      LEFT JOIN teams
+        ON teams.id = tasks.team_id
       LEFT JOIN task_users
         ON task_users.task_id = tasks.id
         AND task_users.status = 'active'
@@ -282,6 +298,10 @@ export default async function handler(request, response) {
         tasks.id,
         tasks.title,
         tasks.description,
+        tasks.project_id,
+        tasks.team_id,
+        teams.code,
+        teams.name,
         tasks.deadline,
         tasks.priority,
         tasks.status,
@@ -330,10 +350,16 @@ export default async function handler(request, response) {
         announcements.message,
         announcements.priority,
         announcements.created_at,
+        announcements.project_id,
+        announcements.team_id,
+        teams.code AS team_code,
+        teams.name AS team_name,
         users.name AS created_by_name
       FROM announcements
       JOIN users
         ON announcements.created_by = users.id
+      LEFT JOIN teams
+        ON teams.id = announcements.team_id
       WHERE announcements.active = 1
       ORDER BY
         CASE announcements.priority

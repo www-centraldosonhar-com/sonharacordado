@@ -140,11 +140,102 @@ function HomePage({
     selectedArea ||
     defaultArea
 
-  // Eventos são encontros da ONG.
-  // Qualquer voluntário pode visualizar e participar,
-  // independentemente da equipe ou projeto.
+  // =====================================================
+  // CONTENT SCOPE
+  // =====================================================
+  //
+  // Eventos continuam visíveis para todo mundo.
+  //
+  // Atividades, missões e comunicados respeitam:
+  // - área selecionada;
+  // - projeto do voluntário;
+  // - Mídias transversal;
+  // - conteúdo global sem equipe/projeto.
+  // =====================================================
+
+  function contentMatchesArea(item) {
+    const teamCode =
+      item?.team_code || null
+
+    const projectId =
+      item?.project_id === null ||
+      item?.project_id === undefined
+        ? null
+        : Number(item.project_id)
+
+    // Conteúdo antigo/global sem equipe aparece
+    // independentemente da aba.
+    if (!teamCode) {
+      if (projectId === null) {
+        return true
+      }
+
+      if (
+        volunteerAccess?.adminScope ===
+        'global'
+      ) {
+        return true
+      }
+
+      return (
+        projectId ===
+        Number(
+          volunteerAccess?.project?.id
+        )
+      )
+    }
+
+    // Só mostra conteúdo da área atualmente aberta.
+    if (teamCode !== activeArea) {
+      return false
+    }
+
+    // Mídias é transversal entre APS, PPF e SJ.
+    if (teamCode === 'media') {
+      return true
+    }
+
+    // Admin Geral pode navegar por todo o conteúdo.
+    if (
+      volunteerAccess?.adminScope ===
+      'global'
+    ) {
+      return true
+    }
+
+    // Demais áreas ficam presas ao projeto.
+    return (
+      projectId === null ||
+      projectId ===
+        Number(
+          volunteerAccess?.project?.id
+        )
+    )
+  }
+
+  // Eventos são encontros da ONG:
+  // todos continuam disponíveis.
   const visibleEvents =
-    data.nextEvents
+    data.nextEvents.map(
+      (event) => ({
+        ...event,
+
+        activities:
+          event.activities.filter(
+            contentMatchesArea
+          ),
+      })
+    )
+
+  const visibleTasks =
+    data.tasks.filter(
+      contentMatchesArea
+    )
+
+  const visibleAnnouncements =
+    data.announcements.filter(
+      contentMatchesArea
+    )
 
   const sameDay =
     visibleEvents.length === 2 &&
@@ -407,9 +498,9 @@ function HomePage({
               </h2>
             </div>
 
-            {data.tasks.length > 0 ? (
+            {visibleTasks.length > 0 ? (
               <div className="cards-grid">
-                {data.tasks.map((mission) => (
+                {visibleTasks.map((mission) => (
                   <MissionCard
                     key={mission.id}
                     mission={mission}
@@ -440,9 +531,9 @@ function HomePage({
               </h2>
             </div>
 
-            {data.announcements.length > 0 ? (
+            {visibleAnnouncements.length > 0 ? (
               <div className="cards-stack">
-                {data.announcements.map(
+                {visibleAnnouncements.map(
                   (announcement) => (
                     <AnnouncementCard
                       key={announcement.id}

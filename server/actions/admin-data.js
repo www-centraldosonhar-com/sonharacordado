@@ -245,6 +245,9 @@ export default async function handler(request, response) {
         er.active,
         er.requires_delivery,
         er.delivery_deadline,
+        er.team_id,
+        team.code AS team_code,
+        team.name AS team_name,
         e.name AS event_name,
         e.event_date,
         r.name AS role_name,
@@ -254,6 +257,8 @@ export default async function handler(request, response) {
         ON er.event_id = e.id
       JOIN roles r
         ON er.role_id = r.id
+      LEFT JOIN teams team
+        ON team.id = er.team_id
       LEFT JOIN confirmations c
         ON c.event_role_id = er.id
         AND c.status = 'confirmed'
@@ -272,6 +277,9 @@ export default async function handler(request, response) {
         er.active,
         er.requires_delivery,
         er.delivery_deadline,
+        er.team_id,
+        team.code,
+        team.name,
         e.name,
         e.event_date,
         r.name
@@ -286,6 +294,11 @@ export default async function handler(request, response) {
         t.title,
         t.description,
         t.event_id,
+        t.project_id,
+        t.team_id,
+        project.name AS project_name,
+        team.code AS team_code,
+        team.name AS team_name,
         t.deadline,
         t.priority,
         t.status,
@@ -296,6 +309,10 @@ export default async function handler(request, response) {
       FROM tasks t
       LEFT JOIN events e
         ON t.event_id = e.id
+      LEFT JOIN projects project
+        ON project.id = t.project_id
+      LEFT JOIN teams team
+        ON team.id = t.team_id
       LEFT JOIN task_users tu
         ON tu.task_id = t.id
         AND tu.status = 'active'
@@ -304,6 +321,11 @@ export default async function handler(request, response) {
         t.title,
         t.description,
         t.event_id,
+        t.project_id,
+        t.team_id,
+        project.name,
+        team.code,
+        team.name,
         t.deadline,
         t.priority,
         t.status,
@@ -476,10 +498,19 @@ export default async function handler(request, response) {
         a.priority,
         a.active,
         a.created_at,
+        a.project_id,
+        a.team_id,
+        project.name AS project_name,
+        team.code AS team_code,
+        team.name AS team_name,
         u.name AS created_by_name
       FROM announcements a
       JOIN users u
         ON a.created_by = u.id
+      LEFT JOIN projects project
+        ON project.id = a.project_id
+      LEFT JOIN teams team
+        ON team.id = a.team_id
       ORDER BY
         a.created_at DESC
     `
