@@ -50,6 +50,18 @@ export default async function handler(request, response) {
     const volunteerTeamAdmin =
       isVolunteerTeamAdmin(admin)
 
+    const activitiesTeamAdmin =
+      admin.adminScope === 'team' &&
+      (admin.teams || []).some(
+        (team) =>
+          team.code === 'activities'
+      )
+
+    const canViewActivitiesOverview =
+      globalAdmin ||
+      projectAdmin ||
+      activitiesTeamAdmin
+
     const canManageRegistrations =
       globalAdmin ||
       projectAdmin ||
@@ -517,6 +529,206 @@ export default async function handler(request, response) {
         er.created_at DESC
     `
 
+
+    // =====================================================
+    // VOLUNTEER EVENT OVERVIEW
+    // =====================================================
+    // Visível apenas para:
+    // - Admin Geral;
+    // - Admin do Projeto;
+    // - Admin da Equipe de Voluntários.
+    //
+    // Cada evento considera somente os voluntários ativos
+    // pertencentes ao projeto daquele evento.
+    // =====================================================
+
+    const volunteerEventStats =
+      canManageRegistrations
+        ? await sql`
+      SELECT
+        e.id AS event_id,
+        e.name AS event_name,
+        e.event_date,
+        e.project_id,
+
+        p.name AS project_name,
+
+        e.registration_fee,
+
+        (
+          SELECT COUNT(*)::int
+          FROM users project_users
+          WHERE
+            project_users.project_id =
+              e.project_id
+            AND project_users.active = 1
+        ) AS total_volunteers,
+
+        (
+          SELECT COUNT(*)::int
+          FROM event_registrations registered
+          WHERE
+            registered.event_id = e.id
+            AND registered.status =
+              'confirmed'
+        ) AS registered_count,
+
+        (
+          SELECT COUNT(*)::int
+          FROM activity_checklist_items item
+
+          JOIN activity_checklists checklist
+            ON checklist.id =
+              item.checklist_id
+
+          JOIN event_roles check_role
+            ON check_role.id =
+              checklist.event_role_id
+
+          WHERE
+            check_role.event_id = e.id
+
+            AND checklist.active = 1
+
+            AND item.checked = 1
+        ) AS present_count,
+
+        EXISTS (
+          SELECT 1
+          FROM activity_checklists checklist
+
+          JOIN event_roles check_role
+            ON check_role.id =
+              checklist.event_role_id
+
+          WHERE
+            check_role.event_id = e.id
+            AND checklist.active = 1
+        ) AS has_checklist,
+
+        (
+          SELECT
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN registered.coupon_id IS NULL
+                  THEN e.registration_fee
+                  ELSE 0
+                END
+              ),
+              0
+            )
+          FROM event_registrations registered
+          WHERE
+            registered.event_id = e.id
+            AND registered.status =
+              'confirmed'
+        ) AS collected_amount
+
+      FROM events e
+
+      JOIN projects p
+        ON p.id = e.project_id
+
+      WHERE
+        e.project_id IS NOT NULL
+
+        AND (
+          ${globalAdmin}
+          OR e.project_id =
+            ${admin.projectId}
+        )
+
+      ORDER BY
+        e.event_date DESC,
+        e.event_time DESC
+    `
+        : []
+
+    // =====================================================
+    // ACTIVITIES TEAM OVERVIEW
+    // =====================================================
+    //
+    // Visível para:
+    // - Admin Geral;
+    // - Admin de Projeto;
+    // - Admin da Equipe de Atividades.
+    //
+    // Aqui não existem funções ou vagas.
+    // Mostramos apenas quem se inscreveu no evento
+    // escolhendo a Equipe de Atividades.
+    // =====================================================
+
+    const activitiesEventStats =
+      canViewActivitiesOverview
+        ? await sql`
+      SELECT
+        e.id AS event_id,
+        e.name AS event_name,
+        e.event_date,
+        e.project_id,
+
+        p.name AS project_name,
+
+        COUNT(er.id)::int
+          AS registered_count,
+
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'registration_id',
+                er.id,
+              'user_id',
+                u.id,
+              'name',
+                u.name,
+              'email',
+                er.email,
+              'status',
+                er.status
+            )
+            ORDER BY u.name
+          ) FILTER (
+            WHERE er.id IS NOT NULL
+          ),
+          '[]'::json
+        ) AS registrations
+
+      FROM events e
+
+      JOIN projects p
+        ON p.id = e.project_id
+
+      LEFT JOIN event_registrations er
+        ON er.event_id = e.id
+        AND er.team = 'activities'
+        AND er.status = 'confirmed'
+
+      LEFT JOIN users u
+        ON u.id = er.user_id
+
+      WHERE
+        e.project_id IS NOT NULL
+
+        AND (
+          ${globalAdmin}
+          OR e.project_id =
+            ${admin.projectId}
+        )
+
+      GROUP BY
+        e.id,
+        e.name,
+        e.event_date,
+        e.project_id,
+        p.name
+
+      ORDER BY
+        e.event_date DESC,
+        e.event_time DESC
+    `
+        : []
+
     const announcements = await sql`
       SELECT
         a.id,
@@ -590,6 +802,8 @@ export default async function handler(request, response) {
 
         canManageRegistrations,
 
+        canViewActivitiesOverview,
+
         canManageCoupons:
           globalAdmin,
       },
@@ -600,6 +814,8 @@ export default async function handler(request, response) {
       tasks,
       registrationCoupons,
       registrations,
+      volunteerEventStats,
+      activitiesEventStats,
       activityParticipants,
       taskParticipants,
       announcements,

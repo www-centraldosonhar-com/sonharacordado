@@ -10,6 +10,9 @@ import AdminImageUpload from '../components/AdminImageUpload'
 import AdminParticipantAction from '../components/AdminParticipantAction'
 import AdminChecklistPanel from '../components/AdminChecklistPanel'
 import AdminRegistrationsPanel from '../components/AdminRegistrationsPanel'
+import AdminVolunteerOverview from '../components/AdminVolunteerOverview'
+import AdminActivitiesOverview from '../components/AdminActivitiesOverview'
+import AdminExpensesPanel from '../components/AdminExpensesPanel'
 import '../styles/admin.css'
 
 function AdminPage({
@@ -431,6 +434,37 @@ function AdminPage({
             onUpdated={reloadAdmin}
           />
         )}
+
+        {data.adminAccess
+          ?.canManageRegistrations && (
+          <AdminVolunteerOverview
+            events={
+              data.volunteerEventStats || []
+            }
+          />
+        )}
+
+        {data.adminAccess
+          ?.canViewActivitiesOverview && (
+          <AdminActivitiesOverview
+            events={
+              data.activitiesEventStats || []
+            }
+          />
+        )}
+
+        <AdminExpensesPanel
+          events={
+            data.events || []
+          }
+          teams={
+            data.teams || []
+          }
+          access={
+            data.adminAccess
+          }
+        />
+
 
         <section
           id="atividades"

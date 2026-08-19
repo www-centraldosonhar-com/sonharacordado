@@ -599,7 +599,28 @@ export default async function handler(request, response) {
           userType
         )
       ) {
-        return forbidden(response)
+        if (
+          isTeamAdmin(admin)
+        ) {
+          return response.status(403).json({
+            error:
+              'Admin de Equipe pode cadastrar apenas voluntários da própria equipe.',
+          })
+        }
+
+        if (
+          isProjectAdmin(admin)
+        ) {
+          return response.status(403).json({
+            error:
+              'Admin de Projeto pode cadastrar voluntários e Admins de Equipe do próprio projeto.',
+          })
+        }
+
+        return response.status(403).json({
+          error:
+            'Você não possui permissão para criar esse tipo de usuário.',
+        })
       }
 
       if (

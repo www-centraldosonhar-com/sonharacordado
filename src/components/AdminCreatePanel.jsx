@@ -69,7 +69,19 @@ function AdminCreatePanel({
 
       await onCreated()
     } catch (error) {
-      setMessage(error.message)
+      const errorMessage =
+        error.message ||
+        'Não foi possível concluir.'
+
+      setMessage(
+        errorMessage
+      )
+
+      // Popup imediato para erros administrativos.
+      // A mensagem continua aparecendo também no painel.
+      window.alert(
+        `❌ ${errorMessage}`
+      )
     } finally {
       setIsLoading(false)
     }

@@ -2,6 +2,7 @@ import adminDataHandler from '../server/actions/admin-data.js'
 import adminCreateHandler from '../server/actions/admin-create.js'
 import adminUpdateHandler from '../server/actions/admin-update.js'
 import adminRegistrationHandler from '../server/actions/admin-registration.js'
+import adminExpenseHandler from '../server/actions/admin-expenses.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -24,6 +25,14 @@ export default async function handler(request, response) {
       response
     )
   }
+
+  if (action === 'expenses') {
+    return adminExpenseHandler(
+      request,
+      response
+    )
+  }
+
 
   return response.status(404).json({
     error: 'Ação administrativa não encontrada.',

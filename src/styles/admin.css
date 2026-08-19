@@ -1353,3 +1353,928 @@
     grid-column: 1 / -1;
   }
 }
+
+
+/* =========================================================
+   VOLUNTEER EVENT OVERVIEW
+   ========================================================= */
+
+.volunteer-overview-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.volunteer-overview-card {
+  padding: 16px;
+
+  border: 1px solid var(--line);
+  border-radius: 18px;
+
+  background: var(--surface);
+}
+
+.volunteer-overview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+
+  margin-bottom: 14px;
+}
+
+.volunteer-overview-header h3 {
+  margin: 0 0 4px;
+}
+
+.volunteer-overview-header small {
+  opacity: 0.68;
+}
+
+.volunteer-overview-money {
+  flex: 0 0 auto;
+
+  padding: 7px 10px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(49, 132, 198, 0.08);
+
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.volunteer-overview-stats {
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 8px;
+}
+
+.volunteer-overview-stats > div {
+  display: grid;
+  gap: 2px;
+
+  min-width: 0;
+  padding: 10px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(0, 0, 0, 0.03);
+
+  text-align: center;
+}
+
+.volunteer-overview-stats strong {
+  font-size: 1.15rem;
+}
+
+.volunteer-overview-stats span {
+  font-size: 0.68rem;
+  opacity: 0.68;
+}
+
+.volunteer-overview-note {
+  display: block;
+
+  margin-top: 10px;
+
+  opacity: 0.65;
+}
+
+
+@media (max-width: 600px) {
+  .volunteer-overview-card {
+    padding: 12px;
+  }
+
+  .volunteer-overview-header {
+    display: grid;
+    gap: 8px;
+  }
+
+  .volunteer-overview-money {
+    justify-self: start;
+  }
+
+  .volunteer-overview-stats {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .volunteer-overview-stats > div {
+    padding: 8px 5px;
+  }
+
+  .volunteer-overview-stats strong {
+    font-size: 1rem;
+  }
+
+  .volunteer-overview-stats span {
+    font-size: 0.62rem;
+  }
+}
+
+
+/* =========================================================
+   TEAM EXPENSES
+   ========================================================= */
+
+.admin-expenses-section {
+  scroll-margin-top: 90px;
+}
+
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+.expense-summary {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin:
+    16px 0;
+}
+
+.expense-summary article {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding:
+    13px 14px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:
+    16px;
+
+  background:
+    var(--surface);
+}
+
+.expense-summary article > span {
+  font-size:
+    1.3rem;
+}
+
+.expense-summary article div {
+  display: grid;
+  gap: 2px;
+}
+
+.expense-summary small {
+  opacity: 0.65;
+
+  font-size:
+    0.72rem;
+}
+
+.expense-summary strong {
+  font-size:
+    1rem;
+}
+
+
+/* =========================================================
+   CREATE CARD
+   ========================================================= */
+
+.expense-create-card {
+  margin:
+    16px 0 20px;
+
+  padding:
+    16px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:
+    18px;
+
+  background:
+    var(--surface);
+}
+
+.expense-create-heading {
+  margin-bottom:
+    14px;
+}
+
+.expense-create-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.expense-create-heading strong {
+  font-size:
+    0.95rem;
+}
+
+.expense-create-heading small {
+  opacity:
+    0.62;
+
+  font-size:
+    0.72rem;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.expense-form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    11px;
+}
+
+.expense-form-grid label {
+  display: grid;
+
+  gap:
+    6px;
+}
+
+.expense-form-grid label > span {
+  font-size:
+    0.76rem;
+
+  font-weight:
+    800;
+}
+
+.expense-form-grid input,
+.expense-form-grid select {
+  width:
+    100%;
+
+  min-width:
+    0;
+
+  min-height:
+    42px;
+
+  padding:
+    8px 10px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:
+    12px;
+
+  background:
+    var(--surface);
+
+  font:
+    inherit;
+}
+
+.expense-description-field {
+  grid-column:
+    1 / -1;
+}
+
+
+/* =========================================================
+   MONEY
+   ========================================================= */
+
+.expense-money-input {
+  display: flex;
+  align-items: center;
+
+  gap:
+    7px;
+
+  padding-left:
+    10px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:
+    12px;
+
+  overflow:
+    hidden;
+}
+
+.expense-money-input strong {
+  font-size:
+    0.82rem;
+
+  opacity:
+    0.65;
+}
+
+.expense-money-input input {
+  border:
+    0;
+
+  border-radius:
+    0;
+
+  outline:
+    0;
+}
+
+
+/* =========================================================
+   RECEIPT
+   ========================================================= */
+
+.expense-receipt-field input {
+  padding:
+    7px;
+}
+
+.expense-receipt-field small {
+  max-width:
+    100%;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  opacity:
+    0.67;
+
+  font-size:
+    0.7rem;
+}
+
+
+/* =========================================================
+   SUBMIT
+   ========================================================= */
+
+.expense-submit-button {
+  width:
+    100%;
+
+  margin-top:
+    13px;
+
+  min-height:
+    43px;
+
+  border:
+    0;
+
+  border-radius:
+    13px;
+
+  font-weight:
+    900;
+
+  cursor:
+    pointer;
+}
+
+
+/* =========================================================
+   READ ONLY
+   ========================================================= */
+
+.expense-readonly-note {
+  margin:
+    14px 0;
+
+  padding:
+    11px 13px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:
+    14px;
+
+  font-size:
+    0.8rem;
+
+  opacity:
+    0.8;
+}
+
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+
+.expense-history {
+  display:
+    grid;
+
+  gap:
+    12px;
+
+  margin-top:
+    18px;
+}
+
+.expense-history-heading {
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  align-items:
+    center;
+
+  gap:
+    12px;
+}
+
+.expense-history-heading small {
+  opacity:
+    0.6;
+
+  font-size:
+    0.74rem;
+}
+
+
+/* =========================================================
+   EVENT CARD
+   ========================================================= */
+
+.expense-event-card {
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:
+    17px;
+
+  background:
+    var(--surface);
+}
+
+.expense-event-header {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    12px;
+
+  padding:
+    12px 14px;
+
+  border-bottom:
+    1px solid
+    var(--line);
+}
+
+.expense-event-header > div {
+  display:
+    grid;
+
+  gap:
+    3px;
+
+  min-width:
+    0;
+}
+
+.expense-event-header > div > strong {
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  font-size:
+    0.9rem;
+}
+
+.expense-event-header small {
+  opacity:
+    0.62;
+
+  font-size:
+    0.7rem;
+}
+
+.expense-event-header > span {
+  flex:
+    0 0 auto;
+
+  font-size:
+    0.82rem;
+
+  font-weight:
+    900;
+}
+
+
+/* =========================================================
+   EXPENSE ROW
+   ========================================================= */
+
+.expense-list {
+  display:
+    grid;
+}
+
+.expense-row {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    auto;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+  padding:
+    10px 13px;
+
+  border-bottom:
+    1px solid
+    var(--line);
+}
+
+.expense-row:last-child {
+  border-bottom:
+    0;
+}
+
+.expense-row-main {
+  display:
+    grid;
+
+  gap:
+    2px;
+
+  min-width:
+    0;
+}
+
+.expense-row-main strong {
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  font-size:
+    0.82rem;
+}
+
+.expense-row-main small {
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  opacity:
+    0.62;
+
+  font-size:
+    0.68rem;
+}
+
+.expense-row-value {
+  white-space:
+    nowrap;
+
+  font-size:
+    0.8rem;
+}
+
+.expense-receipt-button {
+  min-height:
+    32px;
+
+  padding:
+    5px 8px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:
+    9px;
+
+  background:
+    var(--surface);
+
+  font-size:
+    0.72rem;
+
+  font-weight:
+    800;
+
+  cursor:
+    pointer;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .expense-summary {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap:
+      7px;
+  }
+
+  .expense-summary article {
+    padding:
+      10px;
+
+    gap:
+      7px;
+  }
+
+  .expense-summary article > span {
+    font-size:
+      1rem;
+  }
+
+  .expense-summary strong {
+    font-size:
+      0.86rem;
+  }
+
+  .expense-create-card {
+    padding:
+      12px;
+  }
+
+  .expense-form-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .expense-description-field {
+    grid-column:
+      auto;
+  }
+
+  .expense-row {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+
+    gap:
+      6px 9px;
+
+    padding:
+      9px 10px;
+  }
+
+  .expense-receipt-button {
+    grid-column:
+      1;
+
+    justify-self:
+      start;
+  }
+
+  .expense-row-value {
+    grid-column:
+      2;
+
+    grid-row:
+      1;
+
+    align-self:
+      start;
+  }
+
+  .expense-event-header {
+    padding:
+      10px;
+  }
+}
+
+
+/* =========================================================
+   ACTIVITIES TEAM OVERVIEW
+   ========================================================= */
+
+.activities-overview-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.activities-overview-card {
+  overflow: hidden;
+
+  border: 1px solid var(--line);
+  border-radius: 17px;
+
+  background: var(--surface);
+}
+
+.activities-overview-card summary {
+  padding: 13px 14px;
+  cursor: pointer;
+
+  list-style: none;
+}
+
+.activities-overview-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.activities-overview-event {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+.activities-overview-event > div {
+  display: grid;
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.activities-overview-event strong {
+  font-size: 0.9rem;
+}
+
+.activities-overview-event small {
+  opacity: 0.62;
+  font-size: 0.7rem;
+}
+
+.activities-overview-event > span {
+  flex: 0 0 auto;
+
+  padding: 7px 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.activities-people-list {
+  display: grid;
+
+  border-top: 1px solid var(--line);
+}
+
+.activities-person-row {
+  display: grid;
+
+  grid-template-columns:
+    28px minmax(0, 1fr) auto;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 9px 13px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.activities-person-row:last-child {
+  border-bottom: 0;
+}
+
+.activities-person-row > div {
+  display: grid;
+  gap: 2px;
+
+  min-width: 0;
+}
+
+.activities-person-row strong {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.82rem;
+}
+
+.activities-person-row small {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  opacity: 0.62;
+
+  font-size: 0.68rem;
+}
+
+.activities-confirmed {
+  white-space: nowrap;
+
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.activities-empty {
+  padding: 13px;
+
+  border-top: 1px solid var(--line);
+
+  opacity: 0.65;
+
+  font-size: 0.78rem;
+}
+
+
+@media (max-width: 600px) {
+  .activities-overview-card summary {
+    padding: 11px;
+  }
+
+  .activities-overview-event {
+    align-items: flex-start;
+  }
+
+  .activities-overview-event > span {
+    padding: 6px 8px;
+
+    font-size: 0.66rem;
+  }
+
+  .activities-person-row {
+    grid-template-columns:
+      24px minmax(0, 1fr);
+
+    padding: 8px 10px;
+  }
+
+  .activities-confirmed {
+    grid-column: 2;
+
+    justify-self: start;
+  }
+}
