@@ -324,6 +324,34 @@ function VolunteerChecklistPanel() {
   if (
     checklists.length === 0
   ) {
+    // Se houve erro na API, não escondemos a mensagem.
+    // Isso é importante principalmente para diagnosticar
+    // problemas de acesso ou carregamento da checklist.
+    if (message) {
+      return (
+        <section
+          className="section-block volunteer-checklist-section"
+          id="minhas-checklists"
+        >
+          <div className="section-heading">
+            <p className="eyebrow eyebrow-blue">
+              CHECK-IN
+            </p>
+
+            <h2>
+              ☑️ Sua lista de check-in
+            </h2>
+          </div>
+
+          <div className="empty-state">
+            <p>
+              ⚠️ {message}
+            </p>
+          </div>
+        </section>
+      )
+    }
+
     return null
   }
 
