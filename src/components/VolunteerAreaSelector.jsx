@@ -1,11 +1,3 @@
-const TEAM_ICONS = {
-  activities: '🎨',
-  volunteers: '🙋',
-  assisted: '🧒',
-  food: '🍽️',
-  media: '📸',
-}
-
 function VolunteerAreaSelector({
   access,
   selectedArea,
@@ -15,41 +7,13 @@ function VolunteerAreaSelector({
     return null
   }
 
-  const availableTeams =
-    access.availableTeams || []
-
-  if (availableTeams.length === 0) {
-    return null
-  }
-
-  function getScopeLabel(team) {
-    if (team.code === 'media') {
-      if (
-        access.adminScope === 'global'
-      ) {
-        return 'APS • PPF • SJ'
-      }
-
-      if (
-        access.adminScope === 'project'
-      ) {
-        return access.project?.name
-      }
-
-      return 'APS • PPF • SJ • aberta para todos'
-    }
-
-    if (
-      access.adminScope === 'global'
-    ) {
-      return 'Todos os projetos'
-    }
-
-    return (
-      access.project?.name ||
-      'Meu projeto'
-    )
-  }
+  const primaryTeam =
+    access.primaryTeam ||
+    access.availableTeams?.find(
+      (team) =>
+        team.code !== 'media'
+    ) ||
+    null
 
   return (
     <section className="volunteer-area-shell">
@@ -60,43 +24,66 @@ function VolunteerAreaSelector({
           </p>
 
           <h2>
-            Onde vamos fazer acontecer hoje? 🫶
+            Onde você quer navegar? 🫶
           </h2>
         </div>
       </div>
 
       <div className="volunteer-area-options">
-        {availableTeams.map(
-          (team) => (
-            <button
-              key={team.id}
-              type="button"
-              className={
-                selectedArea === team.code
-                  ? 'volunteer-area-card active'
-                  : 'volunteer-area-card'
-              }
-              onClick={() =>
-                onSelect(team.code)
-              }
-            >
-              <span className="volunteer-area-icon">
-                {TEAM_ICONS[
-                  team.code
-                ] || '🫶'}
-              </span>
+        <button
+          type="button"
+          className={
+            selectedArea === 'general'
+              ? 'volunteer-area-card active'
+              : 'volunteer-area-card'
+          }
+          onClick={() =>
+            onSelect('general')
+          }
+        >
+          <span className="volunteer-area-icon">
+            🌎
+          </span>
 
-              <span>
-                <strong>
-                  {team.name}
-                </strong>
+          <span>
+            <strong>
+              Próximos Eventos e Mídia
+            </strong>
 
-                <small>
-                  {getScopeLabel(team)}
-                </small>
-              </span>
-            </button>
-          )
+            <small>
+              Eventos, Mídias e novidades gerais
+            </small>
+          </span>
+        </button>
+
+        {primaryTeam && (
+          <button
+            type="button"
+            className={
+              selectedArea === 'team'
+                ? 'volunteer-area-card active'
+                : 'volunteer-area-card'
+            }
+            onClick={() =>
+              onSelect('team')
+            }
+          >
+            <span className="volunteer-area-icon">
+              🏠
+            </span>
+
+            <span>
+              <strong>
+                Minha Equipe
+              </strong>
+
+              <small>
+                {access.project?.name}
+                {' • '}
+                {primaryTeam.name}
+              </small>
+            </span>
+          </button>
         )}
       </div>
     </section>
