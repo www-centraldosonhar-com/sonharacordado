@@ -697,23 +697,42 @@ function HomePage({
           <small>Eventos</small>
         </a>
 
-        {isTeamView && (
-          <a href="#combinados">
-            <span>🤝</span>
-            <small>Combinados</small>
-          </a>
+        {isGeneralView && (
+          <>
+            <a href="#missoes">
+              <span>🚀</span>
+              <small>Missões</small>
+            </a>
+
+            <a href="#mural">
+              <span>📢</span>
+              <small>Mural</small>
+            </a>
+
+            <a href="#memorias">
+              <span>📸</span>
+              <small>Memórias</small>
+            </a>
+          </>
         )}
 
-        <a href="#missoes">
-          <span>🚀</span>
-          <small>Missões</small>
-        </a>
+        {isTeamView && (
+          <>
+            <a href="#combinados">
+              <span>🤝</span>
+              <small>Combinados</small>
+            </a>
 
-        {isGeneralView && (
-          <a href="#memorias">
-            <span>📸</span>
-            <small>Memórias</small>
-          </a>
+            <a href="#minhas-missoes">
+              <span>🚀</span>
+              <small>Minhas</small>
+            </a>
+
+            <a href="#mural">
+              <span>📢</span>
+              <small>Mural</small>
+            </a>
+          </>
         )}
       </nav>
     </>
