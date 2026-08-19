@@ -8,6 +8,11 @@ function AdminCreatePanel({
   onCreated,
 }) {
   const [message, setMessage] = useState('')
+
+  const [
+    activityTeamId,
+    setActivityTeamId,
+  ] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const [
@@ -55,6 +60,7 @@ function AdminCreatePanel({
 
       if (action === 'activity') {
         setActivityRequiresDelivery(false)
+        setActivityTeamId('')
       }
 
       if (action === 'user') {
@@ -130,6 +136,50 @@ function AdminCreatePanel({
               name="message"
               required
             />
+
+            <label>
+              Projeto de destino
+            </label>
+
+            <select
+              name="projectId"
+              defaultValue=""
+            >
+              <option value="">
+                🌎 Toda a ONG / transversal
+              </option>
+
+              {projects.map((project) => (
+                <option
+                  key={project.id}
+                  value={project.id}
+                >
+                  {project.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
+              Equipe de destino
+            </label>
+
+            <select
+              name="teamId"
+              defaultValue=""
+            >
+              <option value="">
+                Todas as equipes
+              </option>
+
+              {teams.map((team) => (
+                <option
+                  key={team.id}
+                  value={team.id}
+                >
+                  {team.name}
+                </option>
+              ))}
+            </select>
 
             <label>Prioridade</label>
 
@@ -378,38 +428,17 @@ function AdminCreatePanel({
             </select>
 
             <label>
-              Atividade
-            </label>
-
-            <select
-              name="roleId"
-              required
-              defaultValue=""
-            >
-              <option
-                value=""
-                disabled
-              >
-                Selecione
-              </option>
-
-              {roles.map((role) => (
-                <option
-                  key={role.id}
-                  value={role.id}
-                >
-                  {role.name}
-                </option>
-              ))}
-            </select>
-
-            <label>
               Equipe responsável
             </label>
 
             <select
               name="teamId"
-              defaultValue=""
+              value={activityTeamId}
+              onChange={(event) =>
+                setActivityTeamId(
+                  event.target.value
+                )
+              }
               required
             >
               <option
@@ -430,6 +459,42 @@ function AdminCreatePanel({
             </select>
 
             <label>
+              Atividade / função
+            </label>
+
+            <select
+              name="roleId"
+              required
+              defaultValue=""
+              key={activityTeamId}
+              disabled={!activityTeamId}
+            >
+              <option
+                value=""
+                disabled
+              >
+                {activityTeamId
+                  ? 'Selecione'
+                  : 'Escolha a equipe primeiro'}
+              </option>
+
+              {roles
+                .filter(
+                  (role) =>
+                    Number(role.team_id) ===
+                    Number(activityTeamId)
+                )
+                .map((role) => (
+                  <option
+                    key={role.id}
+                    value={role.id}
+                  >
+                    {role.name}
+                  </option>
+                ))}
+            </select>
+
+<label>
               Descrição
             </label>
 

@@ -229,10 +229,17 @@ export default async function handler(request, response) {
 
     const roles = await sql`
       SELECT
-        id,
-        name
-      FROM roles
-      ORDER BY name
+        r.id,
+        r.name,
+        r.team_id,
+        t.code AS team_code,
+        t.name AS team_name
+      FROM roles r
+      LEFT JOIN teams t
+        ON t.id = r.team_id
+      ORDER BY
+        t.name,
+        r.name
     `
 
     const eventRoles = await sql`
