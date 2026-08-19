@@ -46,7 +46,7 @@ function VolunteerChecklistPanel({
   const [
     filter,
     setFilter,
-  ] = useState('all')
+  ] = useState('pending')
 
   const [
     message,
@@ -81,9 +81,22 @@ function VolunteerChecklistPanel({
         }
 
         if (active) {
-          setChecklists(
+          const loadedChecklists =
             result.checklists || []
+
+          setChecklists(
+            loadedChecklists
           )
+
+          // Se existe somente uma checklist,
+          // abre direto para agilizar o check-in.
+          if (
+            loadedChecklists.length === 1
+          ) {
+            setSelectedChecklistId(
+              loadedChecklists[0].id
+            )
+          }
         }
       })
       .catch((error) => {
@@ -149,7 +162,7 @@ function VolunteerChecklistPanel({
           )
 
           setSearch('')
-          setFilter('all')
+          setFilter('pending')
         }
       })
       .catch((error) => {
@@ -549,6 +562,45 @@ function VolunteerChecklistPanel({
         </p>
       </div>
 
+      <div className="checklist-live-summary">
+        <div>
+          <strong>
+            ✅ {checkedCount}
+          </strong>
+
+          <span>
+            presentes
+          </span>
+        </div>
+
+        <div>
+          <strong>
+            ⏳ {pendingCount}
+          </strong>
+
+          <span>
+            pendentes
+          </span>
+        </div>
+
+        <div>
+          <strong>
+            👥 {items.length}
+          </strong>
+
+          <span>
+            total
+          </span>
+        </div>
+      </div>
+
+      {items.length > 0 &&
+        pendingCount === 0 && (
+          <div className="checklist-complete-message">
+            ✅ Check-in concluído — todos presentes!
+          </div>
+        )}
+
       <div className="checklist-search-box">
         <span>🔎</span>
 
@@ -566,6 +618,20 @@ function VolunteerChecklistPanel({
       </div>
 
       <div className="checklist-filter-row">
+        <button
+          type="button"
+          className={
+            filter === 'pending'
+              ? 'active'
+              : ''
+          }
+          onClick={() =>
+            setFilter('pending')
+          }
+        >
+          ⏳ Pendentes {pendingCount}
+        </button>
+
         <button
           type="button"
           className={
@@ -592,20 +658,6 @@ function VolunteerChecklistPanel({
           }
         >
           ✅ Presentes {checkedCount}
-        </button>
-
-        <button
-          type="button"
-          className={
-            filter === 'pending'
-              ? 'active'
-              : ''
-          }
-          onClick={() =>
-            setFilter('pending')
-          }
-        >
-          ⏳ Pendentes {pendingCount}
         </button>
       </div>
 
