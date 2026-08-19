@@ -466,3 +466,139 @@ export async function adminCanAccessRegistration(
     rows[0].event_id
   )
 }
+
+// =========================================================
+// CONTENT SCOPE ACCESS
+// =========================================================
+//
+// Verifica se o Admin pode criar/editar conteúdo destinado
+// a determinado projeto/equipe.
+//
+// Global:
+//   qualquer combinação.
+//
+// Project:
+//   próprio projeto;
+//   qualquer equipe dentro dele.
+//
+// Team:
+//   própria equipe + próprio projeto.
+//
+// Media Admin:
+//   Mídias pode ser transversal.
+// =========================================================
+
+export async function adminCanUseContentScope(
+  admin,
+  projectId,
+  teamId
+) {
+  if (!admin) {
+    return false
+  }
+
+  const normalizedProjectId =
+    projectId === null ||
+    projectId === '' ||
+    projectId === undefined
+      ? null
+      : Number(projectId)
+
+  const normalizedTeamId =
+    teamId === null ||
+    teamId === '' ||
+    teamId === undefined
+      ? null
+      : Number(teamId)
+
+  if (
+    normalizedProjectId !== null &&
+    !Number.isInteger(normalizedProjectId)
+  ) {
+    return false
+  }
+
+  if (
+    normalizedTeamId !== null &&
+    !Number.isInteger(normalizedTeamId)
+  ) {
+    return false
+  }
+
+  // Admin Geral pode usar qualquer escopo.
+  if (isGlobalAdmin(admin)) {
+    return true
+  }
+
+  let targetTeam = null
+
+  if (normalizedTeamId !== null) {
+    const rows = await sql`
+      SELECT
+        id,
+        code,
+        name
+      FROM teams
+      WHERE id = ${normalizedTeamId}
+        AND active = 1
+      LIMIT 1
+    `
+
+    targetTeam = rows[0]
+
+    if (!targetTeam) {
+      return false
+    }
+  }
+
+  // -----------------------------------------------
+  // ADMIN DE PROJETO
+  // -----------------------------------------------
+
+  if (isProjectAdmin(admin)) {
+    // Admin de Projeto não publica conteúdo
+    // global da ONG.
+    if (normalizedProjectId === null) {
+      return false
+    }
+
+    return (
+      normalizedProjectId ===
+      Number(admin.projectId)
+    )
+  }
+
+  // -----------------------------------------------
+  // ADMIN DE EQUIPE
+  // -----------------------------------------------
+
+  if (!isTeamAdmin(admin)) {
+    return false
+  }
+
+  const adminTeamIds =
+    getAdminTeamIds(admin)
+
+  // Mídias é transversal.
+  if (isMediaAdmin(admin)) {
+    return (
+      targetTeam?.code === 'media'
+    )
+  }
+
+  // Equipe comum precisa permanecer no projeto
+  // e na equipe administrada.
+  if (
+    normalizedProjectId !==
+    Number(admin.projectId)
+  ) {
+    return false
+  }
+
+  return (
+    normalizedTeamId !== null &&
+    adminTeamIds.includes(
+      normalizedTeamId
+    )
+  )
+}

@@ -421,6 +421,28 @@ function AdminManageActions({
     if (type === 'activity') {
       return (
         <>
+          <label>Equipe responsável</label>
+
+          <select
+            name="teamId"
+            defaultValue={
+              item.team_id || ''
+            }
+          >
+            <option value="">
+              Sem equipe específica
+            </option>
+
+            {teams.map((team) => (
+              <option
+                key={team.id}
+                value={team.id}
+              >
+                {team.name}
+              </option>
+            ))}
+          </select>
+
           <label>Descrição</label>
 
           <textarea
@@ -513,6 +535,50 @@ function AdminManageActions({
               item.description || ''
             }
           />
+
+          <label>Projeto</label>
+
+          <select
+            name="projectId"
+            defaultValue={
+              item.project_id || ''
+            }
+          >
+            <option value="">
+              Geral / definido pelo evento
+            </option>
+
+            {projects.map((project) => (
+              <option
+                key={project.id}
+                value={project.id}
+              >
+                {project.name}
+              </option>
+            ))}
+          </select>
+
+          <label>Equipe</label>
+
+          <select
+            name="teamId"
+            defaultValue={
+              item.team_id || ''
+            }
+          >
+            <option value="">
+              Todas as equipes
+            </option>
+
+            {teams.map((team) => (
+              <option
+                key={team.id}
+                value={team.id}
+              >
+                {team.name}
+              </option>
+            ))}
+          </select>
 
           <label>Evento</label>
 
@@ -611,6 +677,50 @@ function AdminManageActions({
             }
             required
           />
+
+          <label>Projeto de destino</label>
+
+          <select
+            name="projectId"
+            defaultValue={
+              item.project_id || ''
+            }
+          >
+            <option value="">
+              🌎 Toda a ONG / transversal
+            </option>
+
+            {projects.map((project) => (
+              <option
+                key={project.id}
+                value={project.id}
+              >
+                {project.name}
+              </option>
+            ))}
+          </select>
+
+          <label>Equipe de destino</label>
+
+          <select
+            name="teamId"
+            defaultValue={
+              item.team_id || ''
+            }
+          >
+            <option value="">
+              Todas as equipes
+            </option>
+
+            {teams.map((team) => (
+              <option
+                key={team.id}
+                value={team.id}
+              >
+                {team.name}
+              </option>
+            ))}
+          </select>
 
           <label>Prioridade</label>
 

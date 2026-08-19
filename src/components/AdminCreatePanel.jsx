@@ -404,6 +404,32 @@ function AdminCreatePanel({
             </select>
 
             <label>
+              Equipe responsável
+            </label>
+
+            <select
+              name="teamId"
+              defaultValue=""
+              required
+            >
+              <option
+                value=""
+                disabled
+              >
+                Selecione a equipe
+              </option>
+
+              {teams.map((team) => (
+                <option
+                  key={team.id}
+                  value={team.id}
+                >
+                  {team.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
               Descrição
             </label>
 
@@ -493,6 +519,50 @@ function AdminCreatePanel({
             />
 
             <label>
+              Projeto
+            </label>
+
+            <select
+              name="projectId"
+              defaultValue=""
+            >
+              <option value="">
+                🌎 Geral / definir pelo evento
+              </option>
+
+              {projects.map((project) => (
+                <option
+                  key={project.id}
+                  value={project.id}
+                >
+                  {project.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
+              Equipe
+            </label>
+
+            <select
+              name="teamId"
+              defaultValue=""
+            >
+              <option value="">
+                Todas as equipes
+              </option>
+
+              {teams.map((team) => (
+                <option
+                  key={team.id}
+                  value={team.id}
+                >
+                  {team.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
               Evento relacionado
             </label>
 
@@ -528,6 +598,50 @@ function AdminCreatePanel({
               name="deadline"
               required
             />
+
+            <label>
+              Projeto de destino
+            </label>
+
+            <select
+              name="projectId"
+              defaultValue=""
+            >
+              <option value="">
+                🌎 Toda a ONG / transversal
+              </option>
+
+              {projects.map((project) => (
+                <option
+                  key={project.id}
+                  value={project.id}
+                >
+                  {project.name}
+                </option>
+              ))}
+            </select>
+
+            <label>
+              Equipe de destino
+            </label>
+
+            <select
+              name="teamId"
+              defaultValue=""
+            >
+              <option value="">
+                Todas as equipes
+              </option>
+
+              {teams.map((team) => (
+                <option
+                  key={team.id}
+                  value={team.id}
+                >
+                  {team.name}
+                </option>
+              ))}
+            </select>
 
             <label>
               Prioridade

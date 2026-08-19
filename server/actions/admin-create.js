@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { promisify } from 'node:util'
 import {
+  adminCanUseContentScope,
   adminCanAccessEvent,
   adminCanAccessProject,
   isGlobalAdmin,
@@ -96,13 +97,19 @@ export default async function handler(request, response) {
 
   try {
     if (action === 'announcement') {
-      if (!isGlobalAdmin(admin)) {
-        return forbidden(response)
-      }
-
       const title = data.title?.trim()
       const message = data.message?.trim()
       const priority = data.priority || 'normal'
+
+      const projectId =
+        data.projectId
+          ? Number(data.projectId)
+          : null
+
+      const teamId =
+        data.teamId
+          ? Number(data.teamId)
+          : null
 
       if (!title || !message) {
         return response.status(400).json({
@@ -119,12 +126,25 @@ export default async function handler(request, response) {
         })
       }
 
+      const canUseScope =
+        await adminCanUseContentScope(
+          admin,
+          projectId,
+          teamId
+        )
+
+      if (!canUseScope) {
+        return forbidden(response)
+      }
+
       await sql`
         INSERT INTO announcements (
           title,
           message,
           priority,
           created_by,
+          project_id,
+          team_id,
           active
         )
         VALUES (
@@ -132,6 +152,8 @@ export default async function handler(request, response) {
           ${message},
           ${priority},
           ${admin.id},
+          ${projectId},
+          ${teamId},
           1
         )
       `
@@ -310,9 +332,15 @@ export default async function handler(request, response) {
         vacancyLimit,
         requiresDelivery,
         deliveryDeadline,
+        teamId,
       } = data
 
       const limit = Number(vacancyLimit)
+
+      const numericTeamId =
+        teamId
+          ? Number(teamId)
+          : null
 
       const deliveryRequired =
         Number(requiresDelivery) === 1
@@ -355,6 +383,27 @@ export default async function handler(request, response) {
         })
       }
 
+      const eventRows = await sql`
+        SELECT project_id
+        FROM events
+        WHERE id = ${eventId}
+        LIMIT 1
+      `
+
+      const activityProjectId =
+        eventRows[0]?.project_id ?? null
+
+      const canUseScope =
+        await adminCanUseContentScope(
+          admin,
+          activityProjectId,
+          numericTeamId
+        )
+
+      if (!canUseScope) {
+        return forbidden(response)
+      }
+
       await sql`
         INSERT INTO event_roles (
           event_id,
@@ -363,7 +412,8 @@ export default async function handler(request, response) {
           vacancy_limit,
           active,
           requires_delivery,
-          delivery_deadline
+          delivery_deadline,
+          team_id
         )
         VALUES (
           ${eventId},
@@ -377,7 +427,8 @@ export default async function handler(request, response) {
             deliveryDeadline
               ? deliveryDeadline
               : null
-          }
+          },
+          ${numericTeamId}
         )
       `
 
@@ -395,9 +446,21 @@ export default async function handler(request, response) {
         deadline,
         priority,
         volunteerLimit,
+        projectId,
+        teamId,
       } = data
 
       const limit = Number(volunteerLimit)
+
+      const numericProjectId =
+        projectId
+          ? Number(projectId)
+          : null
+
+      const numericTeamId =
+        teamId
+          ? Number(teamId)
+          : null
 
       if (
         !title?.trim() ||
@@ -419,6 +482,9 @@ export default async function handler(request, response) {
         })
       }
 
+      let effectiveProjectId =
+        numericProjectId
+
       if (eventId) {
         const canAccessEvent =
           await adminCanAccessEvent(
@@ -429,9 +495,26 @@ export default async function handler(request, response) {
         if (!canAccessEvent) {
           return forbidden(response)
         }
-      } else if (
-        !isGlobalAdmin(admin)
-      ) {
+
+        const eventRows = await sql`
+          SELECT project_id
+          FROM events
+          WHERE id = ${eventId}
+          LIMIT 1
+        `
+
+        effectiveProjectId =
+          eventRows[0]?.project_id ?? null
+      }
+
+      const canUseScope =
+        await adminCanUseContentScope(
+          admin,
+          effectiveProjectId,
+          numericTeamId
+        )
+
+      if (!canUseScope) {
         return forbidden(response)
       }
 
@@ -440,6 +523,8 @@ export default async function handler(request, response) {
           title,
           description,
           event_id,
+          project_id,
+          team_id,
           deadline,
           priority,
           status,
@@ -450,6 +535,8 @@ export default async function handler(request, response) {
           ${title.trim()},
           ${description?.trim() || null},
           ${eventId || null},
+          ${effectiveProjectId},
+          ${numericTeamId},
           ${deadline},
           ${priority},
           'open',

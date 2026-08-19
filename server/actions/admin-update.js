@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { promisify } from 'node:util'
 import {
+  adminCanUseContentScope,
   adminCanAccessActivity,
   adminCanAccessEvent,
   adminCanAccessTask,
@@ -767,6 +768,11 @@ export default async function handler(
           ? data.deliveryDeadline
           : null
 
+      const teamId =
+        data.teamId
+          ? Number(data.teamId)
+          : null
+
       if (
         !Number.isInteger(vacancyLimit) ||
         vacancyLimit < 1
@@ -775,6 +781,30 @@ export default async function handler(
           error:
             'A quantidade de vagas é inválida.',
         })
+      }
+
+      const activityRows = await sql`
+        SELECT
+          e.project_id
+        FROM event_roles er
+        JOIN events e
+          ON e.id = er.event_id
+        WHERE er.id = ${recordId}
+        LIMIT 1
+      `
+
+      const activityProjectId =
+        activityRows[0]?.project_id ?? null
+
+      const canUseScope =
+        await adminCanUseContentScope(
+          admin,
+          activityProjectId,
+          teamId
+        )
+
+      if (!canUseScope) {
+        return forbidden(response)
       }
 
       const confirmed = await sql`
@@ -804,7 +834,9 @@ export default async function handler(
           requires_delivery =
             ${requiresDelivery},
           delivery_deadline =
-            ${deliveryDeadline}
+            ${deliveryDeadline},
+          team_id =
+            ${teamId}
         WHERE id = ${recordId}
         RETURNING id
       `
@@ -937,6 +969,16 @@ export default async function handler(
       const volunteerLimit =
         Number(data.volunteerLimit)
 
+      const projectId =
+        data.projectId
+          ? Number(data.projectId)
+          : null
+
+      const teamId =
+        data.teamId
+          ? Number(data.teamId)
+          : null
+
       const rawEventId = data.eventId
       const eventId =
         rawEventId === '' ||
@@ -960,6 +1002,48 @@ export default async function handler(
         return response.status(400).json({
           error: 'Dados da missão inválidos.',
         })
+      }
+
+      let effectiveProjectId =
+        projectId
+
+      if (eventId !== null) {
+        const eventRows = await sql`
+          SELECT project_id
+          FROM events
+          WHERE id = ${eventId}
+          LIMIT 1
+        `
+
+        if (!eventRows[0]) {
+          return response.status(404).json({
+            error: 'Evento não encontrado.',
+          })
+        }
+
+        effectiveProjectId =
+          eventRows[0].project_id
+
+        const canAccessEvent =
+          await adminCanAccessEvent(
+            admin,
+            eventId
+          )
+
+        if (!canAccessEvent) {
+          return forbidden(response)
+        }
+      }
+
+      const canUseScope =
+        await adminCanUseContentScope(
+          admin,
+          effectiveProjectId,
+          teamId
+        )
+
+      if (!canUseScope) {
+        return forbidden(response)
       }
 
       const participants = await sql`
@@ -986,6 +1070,8 @@ export default async function handler(
           description =
             ${description || null},
           event_id = ${eventId},
+          project_id = ${effectiveProjectId},
+          team_id = ${teamId},
           deadline = ${deadline},
           priority = ${priority},
           volunteer_limit =
@@ -1108,14 +1194,20 @@ export default async function handler(
     }
 
     if (action === 'update-announcement') {
-      if (!isGlobalAdmin(admin)) {
-        return forbidden(response)
-      }
-
       const title = cleanText(data.title)
       const message =
         cleanText(data.message)
       const priority = data.priority
+
+      const projectId =
+        data.projectId
+          ? Number(data.projectId)
+          : null
+
+      const teamId =
+        data.teamId
+          ? Number(data.teamId)
+          : null
 
       if (
         !title ||
@@ -1129,12 +1221,25 @@ export default async function handler(
         })
       }
 
+      const canUseScope =
+        await adminCanUseContentScope(
+          admin,
+          projectId,
+          teamId
+        )
+
+      if (!canUseScope) {
+        return forbidden(response)
+      }
+
       const updated = await sql`
         UPDATE announcements
         SET
           title = ${title},
           message = ${message},
-          priority = ${priority}
+          priority = ${priority},
+          project_id = ${projectId},
+          team_id = ${teamId}
         WHERE id = ${recordId}
         RETURNING id
       `
