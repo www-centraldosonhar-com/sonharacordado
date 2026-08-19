@@ -10,6 +10,7 @@ import PastEventCard from '../components/PastEventCard'
 import PhotoDeliveryPanel from '../components/PhotoDeliveryPanel'
 import VolunteerCard from '../components/VolunteerCard'
 import EventRegistrationPanel from '../components/EventRegistrationPanel'
+import VolunteerChecklistPanel from '../components/VolunteerChecklistPanel'
 import VolunteerAreaSelector from '../components/VolunteerAreaSelector'
 
 import '../styles/home.css'
@@ -275,6 +276,8 @@ function HomePage({
             selectedArea={activeArea}
             onSelect={setSelectedArea}
           />
+
+          <VolunteerChecklistPanel />
 
           <section className="welcome-strip">
             <div className="welcome-dot" />

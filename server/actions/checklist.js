@@ -386,6 +386,85 @@ export default async function handler(
 
 
     // =====================================================
+    // MY CHECKLISTS
+    // =====================================================
+    // Lista apenas checklists onde o usuário logado foi
+    // definido como responsável.
+    // =====================================================
+
+    if (operation === 'mine') {
+      const rows = await sql`
+        SELECT
+          ac.id,
+          ac.title,
+          ac.event_role_id,
+          ac.source_type,
+
+          er.event_id,
+
+          e.name AS event_name,
+          e.event_date,
+
+          r.name AS activity_name,
+
+          t.name AS team_name,
+
+          COUNT(aci.id)::int
+            AS total_items,
+
+          COUNT(aci.id) FILTER (
+            WHERE aci.checked = 1
+          )::int
+            AS checked_items
+
+        FROM activity_checklists ac
+
+        JOIN event_roles er
+          ON er.id = ac.event_role_id
+
+        JOIN events e
+          ON e.id = er.event_id
+
+        JOIN roles r
+          ON r.id = er.role_id
+
+        LEFT JOIN teams t
+          ON t.id = er.team_id
+
+        LEFT JOIN activity_checklist_items aci
+          ON aci.checklist_id = ac.id
+
+        WHERE
+          ac.assigned_user_id =
+            ${session.userId}
+
+          AND ac.active = 1
+
+          AND er.active = 1
+
+        GROUP BY
+          ac.id,
+          ac.title,
+          ac.event_role_id,
+          ac.source_type,
+          er.event_id,
+          e.name,
+          e.event_date,
+          r.name,
+          t.name
+
+        ORDER BY
+          e.event_date ASC,
+          ac.created_at ASC
+      `
+
+      return response.status(200).json({
+        checklists: rows,
+      })
+    }
+
+
+    // =====================================================
     // GET CHECKLIST
     // =====================================================
 

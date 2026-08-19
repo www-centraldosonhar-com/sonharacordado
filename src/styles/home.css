@@ -2267,3 +2267,181 @@ body {
     min-width: 0;
   }
 }
+
+
+/* =========================================================
+   VOLUNTEER CHECKLIST
+   ========================================================= */
+
+.volunteer-checklist-section {
+  scroll-margin-top: 90px;
+}
+
+.checklist-selector-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.checklist-selector-card {
+  display: grid;
+  gap: 5px;
+
+  width: 100%;
+  padding: 16px;
+
+  text-align: left;
+
+  border: 1px solid var(--line);
+  border-radius: 18px;
+
+  background: var(--surface);
+}
+
+.checklist-selector-card strong {
+  font-size: 1rem;
+}
+
+.checklist-selector-card span,
+.checklist-selector-card small {
+  opacity: 0.74;
+}
+
+.checklist-progress {
+  margin-top: 7px;
+
+  font-weight: 800;
+}
+
+.checklist-back-button {
+  margin-bottom: 16px;
+}
+
+.checklist-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 18px 0 12px;
+  padding: 0 13px;
+
+  border: 1px solid var(--line);
+  border-radius: 16px;
+
+  background: var(--surface);
+}
+
+.checklist-search-box input {
+  width: 100%;
+  min-height: 48px;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  font: inherit;
+}
+
+.checklist-filter-row {
+  display: flex;
+  gap: 7px;
+
+  overflow-x: auto;
+
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.checklist-filter-row button {
+  flex: 0 0 auto;
+
+  padding: 9px 12px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  background: var(--surface);
+
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.checklist-filter-row button.active {
+  border-color: currentColor;
+  transform: translateY(-1px);
+}
+
+.checklist-mobile-list {
+  display: grid;
+  gap: 8px;
+}
+
+.checklist-person {
+  display: grid;
+  grid-template-columns:
+    42px 1fr auto;
+  align-items: center;
+  gap: 11px;
+
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+
+  text-align: left;
+
+  border: 1px solid var(--line);
+  border-radius: 16px;
+
+  background: var(--surface);
+}
+
+.checklist-person.checked {
+  opacity: 0.78;
+}
+
+.checklist-person-box {
+  display: grid;
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  border: 2px solid currentColor;
+  border-radius: 12px;
+
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.checklist-person-info {
+  display: grid;
+  gap: 2px;
+}
+
+.checklist-person-info strong {
+  font-size: 0.95rem;
+}
+
+.checklist-person-info small {
+  opacity: 0.65;
+}
+
+.checklist-person-status {
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.checklist-message {
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .checklist-person {
+    grid-template-columns:
+      38px 1fr;
+  }
+
+  .checklist-person-status {
+    grid-column: 2;
+  }
+}
