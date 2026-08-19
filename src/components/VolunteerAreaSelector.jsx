@@ -1,15 +1,3 @@
-// =========================================================
-// VOLUNTEER AREA SELECTOR
-// =========================================================
-// Mostra somente as áreas que o usuário realmente possui.
-//
-// Equipe principal:
-//   limitada ao projeto do usuário.
-//
-// Mídias:
-//   transversal para APS, PPF e SJ.
-// =========================================================
-
 const TEAM_ICONS = {
   activities: '🎨',
   volunteers: '🙋',
@@ -27,12 +15,41 @@ function VolunteerAreaSelector({
     return null
   }
 
-  const primary =
-    access.primaryTeam
+  const availableTeams =
+    access.availableTeams || []
 
-  // Mídias é uma área transversal e aberta
-  // para todos os voluntários da ONG.
-  const hasMedia = true
+  if (availableTeams.length === 0) {
+    return null
+  }
+
+  function getScopeLabel(team) {
+    if (team.code === 'media') {
+      if (
+        access.adminScope === 'global'
+      ) {
+        return 'APS • PPF • SJ'
+      }
+
+      if (
+        access.adminScope === 'project'
+      ) {
+        return access.project?.name
+      }
+
+      return 'APS • PPF • SJ • aberta para todos'
+    }
+
+    if (
+      access.adminScope === 'global'
+    ) {
+      return 'Todos os projetos'
+    }
+
+    return (
+      access.project?.name ||
+      'Meu projeto'
+    )
+  }
 
   return (
     <section className="volunteer-area-shell">
@@ -49,65 +66,37 @@ function VolunteerAreaSelector({
       </div>
 
       <div className="volunteer-area-options">
-        {primary && (
-          <button
-            type="button"
-            className={
-              selectedArea ===
-              primary.code
-                ? 'volunteer-area-card active'
-                : 'volunteer-area-card'
-            }
-            onClick={() =>
-              onSelect(
-                primary.code
-              )
-            }
-          >
-            <span className="volunteer-area-icon">
-              {TEAM_ICONS[
-                primary.code
-              ] || '🫶'}
-            </span>
+        {availableTeams.map(
+          (team) => (
+            <button
+              key={team.id}
+              type="button"
+              className={
+                selectedArea === team.code
+                  ? 'volunteer-area-card active'
+                  : 'volunteer-area-card'
+              }
+              onClick={() =>
+                onSelect(team.code)
+              }
+            >
+              <span className="volunteer-area-icon">
+                {TEAM_ICONS[
+                  team.code
+                ] || '🫶'}
+              </span>
 
-            <span>
-              <strong>
-                {primary.name}
-              </strong>
+              <span>
+                <strong>
+                  {team.name}
+                </strong>
 
-              <small>
-                {access.project.name}
-              </small>
-            </span>
-          </button>
-        )}
-
-        {hasMedia && (
-          <button
-            type="button"
-            className={
-              selectedArea === 'media'
-                ? 'volunteer-area-card active'
-                : 'volunteer-area-card'
-            }
-            onClick={() =>
-              onSelect('media')
-            }
-          >
-            <span className="volunteer-area-icon">
-              📸
-            </span>
-
-            <span>
-              <strong>
-                Equipe de Mídias
-              </strong>
-
-              <small>
-                APS • PPF • SJ • aberta para todos
-              </small>
-            </span>
-          </button>
+                <small>
+                  {getScopeLabel(team)}
+                </small>
+              </span>
+            </button>
+          )
         )}
       </div>
     </section>

@@ -127,12 +127,14 @@ function HomePage({
     volunteerAccess
       ?.primaryTeam
       ?.code ||
-    (
-      volunteerAccess
-        ?.mediaSupport
-        ? 'media'
-        : null
-    )
+    volunteerAccess
+      ?.availableTeams
+      ?.find(
+        (team) =>
+          team.code !== 'media'
+      )
+      ?.code ||
+    'media'
 
   const activeArea =
     selectedArea ||

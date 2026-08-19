@@ -360,6 +360,12 @@ export default async function handler(request, response) {
 
       teams:
         currentUser.teams,
+
+      availableTeams:
+        currentUser.availableTeams,
+
+      adminScope:
+        currentUser.adminScope,
     }
 
     return response.status(200).json({
