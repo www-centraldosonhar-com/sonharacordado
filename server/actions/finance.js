@@ -354,14 +354,35 @@ export default async function handler(
   }
 
 
-  const {
-    operation,
-    eventId,
-    eventIds,
-  } =
-    request.method === 'GET'
-      ? request.query ?? {}
-      : request.body ?? {}
+  // =====================================================
+  // REQUEST PARAMETERS
+  // =====================================================
+  //
+  // GET normalmente envia os parâmetros pela query.
+  // POST pode enviar a operação pela query e os dados
+  // específicos pelo body.
+  //
+  // Aceitamos os dois formatos para manter a API
+  // consistente e evitar operações perdidas.
+  // =====================================================
+
+  const query =
+    request.query ?? {}
+
+  const body =
+    request.body ?? {}
+
+  const operation =
+    query.operation ??
+    body.operation
+
+  const eventId =
+    query.eventId ??
+    body.eventId
+
+  const eventIds =
+    query.eventIds ??
+    body.eventIds
 
 
   try {
@@ -378,6 +399,7 @@ export default async function handler(
           e.name,
           e.event_date,
           e.event_status,
+          e.project_id,
 
           p.name AS project_name
 
@@ -434,6 +456,320 @@ export default async function handler(
       return response.status(200).json(
         summary
       )
+    }
+
+
+    // =====================================================
+    // FINANCE REQUESTS — LIST
+    // =====================================================
+
+    if (
+      operation === 'requests'
+    ) {
+      const rows =
+        await sql`
+          SELECT
+            fr.id,
+            fr.project_id,
+            fr.event_id,
+            fr.subject,
+            fr.message,
+            fr.priority,
+            fr.response_deadline,
+            fr.status,
+            fr.response_text,
+            fr.responded_at,
+            fr.resolved_at,
+            fr.created_at,
+
+            p.name AS project_name,
+
+            e.name AS event_name,
+
+            creator.name AS created_by_name,
+
+            responder.name AS responded_by_name
+
+          FROM finance_requests fr
+
+          JOIN projects p
+            ON p.id = fr.project_id
+
+          LEFT JOIN events e
+            ON e.id = fr.event_id
+
+          JOIN users creator
+            ON creator.id = fr.created_by
+
+          LEFT JOIN users responder
+            ON responder.id = fr.responded_by
+
+          ORDER BY
+            CASE
+              WHEN fr.status = 'pending'
+                AND fr.priority = 'urgent'
+                THEN 0
+              WHEN fr.status = 'pending'
+                THEN 1
+              WHEN fr.status = 'answered'
+                THEN 2
+              ELSE 3
+            END,
+
+            fr.created_at DESC
+        `
+
+      return response.status(200).json({
+        requests: rows,
+      })
+    }
+
+
+    // =====================================================
+    // FINANCE REQUESTS — CREATE
+    // =====================================================
+
+    if (
+      operation ===
+      'create-request'
+    ) {
+      if (
+        request.method !== 'POST'
+      ) {
+        return response.status(405).json({
+          error:
+            'Método não permitido.',
+        })
+      }
+
+      const projectId =
+        Number(
+          request.body?.projectId
+        )
+
+      const rawEventId =
+        request.body?.eventId
+
+      const eventId =
+        rawEventId
+          ? Number(rawEventId)
+          : null
+
+      const subject =
+        String(
+          request.body?.subject || ''
+        ).trim()
+
+      const requestMessage =
+        String(
+          request.body?.message || ''
+        ).trim()
+
+      const priority =
+        request.body?.priority ===
+          'urgent'
+          ? 'urgent'
+          : 'normal'
+
+      const responseDeadline =
+        request.body
+          ?.responseDeadline ||
+        null
+
+
+      if (
+        !Number.isInteger(projectId)
+      ) {
+        return response.status(400).json({
+          error:
+            'Projeto inválido.',
+        })
+      }
+
+      if (
+        eventId !== null &&
+        !Number.isInteger(eventId)
+      ) {
+        return response.status(400).json({
+          error:
+            'Evento inválido.',
+        })
+      }
+
+      if (
+        subject.length < 3
+      ) {
+        return response.status(400).json({
+          error:
+            'Informe um assunto.',
+        })
+      }
+
+      if (
+        requestMessage.length < 5
+      ) {
+        return response.status(400).json({
+          error:
+            'Descreva a solicitação.',
+        })
+      }
+
+
+      // Se houver evento, ele precisa pertencer
+      // ao projeto escolhido.
+      if (eventId !== null) {
+        const eventRows =
+          await sql`
+            SELECT id
+
+            FROM events
+
+            WHERE
+              id = ${eventId}
+
+              AND project_id =
+                ${projectId}
+
+            LIMIT 1
+          `
+
+        if (!eventRows[0]) {
+          return response.status(400).json({
+            error:
+              'O evento não pertence ao projeto selecionado.',
+          })
+        }
+      }
+
+
+      const inserted =
+        await sql`
+          INSERT INTO finance_requests (
+            project_id,
+            event_id,
+            created_by,
+            subject,
+            message,
+            priority,
+            response_deadline,
+            status
+          )
+
+          VALUES (
+            ${projectId},
+            ${eventId},
+            ${user.id},
+            ${subject},
+            ${requestMessage},
+            ${priority},
+            ${responseDeadline},
+            'pending'
+          )
+
+          RETURNING id
+        `
+
+      return response.status(201).json({
+        ok: true,
+
+        requestId:
+          inserted[0].id,
+
+        message:
+          priority === 'urgent'
+            ? 'Solicitação urgente enviada ao Admin de Projeto.'
+            : 'Solicitação enviada ao Admin de Projeto.',
+      })
+    }
+
+
+    // =====================================================
+    // FINANCE REQUESTS — RESOLVE
+    // =====================================================
+
+    if (
+      operation ===
+      'resolve-request'
+    ) {
+      if (
+        request.method !== 'POST'
+      ) {
+        return response.status(405).json({
+          error:
+            'Método não permitido.',
+        })
+      }
+
+      const requestId =
+        Number(
+          request.body?.requestId
+        )
+
+      if (
+        !Number.isInteger(requestId)
+      ) {
+        return response.status(400).json({
+          error:
+            'Solicitação inválida.',
+        })
+      }
+
+      const rows =
+        await sql`
+          SELECT
+            id,
+            status
+
+          FROM finance_requests
+
+          WHERE id =
+            ${requestId}
+
+          LIMIT 1
+        `
+
+      const financeRequest =
+        rows[0]
+
+      if (!financeRequest) {
+        return response.status(404).json({
+          error:
+            'Solicitação não encontrada.',
+        })
+      }
+
+      if (
+        financeRequest.status !==
+        'answered'
+      ) {
+        return response.status(409).json({
+          error:
+            'A solicitação precisa ser respondida antes de ser resolvida.',
+        })
+      }
+
+      await sql`
+        UPDATE finance_requests
+
+        SET
+          status = 'resolved',
+          resolved_by =
+            ${user.id},
+          resolved_at =
+            CURRENT_TIMESTAMP,
+          updated_at =
+            CURRENT_TIMESTAMP
+
+        WHERE id =
+          ${requestId}
+      `
+
+      return response.status(200).json({
+        ok: true,
+
+        message:
+          'Solicitação marcada como resolvida.',
+      })
     }
 
 

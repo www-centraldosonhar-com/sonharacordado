@@ -16,6 +16,7 @@ import AdminExpensesPanel from '../components/AdminExpensesPanel'
 import AdminPostEventPanel from '../components/AdminPostEventPanel'
 import AdminPostEventTeamReports from '../components/AdminPostEventTeamReports'
 import '../styles/admin.css'
+import AdminFinanceRequestsPanel from '../components/AdminFinanceRequestsPanel'
 
 function AdminPage({
   user,
@@ -279,6 +280,10 @@ function AdminPage({
       </nav>
 
       <main className="admin-shell">
+        {isProjectAdmin && (
+          <AdminFinanceRequestsPanel />
+        )}
+
         {(isManagementAdmin ||
           isVolunteerAdmin ||
           isMediaAdmin) && (

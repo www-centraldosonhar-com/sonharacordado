@@ -4724,3 +4724,595 @@
     grid-column: 1 / -1;
   }
 }
+
+
+/* =========================================================
+   FINANCE — REQUESTS
+   ========================================================= */
+
+.finance-requests-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.finance-requests-panel > h2 {
+  margin: 0;
+}
+
+.finance-requests-intro {
+  margin: -5px 0 2px;
+  color: #81766f;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.finance-request-form {
+  display: grid;
+  gap: 11px;
+
+  padding: 14px;
+
+  border: 1px solid #ece7e3;
+  border-radius: 15px;
+
+  background: #faf9f8;
+}
+
+.finance-request-form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.finance-request-form label {
+  display: grid;
+  gap: 5px;
+}
+
+.finance-request-form label > span {
+  color: #756b65;
+  font-size: 0.63rem;
+  font-weight: 850;
+}
+
+.finance-request-form input,
+.finance-request-form select,
+.finance-request-form textarea {
+  width: 100%;
+  min-width: 0;
+
+  padding: 9px 10px;
+
+  border: 1px solid #e4ddd8;
+  border-radius: 10px;
+
+  background: #fff;
+
+  color: #463e39;
+  font: inherit;
+  font-size: 0.72rem;
+
+  outline: none;
+}
+
+.finance-request-form input,
+.finance-request-form select {
+  min-height: 40px;
+}
+
+.finance-request-form textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.finance-request-form input:focus,
+.finance-request-form select:focus,
+.finance-request-form textarea:focus {
+  border-color:
+    rgba(48, 123, 177, 0.4);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(48, 123, 177, 0.06);
+}
+
+.finance-request-submit {
+  min-height: 42px;
+
+  border:
+    1px solid
+    rgba(48, 123, 177, 0.18);
+
+  border-radius: 11px;
+
+  background:
+    rgba(48, 123, 177, 0.09);
+
+  color: #286fa8;
+
+  cursor: pointer;
+
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.finance-request-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+
+/* HISTORY */
+
+.finance-request-history {
+  display: grid;
+  gap: 8px;
+}
+
+.finance-request-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.finance-request-history-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.finance-request-history-heading small {
+  color: #9a9089;
+
+  font-size: 0.55rem;
+  font-weight: 900;
+
+  letter-spacing: 0.07em;
+}
+
+.finance-request-history-heading strong {
+  color: #49413c;
+  font-size: 0.79rem;
+}
+
+.finance-request-history-heading > span {
+  min-width: 28px;
+
+  padding: 4px 7px;
+
+  border-radius: 999px;
+
+  background: #f3efec;
+
+  color: #726861;
+
+  font-size: 0.63rem;
+  font-weight: 900;
+
+  text-align: center;
+}
+
+.finance-request-empty {
+  margin: 0;
+
+  padding: 13px;
+
+  border-radius: 11px;
+
+  background: #faf9f8;
+
+  color: #8b817a;
+  font-size: 0.68rem;
+
+  text-align: center;
+}
+
+
+/* REQUEST CARD */
+
+.finance-request-card {
+  display: grid;
+  gap: 9px;
+
+  padding: 13px;
+
+  border: 1px solid #ece7e3;
+  border-radius: 14px;
+
+  background: #fff;
+}
+
+.finance-request-card.is-urgent {
+  border-color:
+    rgba(239, 64, 86, 0.24);
+
+  background:
+    rgba(239, 64, 86, 0.025);
+}
+
+.finance-request-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.finance-request-card > header > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.finance-request-card header small {
+  color: #958b84;
+  font-size: 0.58rem;
+}
+
+.finance-request-card header strong {
+  color: #443c37;
+  font-size: 0.78rem;
+}
+
+.finance-request-card > p {
+  margin: 0;
+
+  color: #716761;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.finance-request-status {
+  flex-shrink: 0;
+
+  padding: 4px 7px;
+
+  border-radius: 999px;
+
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.finance-request-status.is-pending {
+  background:
+    rgba(236, 151, 46, 0.1);
+
+  color: #ad6d1e;
+}
+
+.finance-request-status.is-answered {
+  background:
+    rgba(48, 123, 177, 0.09);
+
+  color: #286fa8;
+}
+
+.finance-request-status.is-resolved {
+  background:
+    rgba(53, 132, 90, 0.09);
+
+  color: #317653;
+}
+
+.finance-request-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.finance-request-meta span {
+  padding: 5px 7px;
+
+  border-radius: 999px;
+
+  background: #f7f4f2;
+
+  color: #81766f;
+
+  font-size: 0.59rem;
+  font-weight: 800;
+}
+
+
+/* RESPONSE */
+
+.finance-request-response {
+  display: grid;
+  gap: 4px;
+
+  padding: 10px;
+
+  border-left:
+    3px solid
+    rgba(48, 123, 177, 0.34);
+
+  border-radius: 9px;
+
+  background:
+    rgba(48, 123, 177, 0.045);
+}
+
+.finance-request-response small {
+  color: #6791b0;
+
+  font-size: 0.53rem;
+  font-weight: 900;
+
+  letter-spacing: 0.06em;
+}
+
+.finance-request-response p {
+  margin: 0;
+
+  color: #5e5752;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.finance-request-response span {
+  color: #8b817a;
+  font-size: 0.59rem;
+}
+
+.finance-request-resolve {
+  width: fit-content;
+  min-height: 34px;
+
+  padding: 6px 10px;
+
+  border:
+    1px solid
+    rgba(53, 132, 90, 0.18);
+
+  border-radius: 9px;
+
+  background:
+    rgba(53, 132, 90, 0.075);
+
+  color: #317653;
+
+  cursor: pointer;
+
+  font-size: 0.63rem;
+  font-weight: 900;
+}
+
+
+@media (max-width: 620px) {
+  .finance-request-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-request-card > header {
+    flex-direction: column;
+  }
+
+  .finance-request-status {
+    width: fit-content;
+  }
+
+  .finance-request-resolve {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   ADMIN — FINANCE REQUESTS
+   ========================================================= */
+
+.admin-finance-requests {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-finance-requests-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-finance-requests-heading h2 {
+  margin: 2px 0 0;
+}
+
+.admin-finance-request-counter {
+  min-width: 29px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(239, 64, 86, 0.1);
+  color: #c43649;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.admin-finance-requests-intro {
+  margin: -3px 0 2px;
+  color: #81776f;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.admin-finance-request-list {
+  display: grid;
+  gap: 9px;
+}
+
+.admin-finance-request-card {
+  display: grid;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid #ebe6e2;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-finance-request-card.is-urgent {
+  border-color: rgba(239, 64, 86, 0.27);
+  background: rgba(239, 64, 86, 0.025);
+}
+
+.admin-finance-request-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-finance-request-card > header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-finance-request-card header small {
+  color: #938981;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.admin-finance-request-card header strong {
+  color: #443c37;
+  font-size: 0.8rem;
+}
+
+.admin-finance-request-status {
+  flex-shrink: 0;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.admin-finance-request-status.is-pending {
+  background: rgba(236, 151, 46, 0.1);
+  color: #ad6d1e;
+}
+
+.admin-finance-request-status.is-answered {
+  background: rgba(48, 123, 177, 0.09);
+  color: #286fa8;
+}
+
+.admin-finance-request-status.is-resolved {
+  background: rgba(53, 132, 90, 0.09);
+  color: #317653;
+}
+
+.admin-finance-request-context,
+.admin-finance-request-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-finance-request-context span {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: #f7f4f2;
+  color: #7c726b;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.admin-finance-request-message {
+  margin: 0;
+  color: #675f59;
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+
+.admin-finance-request-author {
+  color: #9a9089;
+  font-size: 0.59rem;
+}
+
+.admin-finance-request-response-form {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #f0ebe8;
+}
+
+.admin-finance-request-response-form label {
+  color: #756b65;
+  font-size: 0.63rem;
+  font-weight: 850;
+}
+
+.admin-finance-request-response-form textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #e4ddd8;
+  border-radius: 10px;
+  background: #fff;
+  color: #463e39;
+  font: inherit;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.admin-finance-request-response-form button {
+  min-height: 37px;
+  border: 1px solid rgba(48, 123, 177, 0.18);
+  border-radius: 10px;
+  background: rgba(48, 123, 177, 0.08);
+  color: #286fa8;
+  cursor: pointer;
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.admin-finance-request-answer {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-left: 3px solid rgba(48, 123, 177, 0.35);
+  border-radius: 9px;
+  background: rgba(48, 123, 177, 0.045);
+}
+
+.admin-finance-request-answer small {
+  color: #6791b0;
+  font-size: 0.53rem;
+  font-weight: 900;
+}
+
+.admin-finance-request-answer p {
+  margin: 0;
+  color: #5f5752;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.admin-finance-request-answer span {
+  color: #90867f;
+  font-size: 0.58rem;
+}
+
+.admin-finance-request-resolved,
+.admin-finance-request-empty {
+  padding: 11px;
+  border-radius: 10px;
+  background: rgba(53, 132, 90, 0.055);
+  color: #397656;
+  font-size: 0.67rem;
+  font-weight: 800;
+}
+
+@media (max-width: 620px) {
+  .admin-finance-request-card > header {
+    flex-direction: column;
+  }
+
+  .admin-finance-request-status {
+    width: fit-content;
+  }
+
+  .admin-finance-request-response-form button {
+    width: 100%;
+  }
+}

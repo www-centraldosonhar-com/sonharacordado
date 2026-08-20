@@ -4,6 +4,7 @@ import adminUpdateHandler from '../server/actions/admin-update.js'
 import adminRegistrationHandler from '../server/actions/admin-registration.js'
 import adminExpenseHandler from '../server/actions/admin-expenses.js'
 import postEventHandler from '../server/actions/post-event.js'
+import financeRequestsAdminHandler from '../server/actions/finance-requests-admin.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -29,6 +30,13 @@ export default async function handler(request, response) {
 
   if (action === 'expenses') {
     return adminExpenseHandler(
+      request,
+      response
+    )
+  }
+
+  if (action === 'finance-requests') {
+    return financeRequestsAdminHandler(
       request,
       response
     )
