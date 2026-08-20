@@ -293,6 +293,82 @@ function AdminPostEventPanel({
 
 
   // =====================================================
+  // CLOSE EXPENSES
+  // =====================================================
+
+  async function closeExpenses() {
+    if (!selectedEventId) {
+      return
+    }
+
+    const confirmed =
+      window.confirm(
+        'Finalizar os gastos deste evento?\n\nDepois disso, novos lançamentos e cancelamentos ficarão bloqueados e os valores serão enviados oficialmente ao Financeiro.'
+      )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsLoading(true)
+    setMessage('')
+
+    try {
+      const response =
+        await fetch(
+          '/api/admin?action=post-event',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                operation:
+                  'close-expenses',
+
+                eventId:
+                  Number(
+                    selectedEventId
+                  ),
+              }),
+          }
+        )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível finalizar os gastos.'
+        )
+      }
+
+      setMessage(
+        result.message ||
+        'Fechamento de gastos concluído! 💰🔒'
+      )
+
+      await reloadSummary()
+
+      if (onUpdated) {
+        await onUpdated()
+      }
+    } catch (error) {
+      setMessage(
+        error.message
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+
+  // =====================================================
   // EMPTY
   // =====================================================
 
@@ -637,6 +713,63 @@ function AdminPostEventPanel({
                   )}
               </div>
             )}
+
+            <div className="post-event-expense-closing">
+              {Number(
+                summary?.closure
+                  ?.expenses_closed || 0
+              ) === 1 ? (
+                <>
+                  <div>
+                    <strong>
+                      ✅ Gastos finalizados
+                    </strong>
+
+                    <span>
+                      Os gastos deste evento foram
+                      enviados oficialmente ao
+                      Financeiro e estão bloqueados
+                      para alterações.
+                    </span>
+                  </div>
+
+                  {summary?.closure
+                    ?.expenses_closed_at && (
+                    <small>
+                      Fechado em{' '}
+                      {new Date(
+                        summary.closure
+                          .expenses_closed_at
+                      ).toLocaleString(
+                        'pt-BR'
+                      )}
+                    </small>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div>
+                    <strong>
+                      💰 Fechamento de gastos
+                    </strong>
+
+                    <span>
+                      Confira os lançamentos e
+                      comprovantes das equipes
+                      antes de finalizar.
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={closeExpenses}
+                  >
+                    🔒 Finalizar e enviar ao Financeiro
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
 

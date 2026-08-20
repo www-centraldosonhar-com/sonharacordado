@@ -605,6 +605,175 @@ export default async function handler(
     }
 
 
+    // =====================================================
+    // CLOSE EVENT EXPENSES
+    // =====================================================
+    //
+    // Admin Geral:
+    // - pode fechar qualquer evento.
+    //
+    // Admin de Projeto:
+    // - apenas eventos do próprio projeto.
+    //
+    // Após este fechamento:
+    // - gastos ficam congelados;
+    // - Financeiro pode considerar o valor oficial.
+    // =====================================================
+
+    if (
+      operation ===
+      'close-expenses'
+    ) {
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return forbidden(
+          response
+        )
+      }
+
+      const event =
+        await getEvent(
+          numericEventId
+        )
+
+      if (!event) {
+        return response
+          .status(404)
+          .json({
+            error:
+              'Evento não encontrado.',
+          })
+      }
+
+      if (
+        event.event_status !==
+        'post_event'
+      ) {
+        return response
+          .status(409)
+          .json({
+            error:
+              'Os gastos só podem ser fechados durante o Pós-Evento.',
+          })
+      }
+
+      if (
+        isProjectAdmin(admin) &&
+        Number(
+          event.project_id
+        ) !==
+        Number(
+          admin.projectId
+        )
+      ) {
+        return forbidden(
+          response
+        )
+      }
+
+      const closureRows =
+        await sql`
+          SELECT
+            id,
+            expenses_closed
+          FROM post_event_closures
+          WHERE event_id =
+            ${numericEventId}
+          LIMIT 1
+        `
+
+      const closure =
+        closureRows[0]
+
+      if (!closure) {
+        return response
+          .status(409)
+          .json({
+            error:
+              'O Pós-Evento ainda não foi iniciado para este evento.',
+          })
+      }
+
+      if (
+        Number(
+          closure.expenses_closed
+        ) === 1
+      ) {
+        return response
+          .status(409)
+          .json({
+            error:
+              'Os gastos deste evento já foram fechados.',
+          })
+      }
+
+      const totalRows =
+        await sql`
+          SELECT
+            COUNT(*) FILTER (
+              WHERE active = 1
+            )::int AS expense_count,
+
+            COALESCE(
+              SUM(amount) FILTER (
+                WHERE active = 1
+              ),
+              0
+            )::numeric(12,2)
+              AS expense_total
+
+          FROM team_expenses
+
+          WHERE event_id =
+            ${numericEventId}
+        `
+
+      await sql`
+        UPDATE post_event_closures
+
+        SET
+          expenses_closed = 1,
+
+          expenses_closed_by =
+            ${admin.id},
+
+          expenses_closed_at =
+            CURRENT_TIMESTAMP,
+
+          updated_at =
+            CURRENT_TIMESTAMP
+
+        WHERE event_id =
+          ${numericEventId}
+      `
+
+      return response
+        .status(200)
+        .json({
+          success: true,
+
+          expensesClosed: true,
+
+          expenseCount:
+            Number(
+              totalRows[0]
+                ?.expense_count || 0
+            ),
+
+          expenseTotal:
+            Number(
+              totalRows[0]
+                ?.expense_total || 0
+            ),
+
+          message:
+            'Fechamento de gastos concluído! 💰🔒',
+        })
+    }
+
+
     if (operation === 'team-reports') {
       const event =
         await getEvent(numericEventId)

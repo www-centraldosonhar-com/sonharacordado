@@ -4,6 +4,7 @@ import {
 } from 'react'
 
 import '../styles/admin.css'
+import FinanceExpensesPanel from '../components/FinanceExpensesPanel.jsx'
 
 
 function formatMoney(
@@ -405,6 +406,23 @@ function FinancePage({
             </>
           )}
         </section>
+
+        {summary && selectedEventId && (
+          <FinanceExpensesPanel
+            eventId={
+              selectedEventId
+            }
+            expensesClosed={
+              Boolean(
+                summary.expensesClosed
+              )
+            }
+            closedAt={
+              summary.closure
+                ?.expenses_closed_at
+            }
+          />
+        )}
       </main>
     </div>
   )

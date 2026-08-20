@@ -271,6 +271,30 @@ function canReadExpense(
 
 
 // =========================================================
+// EXPENSE CLOSURE
+// =========================================================
+
+async function expensesAreClosed(
+  eventId
+) {
+  const rows = await sql`
+    SELECT
+      expenses_closed
+    FROM post_event_closures
+    WHERE event_id =
+      ${Number(eventId)}
+    LIMIT 1
+  `
+
+  return (
+    Number(
+      rows[0]?.expenses_closed || 0
+    ) === 1
+  )
+}
+
+
+// =========================================================
 // HANDLER
 // =========================================================
 
@@ -416,6 +440,20 @@ export default async function handler(
           })
       }
 
+      const expensesClosed =
+        await expensesAreClosed(
+          numericEventId
+        )
+
+      if (expensesClosed) {
+        return response
+          .status(409)
+          .json({
+            error:
+              'Os gastos deste evento já foram fechados pelo Admin de Projeto.',
+          })
+      }
+
       const allowed =
         await canCreateExpense(
           admin,
@@ -534,6 +572,20 @@ export default async function handler(
           .json({
             error:
               'Preencha corretamente descrição e valor.',
+          })
+      }
+
+      const expensesClosed =
+        await expensesAreClosed(
+          numericEventId
+        )
+
+      if (expensesClosed) {
+        return response
+          .status(409)
+          .json({
+            error:
+              'Os gastos deste evento já foram fechados pelo Admin de Projeto.',
           })
       }
 
@@ -726,6 +778,20 @@ export default async function handler(
           .json({
             error:
               'Lançamento não encontrado.',
+          })
+      }
+
+      const expensesClosed =
+        await expensesAreClosed(
+          expense.event_id
+        )
+
+      if (expensesClosed) {
+        return response
+          .status(409)
+          .json({
+            error:
+              'Os gastos deste evento já foram fechados e não podem mais ser alterados.',
           })
       }
 

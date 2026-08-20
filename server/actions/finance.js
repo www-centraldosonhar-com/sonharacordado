@@ -1,9 +1,40 @@
 import process from 'node:process'
 import { neon } from '@neondatabase/serverless'
+import { createClient } from '@supabase/supabase-js'
 import { getSessionUser } from './_session.js'
 
 const sql =
   neon(process.env.DATABASE_URL)
+
+const EXPENSE_BUCKET =
+  process.env.REGISTRATION_RECEIPTS_BUCKET ||
+  'sonhar-receipts'
+
+
+function getSupabaseAdmin() {
+  const url =
+    process.env.SUPABASE_URL
+
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !key) {
+    throw new Error(
+      'Supabase Storage não configurado.'
+    )
+  }
+
+  return createClient(
+    url,
+    key,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  )
+}
 
 
 // =========================================================
@@ -199,6 +230,11 @@ async function getEventFinance(
     await sql`
       SELECT
         status,
+
+        expenses_closed,
+        expenses_closed_by,
+        expenses_closed_at,
+
         finance_validated,
         finance_validated_by,
         finance_validated_at
@@ -224,11 +260,25 @@ async function getEventFinance(
         .collected_amount || 0
     )
 
-  const expensesAmount =
+  const closure =
+    closureRows[0] ||
+    null
+
+  const expensesClosed =
+    Number(
+      closure?.expenses_closed || 0
+    ) === 1
+
+  const rawExpensesAmount =
     Number(
       expenses
         .expenses_amount || 0
     )
+
+  const expensesAmount =
+    expensesClosed
+      ? rawExpensesAmount
+      : 0
 
 
   return {
@@ -263,20 +313,22 @@ async function getEventFinance(
       expensesAmount,
 
     expensesByTeam:
-      teamRows.map(
-        (team) => ({
-          ...team,
+      expensesClosed
+        ? teamRows.map(
+            (team) => ({
+              ...team,
 
-          amount:
-            Number(
-              team.amount || 0
-            ),
-        })
-      ),
+              amount:
+                Number(
+                  team.amount || 0
+                ),
+            })
+          )
+        : [],
 
-    closure:
-      closureRows[0] ||
-      null,
+    expensesClosed,
+
+    closure,
   }
 }
 
@@ -381,6 +433,204 @@ export default async function handler(
       return response.status(200).json(
         summary
       )
+    }
+
+
+    // =====================================================
+    // CLOSED EXPENSES
+    // =====================================================
+
+    if (
+      operation === 'expenses'
+    ) {
+      const numericEventId =
+        Number(eventId)
+
+      if (
+        !Number.isInteger(
+          numericEventId
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Evento inválido.',
+        })
+      }
+
+      const closureRows =
+        await sql`
+          SELECT
+            expenses_closed,
+            expenses_closed_at
+          FROM post_event_closures
+          WHERE event_id =
+            ${numericEventId}
+          LIMIT 1
+        `
+
+      const closure =
+        closureRows[0]
+
+      if (
+        Number(
+          closure?.expenses_closed || 0
+        ) !== 1
+      ) {
+        return response.status(409).json({
+          error:
+            'Os gastos deste evento ainda não foram enviados oficialmente ao Financeiro.',
+        })
+      }
+
+      const rows = await sql`
+        SELECT
+          te.id,
+          te.event_id,
+          te.team_id,
+          te.description,
+          te.amount,
+          te.created_at,
+
+          t.code AS team_code,
+          t.name AS team_name,
+
+          u.id AS created_by,
+          u.name AS created_by_name
+
+        FROM team_expenses te
+
+        JOIN teams t
+          ON t.id =
+            te.team_id
+
+        JOIN users u
+          ON u.id =
+            te.created_by
+
+        WHERE
+          te.event_id =
+            ${numericEventId}
+
+          AND te.active = 1
+
+        ORDER BY
+          t.name,
+          te.created_at DESC
+      `
+
+      return response.status(200).json({
+        expenses:
+          rows.map(
+            (expense) => ({
+              ...expense,
+
+              amount:
+                Number(
+                  expense.amount || 0
+                ),
+            })
+          ),
+
+        closedAt:
+          closure.expenses_closed_at,
+      })
+    }
+
+
+    // =====================================================
+    // EXPENSE RECEIPT
+    // =====================================================
+
+    if (
+      operation ===
+      'expense-receipt'
+    ) {
+      const expenseId =
+        Number(
+          request.method === 'GET'
+            ? request.query?.expenseId
+            : request.body?.expenseId
+        )
+
+      if (
+        !Number.isInteger(
+          expenseId
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Gasto inválido.',
+        })
+      }
+
+      const rows = await sql`
+        SELECT
+          te.id,
+          te.receipt_path,
+          te.active,
+
+          pec.expenses_closed
+
+        FROM team_expenses te
+
+        JOIN post_event_closures pec
+          ON pec.event_id =
+            te.event_id
+
+        WHERE
+          te.id =
+            ${expenseId}
+
+        LIMIT 1
+      `
+
+      const expense =
+        rows[0]
+
+      if (
+        !expense ||
+        Number(expense.active) !== 1 ||
+        Number(
+          expense.expenses_closed || 0
+        ) !== 1
+      ) {
+        return response.status(403).json({
+          error:
+            'Comprovante não disponível.',
+        })
+      }
+
+      if (
+        !expense.receipt_path
+      ) {
+        return response.status(404).json({
+          error:
+            'Comprovante não encontrado.',
+        })
+      }
+
+      const supabase =
+        getSupabaseAdmin()
+
+      const {
+        data,
+        error,
+      } =
+        await supabase.storage
+          .from(EXPENSE_BUCKET)
+          .createSignedUrl(
+            expense.receipt_path,
+            60 * 5
+          )
+
+      if (error) {
+        throw error
+      }
+
+      return response.status(200).json({
+        url:
+          data.signedUrl,
+      })
     }
 
 
