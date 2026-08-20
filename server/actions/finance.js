@@ -357,6 +357,7 @@ export default async function handler(
   const {
     operation,
     eventId,
+    eventIds,
   } =
     request.method === 'GET'
       ? request.query ?? {}
@@ -433,6 +434,194 @@ export default async function handler(
       return response.status(200).json(
         summary
       )
+    }
+
+
+    // =====================================================
+    // CONSOLIDATED BALANCE
+    // =====================================================
+    //
+    // Consolida vários eventos usando exatamente
+    // a mesma regra financeira da visão individual:
+    //
+    // - receita = inscrições confirmadas pagantes;
+    // - gratuidade não gera receita;
+    // - gasto só entra após expenses_closed = 1.
+    // =====================================================
+
+    if (
+      operation === 'balance'
+    ) {
+      const rawEventIds =
+        Array.isArray(eventIds)
+          ? eventIds
+          : typeof eventIds === 'string'
+            ? eventIds.split(',')
+            : []
+
+      const normalizedEventIds =
+        [
+          ...new Set(
+            rawEventIds
+              .map(
+                (id) =>
+                  Number(id)
+              )
+              .filter(
+                (id) =>
+                  Number.isInteger(id) &&
+                  id > 0
+              )
+          ),
+        ]
+
+      if (
+        normalizedEventIds.length === 0
+      ) {
+        return response.status(400).json({
+          error:
+            'Selecione pelo menos um evento.',
+        })
+      }
+
+      const eventSummaries = []
+
+      for (
+        const selectedEventId
+        of normalizedEventIds
+      ) {
+        const eventSummary =
+          await getEventFinance(
+            selectedEventId
+          )
+
+        if (eventSummary) {
+          eventSummaries.push(
+            eventSummary
+          )
+        }
+      }
+
+      if (
+        eventSummaries.length === 0
+      ) {
+        return response.status(404).json({
+          error:
+            'Nenhum evento válido foi encontrado.',
+        })
+      }
+
+      const totals =
+        eventSummaries.reduce(
+          (accumulator, item) => {
+            accumulator.confirmed +=
+              Number(
+                item.registrations
+                  ?.confirmed || 0
+              )
+
+            accumulator.paid +=
+              Number(
+                item.registrations
+                  ?.paid || 0
+              )
+
+            accumulator.free +=
+              Number(
+                item.registrations
+                  ?.free || 0
+              )
+
+            accumulator.collected +=
+              Number(
+                item.collectedAmount || 0
+              )
+
+            accumulator.expenses +=
+              Number(
+                item.expensesAmount || 0
+              )
+
+            return accumulator
+          },
+          {
+            confirmed: 0,
+            paid: 0,
+            free: 0,
+            collected: 0,
+            expenses: 0,
+          }
+        )
+
+      return response.status(200).json({
+        eventCount:
+          eventSummaries.length,
+
+        registrations: {
+          confirmed:
+            totals.confirmed,
+
+          paid:
+            totals.paid,
+
+          free:
+            totals.free,
+        },
+
+        collectedAmount:
+          totals.collected,
+
+        expensesAmount:
+          totals.expenses,
+
+        balanceAmount:
+          totals.collected -
+          totals.expenses,
+
+        events:
+          eventSummaries.map(
+            (item) => ({
+              id:
+                item.event.id,
+
+              name:
+                item.event.name,
+
+              eventDate:
+                item.event.event_date,
+
+              projectId:
+                item.event.project_id,
+
+              projectName:
+                item.event.project_name,
+
+              confirmed:
+                item.registrations
+                  .confirmed,
+
+              paid:
+                item.registrations
+                  .paid,
+
+              free:
+                item.registrations
+                  .free,
+
+              collectedAmount:
+                item.collectedAmount,
+
+              expensesAmount:
+                item.expensesAmount,
+
+              balanceAmount:
+                item.balanceAmount,
+
+              expensesClosed:
+                item.expensesClosed,
+            })
+          ),
+      })
     }
 
 

@@ -4323,3 +4323,404 @@
     justify-self: end;
   }
 }
+
+
+/* =========================================================
+   FINANCE — CONSOLIDATED BALANCE
+   ========================================================= */
+
+.finance-balance-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.finance-balance-panel > h2 {
+  margin: 0;
+}
+
+.finance-balance-intro {
+  margin: -5px 0 2px;
+  max-width: 620px;
+  color: #81766f;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+
+/* FILTERS */
+
+.finance-balance-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.4fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+  gap: 9px;
+}
+
+.finance-balance-filters > div {
+  display: grid;
+  gap: 5px;
+}
+
+.finance-balance-filters label {
+  color: #756b65;
+  font-size: 0.63rem;
+  font-weight: 850;
+}
+
+.finance-balance-filters select,
+.finance-balance-filters input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+
+  padding: 8px 10px;
+
+  border: 1px solid #e7e1dd;
+  border-radius: 10px;
+
+  background: #fff;
+
+  color: #463e39;
+  font: inherit;
+  font-size: 0.72rem;
+
+  outline: none;
+}
+
+.finance-balance-filters select:focus,
+.finance-balance-filters input:focus {
+  border-color:
+    rgba(48, 123, 177, 0.42);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(48, 123, 177, 0.07);
+}
+
+
+/* SELECTION CONTROLS */
+
+.finance-balance-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.finance-balance-selection-actions button {
+  min-height: 34px;
+  padding: 6px 10px;
+
+  border: 1px solid #e6e0dc;
+  border-radius: 9px;
+
+  background: #faf9f8;
+  color: #665d57;
+
+  cursor: pointer;
+
+  font-size: 0.64rem;
+  font-weight: 850;
+}
+
+
+/* EVENT LIST */
+
+.finance-balance-event-list {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.finance-balance-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+
+  min-width: 0;
+
+  padding: 10px 11px;
+
+  border: 1px solid #ece7e3;
+  border-radius: 11px;
+
+  background: #fff;
+
+  cursor: pointer;
+}
+
+.finance-balance-event.is-selected {
+  border-color:
+    rgba(48, 123, 177, 0.27);
+
+  background:
+    rgba(48, 123, 177, 0.045);
+}
+
+.finance-balance-event input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.finance-balance-event > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.finance-balance-event strong {
+  overflow: hidden;
+
+  color: #463e39;
+  font-size: 0.7rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-balance-event small {
+  color: #958a83;
+  font-size: 0.59rem;
+}
+
+
+/* CALCULATE */
+
+.finance-balance-calculate {
+  width: 100%;
+  min-height: 43px;
+
+  border: 1px solid
+    rgba(48, 123, 177, 0.2);
+
+  border-radius: 11px;
+
+  background:
+    rgba(48, 123, 177, 0.09);
+
+  color: #286fa8;
+
+  cursor: pointer;
+
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.finance-balance-calculate:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.finance-balance-empty {
+  margin: 0;
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  background: #faf9f8;
+
+  color: #8b817a;
+  font-size: 0.68rem;
+
+  text-align: center;
+}
+
+
+/* RESULT */
+
+.finance-balance-result {
+  display: grid;
+  gap: 10px;
+
+  margin-top: 3px;
+  padding-top: 14px;
+
+  border-top: 1px solid #eee9e5;
+}
+
+.finance-balance-result-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.finance-balance-result-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.finance-balance-result-heading small {
+  color: #9b918a;
+
+  font-size: 0.55rem;
+  font-weight: 900;
+
+  letter-spacing: 0.07em;
+}
+
+.finance-balance-result-heading strong {
+  color: #4a423d;
+  font-size: 0.78rem;
+}
+
+
+/* MONEY */
+
+.finance-balance-metrics {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.finance-balance-metrics article {
+  display: grid;
+  gap: 5px;
+
+  min-width: 0;
+
+  padding: 11px;
+
+  border: 1px solid #ece7e3;
+  border-radius: 12px;
+
+  background: #faf9f8;
+}
+
+.finance-balance-metrics span {
+  color: #837871;
+  font-size: 0.61rem;
+  font-weight: 800;
+}
+
+.finance-balance-metrics strong {
+  color: #3f3834;
+  font-size: 0.92rem;
+}
+
+.finance-balance-metrics
+.finance-balance-highlight {
+  border-color:
+    rgba(53, 132, 90, 0.17);
+
+  background:
+    rgba(53, 132, 90, 0.055);
+}
+
+.finance-balance-highlight strong {
+  color: #317653;
+}
+
+
+/* REGISTRATIONS */
+
+.finance-balance-registration-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.finance-balance-registration-metrics span {
+  padding: 6px 8px;
+
+  border: 1px solid #eee9e5;
+  border-radius: 999px;
+
+  background: #fff;
+
+  color: #716761;
+
+  font-size: 0.61rem;
+  font-weight: 800;
+}
+
+
+/* RESULTS BY EVENT */
+
+.finance-balance-event-results {
+  display: grid;
+
+  overflow: hidden;
+
+  border: 1px solid #eee9e5;
+  border-radius: 12px;
+}
+
+.finance-balance-event-results > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 10px 11px;
+
+  border-bottom: 1px solid #f1edea;
+}
+
+.finance-balance-event-results > div:last-child {
+  border-bottom: 0;
+}
+
+.finance-balance-event-results
+> div > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.finance-balance-event-results strong {
+  overflow: hidden;
+
+  color: #4b433e;
+  font-size: 0.68rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-balance-event-results small {
+  color: #978d86;
+  font-size: 0.57rem;
+}
+
+.finance-balance-event-results
+> div > span:last-child {
+  flex-shrink: 0;
+
+  color: #4b433e;
+
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 620px) {
+  .finance-balance-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .finance-balance-filters
+  > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .finance-balance-event-list {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-balance-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .finance-balance-metrics
+  .finance-balance-highlight {
+    grid-column: 1 / -1;
+  }
+}
