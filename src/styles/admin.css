@@ -2278,3 +2278,1097 @@
     justify-self: start;
   }
 }
+
+
+/* =========================================================
+   ADMIN UI UPGRADE V2
+   =========================================================
+   Camada visual adicional.
+   Mantém toda a estrutura e funcionalidades existentes.
+   ========================================================= */
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.admin-page {
+  color: #242424;
+
+  background:
+    radial-gradient(
+      circle at 8% 4%,
+      rgba(239, 64, 86, 0.055),
+      transparent 23rem
+    ),
+    radial-gradient(
+      circle at 94% 7%,
+      rgba(49, 132, 198, 0.065),
+      transparent 24rem
+    ),
+    linear-gradient(
+      180deg,
+      #fffaf7 0%,
+      #fffdfb 52%,
+      #fffaf7 100%
+    );
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.admin-header {
+  border-bottom:
+    1px solid rgba(44, 38, 35, 0.07);
+
+  background:
+    rgba(255, 252, 249, 0.9);
+
+  box-shadow:
+    0 1px 0
+    rgba(255, 255, 255, 0.8);
+
+  backdrop-filter:
+    blur(22px);
+}
+
+.admin-header-inner {
+  min-height: 86px;
+}
+
+.admin-hearts {
+  margin-bottom: 3px;
+}
+
+.admin-kicker {
+  margin: 2px 0;
+
+  font-size: 0.68rem;
+
+  letter-spacing: 0.16em;
+}
+
+.admin-header h1 {
+  letter-spacing: -0.035em;
+
+  line-height: 1.05;
+}
+
+.admin-header p {
+  margin-top: 5px;
+
+  font-size: 0.9rem;
+}
+
+.admin-header-actions {
+  gap: 9px;
+}
+
+.admin-header-actions button {
+  min-height: 40px;
+
+  padding:
+    8px 14px;
+
+  border:
+    1px solid rgba(35, 35, 35, 0.08);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.86);
+
+  box-shadow:
+    0 2px 8px
+    rgba(25, 20, 18, 0.04);
+
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+}
+
+.admin-header-actions button:hover {
+  transform:
+    translateY(-1px);
+
+  background: #ffffff;
+
+  box-shadow:
+    0 5px 14px
+    rgba(25, 20, 18, 0.07);
+}
+
+
+/* =========================================================
+   NAV
+   ========================================================= */
+
+.admin-nav {
+  top: 86px;
+
+  margin:
+    12px auto 18px;
+
+  gap: 5px;
+
+  padding: 6px;
+
+  border:
+    1px solid rgba(35, 35, 35, 0.075);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.88);
+
+  box-shadow:
+    0 8px 30px
+    rgba(35, 25, 20, 0.055);
+}
+
+.admin-nav a {
+  min-height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding:
+    7px 13px;
+
+  border-radius: 999px;
+
+  color: #666;
+
+  font-size: 0.76rem;
+  font-weight: 850;
+
+  white-space: nowrap;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-nav a:hover {
+  transform:
+    translateY(-1px);
+
+  background:
+    #f8f5f2;
+
+  color:
+    #252525;
+}
+
+
+/* =========================================================
+   MAIN SHELL
+   ========================================================= */
+
+.admin-shell {
+  padding-bottom: 72px;
+}
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.admin-dashboard {
+  gap: 10px;
+
+  margin-bottom: 22px;
+}
+
+.admin-dashboard article {
+  position: relative;
+
+  overflow: hidden;
+
+  padding: 18px 19px;
+
+  border:
+    1px solid rgba(35, 35, 35, 0.065);
+
+  border-radius: 20px;
+
+  background:
+    rgba(255, 255, 255, 0.92);
+
+  box-shadow:
+    0 8px 25px
+    rgba(35, 25, 20, 0.045);
+}
+
+.admin-dashboard article::after {
+  content: "";
+
+  position: absolute;
+
+  right: -24px;
+  bottom: -34px;
+
+  width: 85px;
+  height: 85px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(49, 132, 198, 0.035);
+}
+
+.admin-dashboard strong {
+  position: relative;
+  z-index: 1;
+
+  font-size:
+    clamp(1.55rem, 3vw, 2rem);
+
+  letter-spacing:
+    -0.04em;
+}
+
+.admin-dashboard span {
+  position: relative;
+  z-index: 1;
+
+  margin-top: 2px;
+
+  display: block;
+
+  font-size: 0.76rem;
+}
+
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.admin-section {
+  margin-bottom: 20px;
+
+  padding: 24px;
+
+  border:
+    1px solid rgba(35, 35, 35, 0.07);
+
+  border-radius: 26px;
+
+  background:
+    rgba(255, 255, 255, 0.88);
+
+  box-shadow:
+    0 12px 35px
+    rgba(35, 25, 20, 0.045);
+}
+
+.admin-section > .admin-eyebrow {
+  margin-bottom: 5px;
+}
+
+.admin-section h2 {
+  margin:
+    2px 0 18px;
+
+  letter-spacing:
+    -0.025em;
+
+  line-height: 1.1;
+}
+
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.admin-grid {
+  gap: 14px;
+}
+
+.admin-card {
+  padding: 19px 19px 18px 21px;
+
+  border:
+    1px solid rgba(35, 35, 35, 0.065);
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fffdfc 100%
+    );
+
+  box-shadow:
+    0 7px 22px
+    rgba(35, 25, 20, 0.035);
+
+  transition:
+    transform 0.17s ease,
+    border-color 0.17s ease,
+    box-shadow 0.17s ease;
+}
+
+.admin-card:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    rgba(49, 132, 198, 0.14);
+
+  box-shadow:
+    0 12px 30px
+    rgba(35, 25, 20, 0.06);
+}
+
+.admin-card::before {
+  width: 3px;
+
+  top: 12px;
+  bottom: 12px;
+
+  border-radius:
+    0 8px 8px 0;
+}
+
+.admin-card h3 {
+  margin:
+    0 0 8px;
+
+  font-size: 1rem;
+
+  letter-spacing:
+    -0.015em;
+}
+
+.admin-card p {
+  margin:
+    5px 0;
+
+  font-size: 0.82rem;
+
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   USER AVATARS
+   ========================================================= */
+
+.admin-user-top {
+  gap: 11px;
+
+  margin-bottom: 10px;
+}
+
+.admin-avatar {
+  width: 52px;
+  height: 52px;
+
+  flex-basis: 52px;
+
+  border-width: 2px;
+
+  box-shadow:
+    0 5px 14px
+    rgba(0, 0, 0, 0.09);
+}
+
+.admin-tag {
+  padding:
+    4px 9px;
+
+  font-size: 0.66rem;
+}
+
+
+/* =========================================================
+   NUMBERS / STATUS PILLS
+   ========================================================= */
+
+.admin-numbers {
+  gap: 5px;
+
+  margin:
+    10px 0;
+}
+
+.admin-numbers span {
+  padding:
+    5px 9px;
+
+  background:
+    #f7f6f5;
+
+  border:
+    1px solid
+    rgba(35, 35, 35, 0.04);
+
+  font-size: 0.69rem;
+}
+
+
+/* =========================================================
+   PARTICIPANTS
+   ========================================================= */
+
+.admin-participants {
+  margin-top: 15px;
+
+  padding-top: 13px;
+
+  border-top:
+    1px solid
+    rgba(35, 35, 35, 0.065);
+}
+
+.admin-participants h4 {
+  margin:
+    0 0 9px;
+
+  font-size: 0.83rem;
+}
+
+.admin-participant {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding:
+    9px 0;
+
+  border-bottom:
+    1px solid
+    rgba(35, 35, 35, 0.045);
+}
+
+.admin-participant:last-child {
+  border-bottom: none;
+}
+
+.admin-participant > div:first-child {
+  min-width: 0;
+}
+
+.admin-participant strong,
+.admin-participant span,
+.admin-participant a {
+  display: block;
+}
+
+.admin-participant strong {
+  font-size: 0.82rem;
+}
+
+.admin-participant span,
+.admin-participant a {
+  margin-top: 2px;
+
+  font-size: 0.72rem;
+}
+
+
+/* =========================================================
+   GENERIC BUTTON POLISH
+   ========================================================= */
+
+.admin-section button,
+.admin-card button {
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    opacity 0.14s ease;
+}
+
+.admin-section button:not(:disabled):hover,
+.admin-card button:not(:disabled):hover {
+  transform:
+    translateY(-1px);
+}
+
+.admin-section button:disabled,
+.admin-card button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 820px) {
+  .admin-section {
+    padding: 20px;
+
+    border-radius: 22px;
+  }
+
+  .admin-grid {
+    gap: 10px;
+  }
+
+  .admin-card {
+    padding:
+      17px 17px 16px 19px;
+  }
+}
+
+
+@media (max-width: 580px) {
+  .admin-header-inner {
+    min-height: 76px;
+  }
+
+  .admin-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .admin-header p {
+    font-size: 0.78rem;
+  }
+
+  .admin-kicker {
+    font-size: 0.6rem;
+  }
+
+  .admin-nav {
+    top: 76px;
+
+    width:
+      calc(100% - 16px);
+
+    margin:
+      8px auto 14px;
+
+    padding: 5px;
+
+    border-radius: 18px;
+  }
+
+  .admin-nav a {
+    min-height: 34px;
+
+    padding:
+      6px 10px;
+
+    font-size: 0.7rem;
+  }
+
+  .admin-shell {
+    width:
+      calc(100% - 16px);
+  }
+
+  .admin-section {
+    margin-bottom: 12px;
+
+    padding: 15px;
+
+    border-radius: 19px;
+
+    box-shadow:
+      0 7px 22px
+      rgba(35, 25, 20, 0.035);
+  }
+
+  .admin-section h2 {
+    margin-bottom: 14px;
+
+    font-size: 1.25rem;
+  }
+
+  .admin-eyebrow {
+    font-size: 0.61rem;
+  }
+
+  .admin-dashboard {
+    gap: 7px;
+
+    margin-bottom: 12px;
+  }
+
+  .admin-dashboard article {
+    padding: 14px;
+
+    border-radius: 16px;
+  }
+
+  .admin-dashboard strong {
+    font-size: 1.45rem;
+  }
+
+  .admin-dashboard span {
+    font-size: 0.68rem;
+  }
+
+  .admin-grid {
+    gap: 9px;
+  }
+
+  .admin-card {
+    padding:
+      15px 15px 14px 18px;
+
+    border-radius: 17px;
+
+    box-shadow:
+      0 5px 15px
+      rgba(35, 25, 20, 0.025);
+  }
+
+  .admin-card h3 {
+    font-size: 0.95rem;
+  }
+
+  .admin-card p {
+    font-size: 0.78rem;
+  }
+
+  .admin-participant {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 6px;
+  }
+}
+
+
+/* EXPENSE CANCELLATION V2 */
+
+.expense-row-cancelled {
+  position: relative;
+
+  border-color:
+    rgba(239, 64, 86, 0.22);
+
+  background:
+    rgba(239, 64, 86, 0.045);
+}
+
+.expense-row-cancelled
+.expense-cancellable-text {
+  position: relative;
+
+  color:
+    rgba(100, 65, 70, 0.64);
+}
+
+.expense-row-cancelled
+.expense-cancellable-text::after {
+  content: "";
+
+  position: absolute;
+
+  left: -4px;
+  right: -4px;
+
+  top: 50%;
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: #ef4056;
+
+  transform: rotate(-1deg);
+
+  pointer-events: none;
+}
+
+.expense-cancelled-badge {
+  display: inline-flex;
+
+  width: fit-content;
+
+  margin-bottom: 6px;
+
+  padding: 4px 8px;
+
+  border:
+    1px solid
+    rgba(239, 64, 86, 0.25);
+
+  border-radius: 999px;
+
+  background:
+    rgba(239, 64, 86, 0.09);
+
+  color: #c92f44;
+
+  font-size: 0.64rem;
+
+  font-weight: 900;
+
+  letter-spacing: 0.05em;
+}
+
+.expense-cancellation-info {
+  margin-top: 8px;
+
+  padding: 8px 10px;
+
+  border-left:
+    3px solid #ef4056;
+
+  border-radius: 8px;
+
+  background:
+    rgba(239, 64, 86, 0.055);
+
+  color: #8b3945;
+
+  font-size: 0.72rem;
+
+  line-height: 1.45;
+}
+
+.expense-cancellation-info strong {
+  font-size: inherit;
+}
+
+.expense-row-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  flex-wrap: wrap;
+}
+
+.expense-cancel-button {
+  min-height: 34px;
+
+  padding: 6px 10px;
+
+  border:
+    1px solid
+    rgba(239, 64, 86, 0.25);
+
+  border-radius: 10px;
+
+  background:
+    rgba(239, 64, 86, 0.07);
+
+  color: #bd3043;
+
+  cursor: pointer;
+
+  font-size: 0.72rem;
+
+  font-weight: 850;
+}
+
+.expense-cancel-button:hover {
+  background:
+    rgba(239, 64, 86, 0.14);
+}
+
+.expense-cancel-button:disabled {
+  opacity: 0.5;
+
+  cursor: default;
+}
+
+@media (max-width: 620px) {
+  .expense-row-actions {
+    width: 100%;
+  }
+
+  .expense-cancel-button,
+  .expense-receipt-button {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* =========================================================
+   ADMIN COLLAPSIBLE SECTIONS V2
+   ========================================================= */
+
+.admin-section-collapsible {
+  padding: 0;
+
+  overflow: hidden;
+}
+
+.admin-collapsible {
+  width: 100%;
+}
+
+.admin-collapsible-summary {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  min-height: 78px;
+
+  padding:
+    16px 18px;
+
+  cursor: pointer;
+
+  list-style: none;
+
+  user-select: none;
+
+  transition:
+    background 0.18s ease;
+}
+
+.admin-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-collapsible-summary:hover {
+  background:
+    rgba(248, 246, 243, 0.72);
+}
+
+.admin-collapsible-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  min-width: 0;
+}
+
+.admin-collapsible-title > div {
+  display: grid;
+
+  gap: 2px;
+
+  min-width: 0;
+}
+
+.admin-collapsible-icon {
+  display: grid;
+
+  place-items: center;
+
+  width: 42px;
+  height: 42px;
+
+  flex:
+    0 0 42px;
+
+  border:
+    1px solid
+    rgba(35, 25, 20, 0.07);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.92);
+
+  font-size: 1.2rem;
+
+  box-shadow:
+    0 4px 12px
+    rgba(35, 25, 20, 0.035);
+}
+
+.admin-collapsible-title small {
+  overflow: hidden;
+
+  color:
+    #8c817b;
+
+  font-size: 0.62rem;
+
+  font-weight: 850;
+
+  letter-spacing: 0.08em;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.admin-collapsible-title strong {
+  overflow: hidden;
+
+  color:
+    #2e2926;
+
+  font-size: 1rem;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.admin-collapsible-count {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 34px;
+  height: 30px;
+
+  padding:
+    0 10px;
+
+  flex:
+    0 0 auto;
+
+  border:
+    1px solid
+    rgba(35, 25, 20, 0.08);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.96);
+
+  color:
+    #655d58;
+
+  font-size: 0.75rem;
+
+  font-weight: 900;
+}
+
+.admin-collapsible-summary::after {
+  content: "⌄";
+
+  display: grid;
+
+  place-items: center;
+
+  width: 26px;
+  height: 26px;
+
+  flex:
+    0 0 26px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(35, 25, 20, 0.045);
+
+  color:
+    #716964;
+
+  font-size: 0.8rem;
+
+  font-weight: 900;
+
+  transition:
+    transform 0.2s ease;
+}
+
+.admin-collapsible[open]
+.admin-collapsible-summary {
+  border-bottom:
+    1px solid
+    rgba(35, 25, 20, 0.07);
+
+  background:
+    rgba(250, 248, 246, 0.72);
+}
+
+.admin-collapsible[open]
+.admin-collapsible-summary::after {
+  transform:
+    rotate(180deg);
+}
+
+.admin-collapsible-body {
+  padding:
+    16px 18px 18px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 620px) {
+  .admin-section-collapsible {
+    border-radius: 18px;
+  }
+
+  .admin-collapsible-summary {
+    min-height: 68px;
+
+    padding:
+      12px 13px;
+
+    gap: 9px;
+  }
+
+  .admin-collapsible-title {
+    gap: 9px;
+
+    flex: 1 1 auto;
+  }
+
+  .admin-collapsible-icon {
+    width: 36px;
+    height: 36px;
+
+    flex:
+      0 0 36px;
+
+    border-radius: 12px;
+
+    font-size: 1rem;
+  }
+
+  .admin-collapsible-title small {
+    font-size: 0.55rem;
+  }
+
+  .admin-collapsible-title strong {
+    font-size: 0.88rem;
+  }
+
+  .admin-collapsible-count {
+    min-width: 30px;
+    height: 27px;
+
+    padding:
+      0 8px;
+
+    font-size: 0.68rem;
+  }
+
+  .admin-collapsible-summary::after {
+    width: 23px;
+    height: 23px;
+
+    flex:
+      0 0 23px;
+
+    font-size: 0.72rem;
+  }
+
+  .admin-collapsible-body {
+    padding:
+      12px;
+  }
+
+  .admin-collapsible-body
+  .admin-grid {
+    grid-template-columns:
+      1fr;
+  }
+}

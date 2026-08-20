@@ -219,6 +219,31 @@ export default async function handler(
         })
       }
 
+      // Antes de calcular o contador, sincroniza a
+      // checklist com todas as inscrições confirmadas
+      // atuais do evento.
+      const checklistRows = await sql`
+        SELECT
+          ac.id,
+          er.event_id
+        FROM activity_checklists ac
+        JOIN event_roles er
+          ON er.id = ac.event_role_id
+        WHERE
+          ac.event_role_id =
+            ${numericEventRoleId}
+          AND ac.active = 1
+      `
+
+      for (
+        const checklist
+        of checklistRows
+      ) {
+        await syncChecklist(
+          checklist
+        )
+      }
+
       const rows = await sql`
         SELECT
           ac.id,
@@ -570,6 +595,45 @@ export default async function handler(
     // =====================================================
 
     if (operation === 'mine') {
+      // ===================================================
+      // SYNC BEFORE COUNTERS
+      // ===================================================
+      // Uma inscrição pode ser confirmada depois da criação
+      // da checklist. Antes de devolver checked_items /
+      // total_items, sincronizamos todas as checklists
+      // atribuídas ao usuário atual.
+      // ===================================================
+
+      const assignedChecklists =
+        await sql`
+          SELECT
+            ac.id,
+            er.event_id
+
+          FROM activity_checklists ac
+
+          JOIN event_roles er
+            ON er.id =
+              ac.event_role_id
+
+          WHERE
+            ac.assigned_user_id =
+              ${session.userId}
+
+            AND ac.active = 1
+
+            AND er.active = 1
+        `
+
+      for (
+        const checklist
+        of assignedChecklists
+      ) {
+        await syncChecklist(
+          checklist
+        )
+      }
+
       const rows = await sql`
         SELECT
           ac.id,

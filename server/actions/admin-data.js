@@ -294,9 +294,31 @@ export default async function handler(request, response) {
         AND c.status = 'confirmed'
 
       WHERE
-        ${unrestrictedProjects}
-        OR e.project_id =
-          ${admin.projectId}
+        ${globalAdmin}
+
+        OR (
+          ${projectAdmin}
+          AND e.project_id =
+            ${admin.projectId}
+        )
+
+        OR (
+          ${mediaAdmin}
+          AND er.team_id =
+            ANY(${adminTeamIds})
+        )
+
+        OR (
+          ${!globalAdmin &&
+            !projectAdmin &&
+            !mediaAdmin}
+
+          AND e.project_id =
+            ${admin.projectId}
+
+          AND er.team_id =
+            ANY(${adminTeamIds})
+        )
 
       GROUP BY
         er.id,
@@ -347,6 +369,34 @@ export default async function handler(request, response) {
       LEFT JOIN task_users tu
         ON tu.task_id = t.id
         AND tu.status = 'active'
+
+      WHERE
+        ${globalAdmin}
+
+        OR (
+          ${projectAdmin}
+          AND t.project_id =
+            ${admin.projectId}
+        )
+
+        OR (
+          ${mediaAdmin}
+          AND t.team_id =
+            ANY(${adminTeamIds})
+        )
+
+        OR (
+          ${!globalAdmin &&
+            !projectAdmin &&
+            !mediaAdmin}
+
+          AND t.project_id =
+            ${admin.projectId}
+
+          AND t.team_id =
+            ANY(${adminTeamIds})
+        )
+
       GROUP BY
         t.id,
         t.title,
@@ -402,11 +452,35 @@ export default async function handler(request, response) {
         ON er.event_id = e.id
       WHERE c.status = 'confirmed'
         AND c.completed_at IS NULL
+
         AND (
-          ${unrestrictedProjects}
-          OR e.project_id =
-            ${admin.projectId}
+          ${globalAdmin}
+
+          OR (
+            ${projectAdmin}
+            AND e.project_id =
+              ${admin.projectId}
+          )
+
+          OR (
+            ${mediaAdmin}
+            AND er.team_id =
+              ANY(${adminTeamIds})
+          )
+
+          OR (
+            ${!globalAdmin &&
+              !projectAdmin &&
+              !mediaAdmin}
+
+            AND e.project_id =
+              ${admin.projectId}
+
+            AND er.team_id =
+              ANY(${adminTeamIds})
+          )
         )
+
       ORDER BY
         e.event_date DESC,
         r.name,
@@ -439,36 +513,90 @@ export default async function handler(request, response) {
         ON u.project_id = p.id
       JOIN tasks t
         ON tu.task_id = t.id
-      WHERE tu.status = 'active'
+
+      WHERE
+        tu.status = 'active'
+
+        AND (
+          ${globalAdmin}
+
+          OR (
+            ${projectAdmin}
+            AND t.project_id =
+              ${admin.projectId}
+          )
+
+          OR (
+            ${mediaAdmin}
+            AND t.team_id =
+              ANY(${adminTeamIds})
+          )
+
+          OR (
+            ${!globalAdmin &&
+              !projectAdmin &&
+              !mediaAdmin}
+
+            AND t.project_id =
+              ${admin.projectId}
+
+            AND t.team_id =
+              ANY(${adminTeamIds})
+          )
+        )
       ORDER BY
         t.deadline DESC,
         u.name
     `
 
     const registrationCoupons =
-      globalAdmin
+      (
+        globalAdmin ||
+        projectAdmin
+      )
         ? await sql`
       SELECT
         rc.id,
         rc.code,
         rc.usage_limit,
+        rc.project_id,
         rc.active,
         rc.created_at,
-        COUNT(er.id)::int AS used_count
+
+        p.name AS project_name,
+
+        COUNT(er.id)::int
+          AS used_count
+
       FROM registration_coupons rc
+
+      LEFT JOIN projects p
+        ON p.id =
+          rc.project_id
+
       LEFT JOIN event_registrations er
         ON er.coupon_id = rc.id
         AND er.status IN (
           'pending_coupon_review',
           'confirmed'
         )
+
+      WHERE
+        ${globalAdmin}
+        OR rc.project_id =
+          ${admin.projectId}
+
       GROUP BY
         rc.id,
         rc.code,
         rc.usage_limit,
+        rc.project_id,
         rc.active,
-        rc.created_at
-      ORDER BY rc.created_at DESC
+        rc.created_at,
+        p.name
+
+      ORDER BY
+        rc.created_at DESC
     `
 
         : []
@@ -805,7 +933,8 @@ export default async function handler(request, response) {
         canViewActivitiesOverview,
 
         canManageCoupons:
-          globalAdmin,
+          globalAdmin ||
+          projectAdmin,
       },
       users,
       events,

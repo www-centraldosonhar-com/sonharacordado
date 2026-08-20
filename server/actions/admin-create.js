@@ -5,9 +5,9 @@ import {
   adminCanAccessEvent,
   adminCanAccessProject,
   isGlobalAdmin,
-  isMediaAdmin,
   isProjectAdmin,
   isTeamAdmin,
+  isVolunteerTeamAdmin,
   requireAdmin,
   sql,
 } from './_admin.js'
@@ -60,7 +60,14 @@ function canCreateUserType(
     ].includes(userType)
   }
 
-  if (isTeamAdmin(admin)) {
+  // Somente o Admin da Equipe de Voluntários
+  // pode cadastrar voluntários dentro do próprio projeto.
+  //
+  // Mídias, Atividades, Assistidos e Alimentação
+  // não cadastram usuários.
+  if (
+    isVolunteerTeamAdmin(admin)
+  ) {
     return (
       userType === 'volunteer'
     )
@@ -165,7 +172,24 @@ export default async function handler(request, response) {
     }
 
     if (action === 'coupon') {
-      if (!isGlobalAdmin(admin)) {
+      // ===================================================
+      // CUPOM DE GRATUIDADE
+      // ===================================================
+      //
+      // Admin Geral:
+      // - pode criar para qualquer projeto.
+      //
+      // Admin de Projeto:
+      // - cria somente para o próprio projeto.
+      //
+      // Admin de Equipe:
+      // - não possui acesso.
+      // ===================================================
+
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
         return forbidden(response)
       }
 
@@ -179,14 +203,52 @@ export default async function handler(request, response) {
       const usageLimit =
         Number(data.usageLimit)
 
+      const requestedProjectId =
+        data.projectId
+          ? Number(data.projectId)
+          : null
+
+      const effectiveProjectId =
+        isProjectAdmin(admin)
+          ? Number(admin.projectId)
+          : requestedProjectId
+
       if (
         !code ||
         !Number.isInteger(usageLimit) ||
-        usageLimit < 1
+        usageLimit < 1 ||
+        !Number.isInteger(
+          effectiveProjectId
+        )
       ) {
         return response.status(400).json({
           error:
-            'Preencha corretamente o cupom.',
+            'Preencha corretamente o cupom e o projeto.',
+        })
+      }
+
+      const canAccessProject =
+        adminCanAccessProject(
+          admin,
+          effectiveProjectId
+        )
+
+      if (!canAccessProject) {
+        return forbidden(response)
+      }
+
+      const projectRows = await sql`
+        SELECT id
+        FROM projects
+        WHERE id =
+          ${effectiveProjectId}
+        LIMIT 1
+      `
+
+      if (!projectRows[0]) {
+        return response.status(400).json({
+          error:
+            'Projeto inválido.',
         })
       }
 
@@ -208,11 +270,13 @@ export default async function handler(request, response) {
         INSERT INTO registration_coupons (
           code,
           usage_limit,
+          project_id,
           active
         )
         VALUES (
           ${code},
           ${usageLimit},
+          ${effectiveProjectId},
           1
         )
       `
@@ -220,7 +284,7 @@ export default async function handler(request, response) {
       return response.status(201).json({
         success: true,
         message:
-          'Cupom criado! 🎟️',
+          'Cupom criado para o projeto! 🎟️',
       })
     }
 
@@ -604,7 +668,7 @@ export default async function handler(request, response) {
         ) {
           return response.status(403).json({
             error:
-              'Admin de Equipe pode cadastrar apenas voluntários da própria equipe.',
+              'Somente o Admin de Voluntários pode cadastrar voluntários do próprio projeto.',
           })
         }
 
@@ -869,45 +933,29 @@ export default async function handler(request, response) {
         normalizedTeamIds.length = 0
       }
 
-      if (
-        isTeamAdmin(admin) &&
-        !isMediaAdmin(admin)
-      ) {
-        const allowedTeamIds =
-          (
-            admin.teams || []
-          ).map(
-            (team) =>
-              Number(team.id)
-          )
-
-        const invalidTeam =
-          normalizedTeamIds.some(
-            (teamId) =>
-              !allowedTeamIds.includes(
-                Number(teamId)
-              )
-          )
-
-        if (invalidTeam) {
-          return forbidden(response)
-        }
-      }
+      // =================================================
+      // TEAM ADMIN USER CREATION SCOPE
+      // =================================================
+      //
+      // Neste ponto, canCreateUserType() já garantiu que:
+      //
+      // - somente Admin da Equipe de Voluntários pode
+      //   cadastrar alguém entre os Admins de Equipe;
+      //
+      // - ele pode cadastrar somente VOLUNTÁRIOS;
+      //
+      // - adminCanAccessProject() já garantiu que o novo
+      //   voluntário pertence ao mesmo projeto do Admin.
+      //
+      // Portanto, ele pode definir qualquer equipe
+      // principal do projeto e adicionar Mídias como apoio.
+      // =================================================
 
       if (
         isTeamAdmin(admin) &&
-        isMediaAdmin(admin)
+        !isVolunteerTeamAdmin(admin)
       ) {
-        const onlyMedia =
-          normalizedTeamIds.every(
-            (teamId) =>
-              Number(teamId) ===
-              Number(mediaTeamId)
-          )
-
-        if (!onlyMedia) {
-          return forbidden(response)
-        }
+        return forbidden(response)
       }
 
       for (

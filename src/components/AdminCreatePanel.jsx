@@ -5,8 +5,108 @@ function AdminCreatePanel({
   events,
   roles,
   teams = [],
+  access,
   onCreated,
 }) {
+  // =====================================================
+  // ADMIN SCOPE
+  // =====================================================
+  //
+  // Global / Project:
+  // - podem escolher entre todas as equipes disponíveis.
+  //
+  // Team Admin:
+  // - só trabalha com as equipes às quais pertence.
+  //
+  // A segurança definitiva continua no backend.
+  // Este filtro serve para deixar a interface coerente
+  // e impedir opções que o usuário não pode utilizar.
+  // =====================================================
+
+  const adminScope =
+    access?.scope || null
+
+  const canManageCoupons =
+    Boolean(
+      access?.canManageCoupons
+    )
+
+  const adminTeamCodes =
+    (access?.teams || [])
+      .map(
+        (team) =>
+          team.code
+      )
+
+  const isGlobalAdmin =
+    adminScope === 'global'
+
+  const isProjectAdmin =
+    adminScope === 'project'
+
+  const isVolunteerAdmin =
+    adminScope === 'team' &&
+    adminTeamCodes.includes(
+      'volunteers'
+    )
+
+  // Cadastro de pessoas segue a hierarquia:
+  //
+  // Global:
+  // - qualquer nível.
+  //
+  // Projeto:
+  // - voluntário;
+  // - Admin de Equipe.
+  //
+  // Voluntários:
+  // - somente voluntário.
+  //
+  // Outros Admins de Equipe:
+  // - sem cadastro de pessoas.
+  const canCreateUsers =
+    isGlobalAdmin ||
+    isProjectAdmin ||
+    isVolunteerAdmin
+
+  const adminTeamIds =
+    new Set(
+      (access?.teams || [])
+        .map(
+          (team) =>
+            Number(team.id)
+        )
+    )
+
+  const scopedTeams =
+    adminScope === 'team'
+      ? teams.filter(
+          (team) =>
+            adminTeamIds.has(
+              Number(team.id)
+            )
+        )
+      : teams
+
+  // =====================================================
+  // USER CREATION TEAMS
+  // =====================================================
+  //
+  // O Admin da Equipe de Voluntários administra o
+  // cadastro dos voluntários do projeto inteiro.
+  //
+  // Por isso, no cadastro de pessoas ele pode definir
+  // qualquer equipe principal.
+  //
+  // Isso NÃO altera o escopo dele para atividades,
+  // missões ou outros conteúdos administrativos.
+  // =====================================================
+
+  const userCreationTeams =
+    isVolunteerAdmin
+      ? teams
+      : scopedTeams
+
   const [message, setMessage] = useState('')
 
   const [
@@ -183,7 +283,7 @@ function AdminCreatePanel({
                 Todas as equipes
               </option>
 
-              {teams.map((team) => (
+              {scopedTeams.map((team) => (
                 <option
                   key={team.id}
                   value={team.id}
@@ -221,45 +321,75 @@ function AdminCreatePanel({
           </form>
         </details>
 
-        <details>
-          <summary>
-            🎟️ Criar cupom de gratuidade
-          </summary>
+        {canManageCoupons && (
+          <details>
+            <summary>
+              🎟️ Criar cupom de gratuidade
+            </summary>
 
-          <form
-            onSubmit={handleSubmit(
-              'coupon'
-            )}
-          >
-            <label>
-              Nome do cupom
-            </label>
-
-            <input
-              name="code"
-              placeholder="SONHADOR2026"
-              required
-            />
-
-            <label>
-              Quantidade de usos
-            </label>
-
-            <input
-              type="number"
-              name="usageLimit"
-              min="1"
-              required
-            />
-
-            <button
-              disabled={isLoading}
-              type="submit"
+            <form
+              onSubmit={handleSubmit(
+                'coupon'
+              )}
             >
-              Criar cupom
-            </button>
-          </form>
-        </details>
+              <label>
+                Projeto
+              </label>
+
+              <select
+                name="projectId"
+                defaultValue=""
+                required
+              >
+                <option
+                  value=""
+                  disabled
+                >
+                  Selecione o projeto
+                </option>
+
+                {projects.map(
+                  (project) => (
+                    <option
+                      key={project.id}
+                      value={project.id}
+                    >
+                      {project.name}
+                    </option>
+                  )
+                )}
+              </select>
+
+              <label>
+                Nome do cupom
+              </label>
+
+              <input
+                name="code"
+                placeholder="SONHADOR2026"
+                required
+              />
+
+              <label>
+                Quantidade de usos
+              </label>
+
+              <input
+                type="number"
+                name="usageLimit"
+                min="1"
+                required
+              />
+
+              <button
+                disabled={isLoading}
+                type="submit"
+              >
+                Criar cupom
+              </button>
+            </form>
+          </details>
+        )}
 
         <details>
           <summary>
@@ -460,7 +590,7 @@ function AdminCreatePanel({
                 Selecione a equipe
               </option>
 
-              {teams.map((team) => (
+              {scopedTeams.map((team) => (
                 <option
                   key={team.id}
                   value={team.id}
@@ -596,50 +726,6 @@ function AdminCreatePanel({
             />
 
             <label>
-              Projeto
-            </label>
-
-            <select
-              name="projectId"
-              defaultValue=""
-            >
-              <option value="">
-                🌎 Geral / definir pelo evento
-              </option>
-
-              {projects.map((project) => (
-                <option
-                  key={project.id}
-                  value={project.id}
-                >
-                  {project.name}
-                </option>
-              ))}
-            </select>
-
-            <label>
-              Equipe
-            </label>
-
-            <select
-              name="teamId"
-              defaultValue=""
-            >
-              <option value="">
-                Todas as equipes
-              </option>
-
-              {teams.map((team) => (
-                <option
-                  key={team.id}
-                  value={team.id}
-                >
-                  {team.name}
-                </option>
-              ))}
-            </select>
-
-            <label>
               Evento relacionado
             </label>
 
@@ -654,17 +740,88 @@ function AdminCreatePanel({
               {events
                 .filter(
                   (event) =>
-                    Number(event.active) === 1
+                    Number(
+                      event.active
+                    ) === 1
                 )
-                .map((event) => (
-                  <option
-                    key={event.id}
-                    value={event.id}
-                  >
-                    {event.name}
-                  </option>
-                ))}
+                .map(
+                  (event) => (
+                    <option
+                      key={event.id}
+                      value={event.id}
+                    >
+                      {event.name}
+                    </option>
+                  )
+                )}
             </select>
+
+            <label>
+              Projeto
+            </label>
+
+            <select
+              name="projectId"
+              defaultValue=""
+            >
+              <option value="">
+                🌎 Definir pelo evento / geral
+              </option>
+
+              {projects.map(
+                (project) => (
+                  <option
+                    key={project.id}
+                    value={project.id}
+                  >
+                    {project.name}
+                  </option>
+                )
+              )}
+            </select>
+
+            <label>
+              Equipe responsável
+            </label>
+
+            <select
+              name="teamId"
+              defaultValue={
+                adminScope === 'team' &&
+                scopedTeams.length === 1
+                  ? String(
+                      scopedTeams[0].id
+                    )
+                  : ''
+              }
+              required
+            >
+              <option
+                value=""
+                disabled
+              >
+                Selecione
+              </option>
+
+              {scopedTeams.map(
+                (team) => (
+                  <option
+                    key={team.id}
+                    value={team.id}
+                  >
+                    {team.name}
+                  </option>
+                )
+              )}
+            </select>
+
+            {adminScope === 'team' &&
+              scopedTeams.length === 1 && (
+              <p className="admin-form-help">
+                🔒 Esta missão ficará vinculada
+                à sua equipe.
+              </p>
+            )}
 
             <label>
               Prazo
@@ -675,50 +832,6 @@ function AdminCreatePanel({
               name="deadline"
               required
             />
-
-            <label>
-              Projeto de destino
-            </label>
-
-            <select
-              name="projectId"
-              defaultValue=""
-            >
-              <option value="">
-                🌎 Toda a ONG / transversal
-              </option>
-
-              {projects.map((project) => (
-                <option
-                  key={project.id}
-                  value={project.id}
-                >
-                  {project.name}
-                </option>
-              ))}
-            </select>
-
-            <label>
-              Equipe de destino
-            </label>
-
-            <select
-              name="teamId"
-              defaultValue=""
-            >
-              <option value="">
-                Todas as equipes
-              </option>
-
-              {teams.map((team) => (
-                <option
-                  key={team.id}
-                  value={team.id}
-                >
-                  {team.name}
-                </option>
-              ))}
-            </select>
 
             <label>
               Prioridade
@@ -762,10 +875,11 @@ function AdminCreatePanel({
           </form>
         </details>
 
-        <details>
-          <summary>
-            👤 Cadastrar pessoa
-          </summary>
+        {canCreateUsers && (
+          <details>
+            <summary>
+              👤 Cadastrar pessoa
+            </summary>
 
           <form
             onSubmit={handleSubmit('user')}
@@ -831,17 +945,24 @@ function AdminCreatePanel({
                 🫶 Voluntário
               </option>
 
-              <option value="team_admin">
-                ⚙️ Admin de equipe
-              </option>
+              {(isGlobalAdmin ||
+                isProjectAdmin) && (
+                <option value="team_admin">
+                  ⚙️ Admin de equipe
+                </option>
+              )}
 
-              <option value="project_admin">
-                🏠 Admin de Projeto
-              </option>
+              {isGlobalAdmin && (
+                <option value="project_admin">
+                  🏠 Admin de Projeto
+                </option>
+              )}
 
-              <option value="admin">
-                🛡️ Admin Geral
-              </option>
+              {isGlobalAdmin && (
+                <option value="admin">
+                  🛡️ Admin Geral
+                </option>
+              )}
             </select>
 
             {[
@@ -858,10 +979,10 @@ function AdminCreatePanel({
               defaultValue=""
             >
               <option value="">
-                Somente Mídias / sem equipe principal
+                Sem equipe principal / somente Mídias
               </option>
 
-              {teams
+              {userCreationTeams
                 .filter(
                   (team) =>
                     team.code !== 'media'
@@ -915,7 +1036,8 @@ function AdminCreatePanel({
               Cadastrar pessoa
             </button>
           </form>
-        </details>
+          </details>
+        )}
 
       </div>
     </section>

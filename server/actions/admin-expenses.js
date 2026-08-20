@@ -299,6 +299,7 @@ export default async function handler(
     contentType,
     storagePath,
     expenseId,
+    cancellationReason,
   } =
     request.method === 'GET'
       ? request.query ?? {}
@@ -320,8 +321,15 @@ export default async function handler(
           te.amount,
           te.receipt_path,
           te.created_by,
+          te.active,
           te.created_at,
           te.updated_at,
+          te.cancellation_reason,
+          te.cancelled_at,
+          te.cancelled_by,
+
+          cancelled_user.name
+            AS cancelled_by_name,
 
           e.name AS event_name,
           e.event_date,
@@ -352,7 +360,9 @@ export default async function handler(
           ON u.id =
             te.created_by
 
-        WHERE te.active = 1
+        LEFT JOIN users cancelled_user
+          ON cancelled_user.id =
+            te.cancelled_by
 
         ORDER BY
           e.event_date DESC,
@@ -655,6 +665,133 @@ export default async function handler(
 
 
     // =====================================================
+    // CANCEL EXPENSE
+    // =====================================================
+
+    if (operation === 'cancel') {
+      const numericExpenseId =
+        Number(expenseId)
+
+      const cleanReason =
+        typeof cancellationReason ===
+        'string'
+          ? cancellationReason.trim()
+          : ''
+
+      if (
+        !Number.isInteger(
+          numericExpenseId
+        ) ||
+        numericExpenseId < 1
+      ) {
+        return response
+          .status(400)
+          .json({
+            error:
+              'Lançamento inválido.',
+          })
+      }
+
+      if (cleanReason.length < 3) {
+        return response
+          .status(400)
+          .json({
+            error:
+              'Informe o motivo do cancelamento.',
+          })
+      }
+
+      const rows =
+        await sql`
+          SELECT
+            te.id,
+            te.event_id,
+            te.team_id,
+            te.active
+
+          FROM team_expenses te
+
+          WHERE te.id =
+            ${numericExpenseId}
+
+          LIMIT 1
+        `
+
+      const expense =
+        rows[0]
+
+      if (!expense) {
+        return response
+          .status(404)
+          .json({
+            error:
+              'Lançamento não encontrado.',
+          })
+      }
+
+      const allowed =
+        await canCreateExpense(
+          admin,
+          expense.event_id,
+          expense.team_id
+        )
+
+      if (!allowed) {
+        return response
+          .status(403)
+          .json({
+            error:
+              'Você não pode cancelar este lançamento.',
+          })
+      }
+
+      if (
+        Number(expense.active) !== 1
+      ) {
+        return response
+          .status(409)
+          .json({
+            error:
+              'Este lançamento já foi cancelado.',
+          })
+      }
+
+      await sql`
+        UPDATE team_expenses
+
+        SET
+          active = 0,
+
+          cancellation_reason =
+            ${cleanReason},
+
+          cancelled_at =
+            CURRENT_TIMESTAMP,
+
+          cancelled_by =
+            ${admin.id},
+
+          updated_at =
+            CURRENT_TIMESTAMP
+
+        WHERE id =
+          ${numericExpenseId}
+
+          AND active = 1
+      `
+
+      return response
+        .status(200)
+        .json({
+          success: true,
+
+          message:
+            'Lançamento cancelado e mantido no histórico. 🧾❌',
+        })
+    }
+
+
+    // =====================================================
     // RECEIPT URL
     // =====================================================
 
@@ -701,8 +838,6 @@ export default async function handler(
         WHERE
           te.id =
             ${numericExpenseId}
-
-          AND te.active = 1
 
         LIMIT 1
       `

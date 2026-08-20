@@ -26,6 +26,24 @@ function formatMoney(value) {
 // DATE FORMAT
 // =========================================================
 
+function formatDateTime(value) {
+  if (!value) {
+    return ''
+  }
+
+  const date =
+    new Date(value)
+
+  return new Intl.DateTimeFormat(
+    'pt-BR',
+    {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }
+  ).format(date)
+}
+
+
 function formatDate(value) {
   if (!value) {
     return ''
@@ -326,11 +344,22 @@ function AdminExpensesPanel({
       (
         total,
         expense
-      ) =>
-        total +
-        Number(
-          expense.amount || 0
-        ),
+      ) => {
+        if (
+          Number(
+            expense.active
+          ) !== 1
+        ) {
+          return total
+        }
+
+        return (
+          total +
+          Number(
+            expense.amount || 0
+          )
+        )
+      },
       0
     )
 
@@ -551,6 +580,83 @@ function AdminExpensesPanel({
   // =====================================================
   // OPEN RECEIPT
   // =====================================================
+
+  async function cancelExpense(
+    expense
+  ) {
+    setMessage('')
+
+    const reason =
+      window.prompt(
+        `Por que deseja cancelar o lançamento "${expense.description}"?`
+      )
+
+    if (!reason?.trim()) {
+      return
+    }
+
+    const confirmed =
+      window.confirm(
+        'Confirmar cancelamento? O lançamento continuará no histórico e não entrará mais nos totais.'
+      )
+
+    if (!confirmed) {
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const response =
+        await fetch(
+          '/api/admin?action=expenses',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                operation:
+                  'cancel',
+
+                expenseId:
+                  expense.id,
+
+                cancellationReason:
+                  reason.trim(),
+              }),
+          }
+        )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível cancelar o lançamento.'
+        )
+      }
+
+      setMessage(
+        result.message ||
+        'Lançamento cancelado. 🧾❌'
+      )
+
+      await loadExpenses()
+    } catch (error) {
+      setMessage(
+        error.message
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
 
   async function openReceipt(
     expense
@@ -946,12 +1052,23 @@ function AdminExpensesPanel({
                   (
                     total,
                     expense
-                  ) =>
-                    total +
-                    Number(
-                      expense.amount ||
-                      0
-                    ),
+                  ) => {
+                    if (
+                      Number(
+                        expense.active
+                      ) !== 1
+                    ) {
+                      return total
+                    }
+
+                    return (
+                      total +
+                      Number(
+                        expense.amount ||
+                        0
+                      )
+                    )
+                  },
                   0
                 )
 
@@ -997,10 +1114,26 @@ function AdminExpensesPanel({
                           key={
                             expense.id
                           }
-                          className="expense-row"
+                          className={
+                            `expense-row ${
+                              Number(
+                                expense.active
+                              ) !== 1
+                                ? 'expense-row-cancelled'
+                                : ''
+                            }`
+                          }
                         >
                           <div className="expense-row-main">
-                            <strong>
+                            {Number(
+                              expense.active
+                            ) !== 1 && (
+                              <span className="expense-cancelled-badge">
+                                ❌ CANCELADO
+                              </span>
+                            )}
+
+                            <strong className="expense-cancellable-text">
                               {
                                 expense.description
                               }
@@ -1016,27 +1149,83 @@ function AdminExpensesPanel({
                                 expense.created_by_name
                               }
                             </small>
+
+                            {Number(
+                              expense.active
+                            ) !== 1 && (
+                              <div className="expense-cancellation-info">
+                                <strong>
+                                  Motivo:
+                                </strong>
+                                {' '}
+                                {
+                                  expense.cancellation_reason ||
+                                  'Não informado'
+                                }
+
+                                {expense.cancelled_by_name && (
+                                  <>
+                                    <br />
+
+                                    <span>
+                                      Cancelado por{' '}
+                                      {
+                                        expense.cancelled_by_name
+                                      }
+
+                                      {expense.cancelled_at
+                                        ? ` · ${formatDateTime(
+                                            expense.cancelled_at
+                                          )}`
+                                        : ''}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            )}
                           </div>
 
-                          <strong className="expense-row-value">
+                          <strong
+                            className="expense-row-value expense-cancellable-text"
+                          >
                             {formatMoney(
                               expense.amount
                             )}
                           </strong>
 
-                          {expense.receipt_path && (
-                            <button
-                              type="button"
-                              className="expense-receipt-button"
-                              onClick={() =>
-                                openReceipt(
-                                  expense
-                                )
-                              }
-                            >
-                              📎 Ver
-                            </button>
-                          )}
+                          <div className="expense-row-actions">
+                            {expense.receipt_path && (
+                              <button
+                                type="button"
+                                className="expense-receipt-button"
+                                onClick={() =>
+                                  openReceipt(
+                                    expense
+                                  )
+                                }
+                              >
+                                📎 Ver
+                              </button>
+                            )}
+
+                            {canCreate &&
+                              Number(
+                                expense.active
+                              ) === 1 && (
+                              <button
+                                type="button"
+                                className="expense-cancel-button"
+                                disabled={loading}
+                                onClick={() =>
+                                  cancelExpense(
+                                    expense
+                                  )
+                                }
+                              >
+                                ❌ Cancelar
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )
                     )}

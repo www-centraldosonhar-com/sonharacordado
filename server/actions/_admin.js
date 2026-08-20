@@ -231,7 +231,10 @@ export async function adminCanAccessEvent(
   if (
     event.project_id === null
   ) {
-    return isGlobalAdmin(admin)
+    return (
+      isGlobalAdmin(admin) ||
+      isMediaAdmin(admin)
+    )
   }
 
   return adminCanAccessProject(

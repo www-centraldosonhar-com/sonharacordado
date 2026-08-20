@@ -339,9 +339,20 @@ export default async function handler(
           SELECT
             id,
             usage_limit,
+            project_id,
             active
           FROM registration_coupons
-          WHERE UPPER(code) = ${coupon}
+          WHERE
+            UPPER(code) =
+              ${coupon}
+
+            AND (
+              project_id IS NULL
+
+              OR project_id =
+                ${event.project_id}
+            )
+
           LIMIT 1
         `
 

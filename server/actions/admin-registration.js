@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import {
   adminCanManageRegistration,
   isGlobalAdmin,
+  isProjectAdmin,
   requireAdmin,
   sql,
 } from './_admin.js'
@@ -378,32 +379,65 @@ export default async function handler(
     if (
       operation === 'toggle-coupon'
     ) {
-      if (!isGlobalAdmin(admin)) {
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
         return response.status(403).json({
           error:
-            'Somente a Administração Geral pode alterar cupons.',
+            'Você não possui permissão para administrar cupons.',
         })
       }
+
+      const numericCouponId =
+        Number(couponId)
+
+      if (
+        !Number.isInteger(
+          numericCouponId
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Cupom inválido.',
+        })
+      }
+
       const updated = await sql`
         UPDATE registration_coupons
+
         SET active =
           CASE
             WHEN active = 1 THEN 0
             ELSE 1
           END
-        WHERE id = ${couponId}
-        RETURNING active
+
+        WHERE
+          id =
+            ${numericCouponId}
+
+          AND (
+            ${isGlobalAdmin(admin)}
+
+            OR project_id =
+              ${admin.projectId}
+          )
+
+        RETURNING
+          active,
+          project_id
       `
 
       if (!updated[0]) {
         return response.status(404).json({
           error:
-            'Cupom não encontrado.',
+            'Cupom não encontrado ou fora do seu projeto.',
         })
       }
 
       return response.status(200).json({
         success: true,
+
         message:
           Number(updated[0].active) === 1
             ? 'Cupom ativado! 🎟️'

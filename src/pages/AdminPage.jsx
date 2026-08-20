@@ -101,6 +101,74 @@ function AdminPage({
     )
   }
 
+  // =====================================================
+  // CONTEXTUAL ADMIN UI
+  // =====================================================
+  // Segurança continua sendo validada no backend.
+  // Estas flags servem apenas para deixar a interface
+  // limpa e adequada à função de cada Admin.
+  // =====================================================
+
+  const adminScope =
+    data.adminAccess?.scope || null
+
+  const adminTeamCodes =
+    (data.adminAccess?.teams || [])
+      .map(
+        (team) =>
+          team.code
+      )
+
+  const isGlobalAdmin =
+    adminScope === 'global'
+
+  const isProjectAdmin =
+    adminScope === 'project'
+
+  const isTeamAdmin =
+    adminScope === 'team'
+
+  const isVolunteerAdmin =
+    isTeamAdmin &&
+    adminTeamCodes.includes(
+      'volunteers'
+    )
+
+  const isMediaAdmin =
+    isTeamAdmin &&
+    adminTeamCodes.includes(
+      'media'
+    )
+
+  const isManagementAdmin =
+    isGlobalAdmin ||
+    isProjectAdmin
+
+  const canSeeUsers =
+    isManagementAdmin ||
+    isVolunteerAdmin
+
+  const canSeeEvents =
+    isManagementAdmin
+
+  const canSeeActivities =
+    isManagementAdmin ||
+    isMediaAdmin ||
+    isVolunteerAdmin
+
+  const canSeeMissions =
+    isManagementAdmin ||
+    isTeamAdmin
+
+  const canSeeAnnouncements =
+    isManagementAdmin ||
+    isTeamAdmin
+
+  const canSeeExpenses =
+    isGlobalAdmin ||
+    isProjectAdmin ||
+    isTeamAdmin
+
   return (
     <div className="admin-page">
       <header className="admin-header">
@@ -144,13 +212,17 @@ function AdminPage({
       </header>
 
       <nav className="admin-nav">
-        <a href="#usuarios">
-          👥 Voluntários
-        </a>
+        {canSeeUsers && (
+          <a href="#usuarios">
+            👥 Voluntários
+          </a>
+        )}
 
-        <a href="#eventos">
-          📅 Eventos
-        </a>
+        {canSeeEvents && (
+          <a href="#eventos">
+            📅 Eventos
+          </a>
+        )}
 
         {data.adminAccess
           ?.canManageRegistrations && (
@@ -159,31 +231,52 @@ function AdminPage({
           </a>
         )}
 
-        <a href="#atividades">
-          🙋 Atividades
-        </a>
+        {data.adminAccess
+          ?.canViewActivitiesOverview && (
+          <a href="#controle-atividades">
+            🎨 Atividades
+          </a>
+        )}
 
-        <a href="#missoes">
-          🚀 Missões
-        </a>
+        {canSeeActivities && (
+          <a href="#atividades">
+            🙋 Vagas
+          </a>
+        )}
 
-        <a href="#comunicados">
-          📢 Comunicados
-        </a>
+        {canSeeExpenses && (
+          <a href="#gastos">
+            🧾 Gastos
+          </a>
+        )}
 
-        <a href="#confirmados">
-          🫶 Confirmados
-        </a>
+        {canSeeMissions && (
+          <a href="#missoes">
+            🚀 Missões
+          </a>
+        )}
+
+        {canSeeAnnouncements && (
+          <a href="#comunicados">
+            📢 Comunicados
+          </a>
+        )}
       </nav>
 
       <main className="admin-shell">
-        <AdminCreatePanel
-          projects={data.projects}
-          events={data.events}
-          roles={data.roles}
-          teams={data.teams || []}
-          onCreated={reloadAdmin}
-        />
+        {(isManagementAdmin ||
+          isVolunteerAdmin ||
+          isMediaAdmin) && (
+          <AdminCreatePanel
+            projects={data.projects}
+            events={data.events}
+            roles={data.roles}
+            teams={data.teams || []}
+            access={data.adminAccess}
+            onCreated={reloadAdmin}
+          />
+        )}
+        {isManagementAdmin && (
         <section
           id="resumo"
           className="admin-dashboard"
@@ -228,20 +321,38 @@ function AdminPage({
             </span>
           </article>
         </section>
+        )}
 
+        {canSeeUsers && (
         <section
           id="usuarios"
-          className="admin-section"
+          className="admin-section admin-section-collapsible"
         >
-          <p className="admin-eyebrow">
-            QUEM FAZ ACONTECER
-          </p>
+          <details className="admin-collapsible">
+            <summary className="admin-collapsible-summary">
+              <div className="admin-collapsible-title">
+                <span className="admin-collapsible-icon">
+                  👥
+                </span>
 
-          <h2>
-            👥 Voluntários e usuários
-          </h2>
+                <div>
+                  <small>
+                    QUEM FAZ ACONTECER
+                  </small>
 
-          <div className="admin-grid">
+                  <strong>
+                    Voluntários e usuários
+                  </strong>
+                </div>
+              </div>
+
+              <span className="admin-collapsible-count">
+                {data.users.length}
+              </span>
+            </summary>
+
+            <div className="admin-collapsible-body">
+              <div className="admin-grid">
             {data.users.map((person) => (
               <article
                 className="admin-card"
@@ -333,22 +444,41 @@ function AdminPage({
                 />
               </article>
             ))}
-          </div>
+              </div>
+            </div>
+          </details>
         </section>
-
+        )}
+        {canSeeEvents && (
         <section
           id="eventos"
-          className="admin-section"
+          className="admin-section admin-section-collapsible"
         >
-          <p className="admin-eyebrow admin-orange">
-            PRÓXIMOS ENCONTROS
-          </p>
+          <details className="admin-collapsible">
+            <summary className="admin-collapsible-summary">
+              <div className="admin-collapsible-title">
+                <span className="admin-collapsible-icon">
+                  📅
+                </span>
 
-          <h2>
-            📅 Eventos
-          </h2>
+                <div>
+                  <small className="admin-orange">
+                    PRÓXIMOS ENCONTROS
+                  </small>
 
-          <div className="admin-grid">
+                  <strong>
+                    Eventos
+                  </strong>
+                </div>
+              </div>
+
+              <span className="admin-collapsible-count">
+                {data.events.length}
+              </span>
+            </summary>
+
+            <div className="admin-collapsible-body">
+              <div className="admin-grid">
             {data.events.map((event) => (
               <article
                 className="admin-card"
@@ -414,8 +544,11 @@ function AdminPage({
                 />
               </article>
             ))}
-          </div>
+              </div>
+            </div>
+          </details>
         </section>
+        )}
 
         {data.adminAccess
           ?.canManageRegistrations && (
@@ -453,32 +586,51 @@ function AdminPage({
           />
         )}
 
-        <AdminExpensesPanel
-          events={
-            data.events || []
-          }
-          teams={
-            data.teams || []
-          }
-          access={
-            data.adminAccess
-          }
-        />
-
-
+        {canSeeExpenses && (
+          <div id="gastos">
+            <AdminExpensesPanel
+              events={
+                data.events || []
+              }
+              teams={
+                data.teams || []
+              }
+              access={
+                data.adminAccess
+              }
+            />
+          </div>
+        )}
+        {canSeeActivities && (
         <section
           id="atividades"
-          className="admin-section"
+          className="admin-section admin-section-collapsible"
         >
-          <p className="admin-eyebrow">
-            VAGAS E FUNÇÕES
-          </p>
+          <details className="admin-collapsible">
+            <summary className="admin-collapsible-summary">
+              <div className="admin-collapsible-title">
+                <span className="admin-collapsible-icon">
+                  🙋
+                </span>
 
-          <h2>
-            🙋 Atividades
-          </h2>
+                <div>
+                  <small>
+                    VAGAS E FUNÇÕES
+                  </small>
 
-          <div className="admin-grid">
+                  <strong>
+                    Atividades
+                  </strong>
+                </div>
+              </div>
+
+              <span className="admin-collapsible-count">
+                {data.eventRoles.length}
+              </span>
+            </summary>
+
+            <div className="admin-collapsible-body">
+              <div className="admin-grid">
             {data.eventRoles.map((activity) => {
               const remaining =
                 Number(activity.vacancy_limit) -
@@ -610,22 +762,41 @@ function AdminPage({
                 </article>
               )
             })}
-          </div>
+              </div>
+            </div>
+          </details>
         </section>
-
+        )}
+        {canSeeMissions && (
         <section
           id="missoes"
-          className="admin-section"
+          className="admin-section admin-section-collapsible"
         >
-          <p className="admin-eyebrow">
-            TIRANDO DO PAPEL
-          </p>
+          <details className="admin-collapsible">
+            <summary className="admin-collapsible-summary">
+              <div className="admin-collapsible-title">
+                <span className="admin-collapsible-icon">
+                  🚀
+                </span>
 
-          <h2>
-            🚀 Missões
-          </h2>
+                <div>
+                  <small>
+                    TIRANDO DO PAPEL
+                  </small>
 
-          <div className="admin-grid">
+                  <strong>
+                    Missões
+                  </strong>
+                </div>
+              </div>
+
+              <span className="admin-collapsible-count">
+                {data.tasks.length}
+              </span>
+            </summary>
+
+            <div className="admin-collapsible-body">
+              <div className="admin-grid">
             {data.tasks.map((task) => (
               <article
                 className="admin-card"
@@ -728,104 +899,86 @@ function AdminPage({
                 )}
               </article>
             ))}
-          </div>
+              </div>
+            </div>
+          </details>
         </section>
-
+        )}
+        {canSeeAnnouncements && (
         <section
           id="comunicados"
-          className="admin-section"
+          className="admin-section admin-section-collapsible"
         >
-          <p className="admin-eyebrow admin-orange">
-            MURAL DO SONHAR
-          </p>
+          <details className="admin-collapsible">
+            <summary className="admin-collapsible-summary">
+              <div className="admin-collapsible-title">
+                <span className="admin-collapsible-icon">
+                  📢
+                </span>
 
-          <h2>
-            📢 Comunicados
-          </h2>
-
-          <div className="admin-grid">
-            {data.announcements.map(
-              (announcement) => (
-                <article
-                  className="admin-card"
-                  key={announcement.id}
-                >
-                  <h3>
-                    {announcement.title}
-                  </h3>
-
-                  <p>
-                    {announcement.message}
-                  </p>
-
-                  <p>
-                    Prioridade:
-                    {' '}
-                    {announcement.priority}
-                  </p>
-
-                  <p>
-                    Por:
-                    {' '}
-                    {announcement.created_by_name}
-                  </p>
-
-                  <p>
-                    {announcement.active
-                      ? '🟢 Ativo'
-                      : '⚪ Arquivado'}
-                  </p>
-
-                  <AdminManageActions
-                    type="announcement"
-                    item={announcement}
-                    onUpdated={reloadAdmin}
-                  />
-                </article>
-              )
-            )}
-          </div>
-        </section>
-
-        <section
-          id="confirmados"
-          className="admin-section"
-        >
-          <p className="admin-eyebrow">
-            QUEM DISSE EU VOU
-          </p>
-
-          <h2>
-            🫶 Confirmados
-          </h2>
-
-          <div className="admin-confirmations">
-            {data.confirmations.map(
-              (confirmation) => (
-                <article
-                  className="admin-confirmation"
-                  key={confirmation.id}
-                >
-                  <strong>
-                    {confirmation.name}
-                  </strong>
-
-                  <span>
-                    {confirmation.project}
-                  </span>
-
-                  <span>
-                    {confirmation.role}
-                  </span>
-
-                  <small>
-                    {confirmation.event_name}
+                <div>
+                  <small className="admin-orange">
+                    MURAL DO SONHAR
                   </small>
-                </article>
-              )
-            )}
-          </div>
+
+                  <strong>
+                    Comunicados
+                  </strong>
+                </div>
+              </div>
+
+              <span className="admin-collapsible-count">
+                {data.announcements.length}
+              </span>
+            </summary>
+
+            <div className="admin-collapsible-body">
+              <div className="admin-grid">
+                {data.announcements.map(
+                  (announcement) => (
+                    <article
+                      className="admin-card"
+                      key={announcement.id}
+                    >
+                      <h3>
+                        {announcement.title}
+                      </h3>
+
+                      <p>
+                        {announcement.message}
+                      </p>
+
+                      <p>
+                        Prioridade:
+                        {' '}
+                        {announcement.priority}
+                      </p>
+
+                      <p>
+                        Por:
+                        {' '}
+                        {announcement.created_by_name}
+                      </p>
+
+                      <p>
+                        {announcement.active
+                          ? '🟢 Ativo'
+                          : '⚪ Arquivado'}
+                      </p>
+
+                      <AdminManageActions
+                        type="announcement"
+                        item={announcement}
+                        onUpdated={reloadAdmin}
+                      />
+                    </article>
+                  )
+                )}
+              </div>
+            </div>
+          </details>
         </section>
+        )}
       </main>
     </div>
   )
