@@ -18,11 +18,6 @@ function SpaceSelectorPage({
       'admin'
     )
 
-  const hasFinance =
-    permissions.includes(
-      'finance'
-    )
-
   return (
     <main className="login-page">
       <section className="login-shell">
@@ -95,30 +90,6 @@ function SpaceSelectorPage({
                 <small>
                   Eventos, equipes,
                   atividades e missões.
-                </small>
-              </button>
-            )}
-
-            {hasFinance && (
-              <button
-                type="button"
-                className="space-selector-card"
-                onClick={() =>
-                  onSelect('finance')
-                }
-              >
-                <span>
-                  💰
-                </span>
-
-                <strong>
-                  Financeiro
-                </strong>
-
-                <small>
-                  Balanços, arrecadações,
-                  gastos e fechamento
-                  dos eventos.
                 </small>
               </button>
             )}

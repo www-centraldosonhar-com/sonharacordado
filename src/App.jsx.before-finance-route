@@ -6,7 +6,6 @@ import {
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import AdminPage from './pages/AdminPage'
-import FinancePage from './pages/FinancePage'
 import DreamerPage from './pages/DreamerPage'
 import SpaceSelectorPage from './pages/SpaceSelectorPage'
 
@@ -170,21 +169,6 @@ function App() {
             'admin'
           )
         }
-      />
-    )
-  }
-
-  if (
-    currentPage === 'finance' &&
-    hasPermission('finance')
-  ) {
-    return (
-      <FinancePage
-        user={user}
-        onBack={() =>
-          setCurrentPage('spaces')
-        }
-        onLogout={handleLogout}
       />
     )
   }

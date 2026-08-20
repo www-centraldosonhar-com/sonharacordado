@@ -3372,3 +3372,670 @@
       1fr;
   }
 }
+
+
+/* =========================================================
+   POST EVENT — VISUAL
+   ========================================================= */
+
+.post-event-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.post-event-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.post-event-heading h2 {
+  margin: 3px 0 6px;
+}
+
+.post-event-heading p:last-child {
+  max-width: 620px;
+  margin: 0;
+
+  color: #6d6661;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.post-event-status {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 10px;
+
+  border: 1px solid #e7e2de;
+  border-radius: 999px;
+
+  background: #faf8f6;
+
+  color: #5e5752;
+  font-size: 0.68rem;
+  font-weight: 850;
+
+  white-space: nowrap;
+}
+
+.post-event-selector {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+
+  gap: 8px 10px;
+
+  padding: 13px;
+
+  border: 1px solid #ece8e4;
+  border-radius: 16px;
+
+  background: rgba(250, 248, 246, 0.8);
+}
+
+.post-event-selector label {
+  grid-column: 1 / -1;
+
+  color: #786f69;
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.post-event-selector select {
+  width: 100%;
+  min-height: 40px;
+
+  padding: 8px 10px;
+
+  border: 1px solid #ded8d3;
+  border-radius: 11px;
+
+  background: white;
+
+  color: #3f3935;
+}
+
+.post-event-open-button {
+  min-height: 40px;
+
+  padding: 8px 13px;
+
+  border: 1px solid rgba(49, 132, 198, 0.16);
+  border-radius: 11px;
+
+  background: rgba(49, 132, 198, 0.08);
+
+  color: #276fa9;
+
+  cursor: pointer;
+
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.post-event-open-button:hover {
+  background: rgba(49, 132, 198, 0.13);
+}
+
+.post-event-open-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.post-event-message,
+.post-event-loading,
+.post-event-empty {
+  margin: 0;
+
+  padding: 10px 12px;
+
+  border: 1px solid #ece8e4;
+  border-radius: 12px;
+
+  background: #fbfaf9;
+
+  color: #6b625d;
+  font-size: 0.76rem;
+}
+
+.post-event-block {
+  overflow: hidden;
+
+  border: 1px solid #ece8e4;
+  border-radius: 17px;
+
+  background: white;
+
+  box-shadow:
+    0 4px 15px
+    rgba(35, 25, 20, 0.025);
+}
+
+.post-event-block-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 13px 15px;
+
+  border-bottom: 1px solid #f0ece9;
+}
+
+.post-event-block-title > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.post-event-block-title > div > span {
+  font-size: 1.15rem;
+}
+
+.post-event-block-title > div > div {
+  display: grid;
+  gap: 1px;
+}
+
+.post-event-block-title small {
+  color: #988f89;
+
+  font-size: 0.56rem;
+  font-weight: 900;
+
+  letter-spacing: 0.08em;
+}
+
+.post-event-block-title strong {
+  color: #352f2c;
+  font-size: 0.86rem;
+}
+
+.post-event-block-title > b {
+  color: #4b4541;
+  font-size: 0.83rem;
+}
+
+.post-event-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 1px;
+
+  background: #f0ece9;
+}
+
+.post-event-metrics article {
+  display: grid;
+  gap: 2px;
+
+  padding: 14px 8px;
+
+  background: white;
+
+  text-align: center;
+}
+
+.post-event-metrics strong {
+  color: #312c29;
+  font-size: 1.25rem;
+}
+
+.post-event-metrics span {
+  color: #817771;
+  font-size: 0.66rem;
+}
+
+.post-event-finance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 8px;
+
+  padding: 12px;
+}
+
+.post-event-finance-grid article {
+  display: grid;
+  gap: 4px;
+
+  padding: 11px;
+
+  border: 1px solid #eee9e5;
+  border-radius: 13px;
+
+  background: #fcfbfa;
+}
+
+.post-event-finance-grid span {
+  color: #817771;
+  font-size: 0.65rem;
+}
+
+.post-event-finance-grid strong {
+  color: #352f2c;
+  font-size: 0.82rem;
+}
+
+.post-event-final-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin: 0 12px 12px;
+
+  padding: 12px;
+
+  border: 1px solid rgba(59, 154, 92, 0.12);
+  border-radius: 13px;
+
+  background: rgba(59, 154, 92, 0.05);
+}
+
+.post-event-final-balance span {
+  color: #5e6f63;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.post-event-final-balance strong {
+  color: #2f7045;
+  font-size: 1rem;
+}
+
+.post-event-balance-positive {
+  color: #2f7045 !important;
+}
+
+.post-event-balance-negative {
+  color: #c13c4c !important;
+}
+
+.post-event-team-expenses,
+.post-event-team-list {
+  display: grid;
+
+  padding: 0 12px 12px;
+}
+
+.post-event-team-expenses h4 {
+  margin: 2px 0 7px;
+
+  color: #4f4844;
+  font-size: 0.75rem;
+}
+
+.post-event-team-expenses > div,
+.post-event-team-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 8px 2px;
+
+  border-bottom: 1px solid #f0ece9;
+}
+
+.post-event-team-expenses > div:last-child,
+.post-event-team-list > div:last-child {
+  border-bottom: 0;
+}
+
+.post-event-team-expenses span,
+.post-event-team-list span {
+  color: #625a55;
+  font-size: 0.72rem;
+}
+
+.post-event-team-expenses strong,
+.post-event-team-list strong {
+  color: #3d3733;
+  font-size: 0.7rem;
+
+  text-align: right;
+}
+
+.post-event-feedback-summary {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 11px 13px;
+
+  border: 1px solid rgba(245, 154, 58, 0.15);
+  border-radius: 14px;
+
+  background: rgba(245, 154, 58, 0.04);
+}
+
+.post-event-feedback-summary span {
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.post-event-feedback-summary strong {
+  margin-left: auto;
+
+  color: #4a423d;
+  font-size: 0.76rem;
+}
+
+.post-event-feedback-summary small {
+  color: #84766d;
+  font-size: 0.64rem;
+}
+
+
+/* =========================================================
+   POST EVENT — MOBILE
+   ========================================================= */
+
+@media (max-width: 620px) {
+  .post-event-panel {
+    gap: 11px;
+  }
+
+  .post-event-heading {
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .post-event-status {
+    font-size: 0.64rem;
+  }
+
+  .post-event-selector {
+    grid-template-columns: 1fr;
+
+    padding: 10px;
+  }
+
+  .post-event-selector label {
+    grid-column: auto;
+  }
+
+  .post-event-open-button {
+    width: 100%;
+  }
+
+  .post-event-block-title {
+    padding: 11px 12px;
+  }
+
+  .post-event-metrics article {
+    padding: 12px 5px;
+  }
+
+  .post-event-metrics strong {
+    font-size: 1.08rem;
+  }
+
+  .post-event-finance-grid {
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 6px;
+
+    padding: 10px;
+  }
+
+  .post-event-finance-grid article {
+    padding: 10px;
+  }
+
+  .post-event-final-balance {
+    margin: 0 10px 10px;
+
+    padding: 11px;
+  }
+
+  .post-event-team-expenses,
+  .post-event-team-list {
+    padding: 0 10px 10px;
+  }
+
+  .post-event-feedback-summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+
+    padding: 10px;
+  }
+
+  .post-event-feedback-summary strong {
+    margin-left: auto;
+  }
+}
+
+
+/* =========================================================
+   POST EVENT — TEAM REPORTS
+   ========================================================= */
+
+.post-event-team-reports {
+  display: grid;
+  gap: 13px;
+}
+
+.post-event-team-intro {
+  max-width: 650px;
+
+  margin: -5px 0 2px;
+
+  color: #716863;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.post-event-team-event-select {
+  display: grid;
+  gap: 5px;
+
+  padding: 11px;
+
+  border: 1px solid #ece8e4;
+  border-radius: 14px;
+
+  background: #faf9f8;
+}
+
+.post-event-team-event-select label {
+  color: #786f69;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.post-event-team-event-select select {
+  min-height: 40px;
+
+  padding: 8px 10px;
+
+  border: 1px solid #ded8d3;
+  border-radius: 11px;
+
+  background: white;
+
+  color: #3f3935;
+}
+
+.post-event-report-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+.post-event-report-card {
+  overflow: hidden;
+
+  border: 1px solid #ece8e4;
+  border-radius: 16px;
+
+  background: white;
+
+  box-shadow:
+    0 4px 15px
+    rgba(35, 25, 20, 0.025);
+}
+
+.post-event-report-header {
+  padding: 12px 14px;
+
+  border-bottom:
+    1px solid #f0ece9;
+}
+
+.post-event-report-header > div {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.post-event-report-header strong {
+  color: #352f2c;
+  font-size: 0.86rem;
+}
+
+.post-event-report-header span {
+  color: #746b65;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.post-event-report-card form {
+  display: grid;
+  gap: 6px;
+
+  padding: 13px;
+}
+
+.post-event-report-card form label {
+  margin-top: 4px;
+
+  color: #716863;
+  font-size: 0.67rem;
+  font-weight: 850;
+}
+
+.post-event-report-card textarea {
+  min-height: 70px;
+
+  resize: vertical;
+
+  padding: 9px 10px;
+
+  border: 1px solid #e2dcd7;
+  border-radius: 10px;
+
+  background: #fcfbfa;
+
+  color: #403936;
+
+  font: inherit;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.post-event-report-card form button,
+.post-event-approve-button {
+  min-height: 38px;
+
+  margin-top: 6px;
+
+  border:
+    1px solid
+    rgba(49, 132, 198, 0.15);
+
+  border-radius: 10px;
+
+  background:
+    rgba(49, 132, 198, 0.075);
+
+  color: #286fa8;
+
+  cursor: pointer;
+
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.post-event-report-card form button:hover,
+.post-event-approve-button:hover {
+  background:
+    rgba(49, 132, 198, 0.13);
+}
+
+.post-event-report-card form button:disabled,
+.post-event-approve-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.post-event-report-content {
+  display: grid;
+  gap: 12px;
+
+  padding: 13px;
+}
+
+.post-event-report-content small {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #9a9089;
+
+  font-size: 0.55rem;
+  font-weight: 900;
+
+  letter-spacing: 0.07em;
+}
+
+.post-event-report-content p {
+  margin: 0;
+
+  color: #5d5550;
+
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.post-event-report-author {
+  color: #958a83;
+  font-size: 0.63rem;
+}
+
+.post-event-approve-button {
+  width:
+    calc(100% - 26px);
+
+  margin:
+    0 13px 13px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 620px) {
+  .post-event-report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .post-event-report-card textarea {
+    min-height: 78px;
+  }
+}

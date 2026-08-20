@@ -13,6 +13,8 @@ import AdminRegistrationsPanel from '../components/AdminRegistrationsPanel'
 import AdminVolunteerOverview from '../components/AdminVolunteerOverview'
 import AdminActivitiesOverview from '../components/AdminActivitiesOverview'
 import AdminExpensesPanel from '../components/AdminExpensesPanel'
+import AdminPostEventPanel from '../components/AdminPostEventPanel'
+import AdminPostEventTeamReports from '../components/AdminPostEventTeamReports'
 import '../styles/admin.css'
 
 function AdminPage({
@@ -241,6 +243,19 @@ function AdminPage({
         {canSeeActivities && (
           <a href="#atividades">
             🙋 Vagas
+          </a>
+        )}
+
+        {isManagementAdmin && (
+          <a href="#pos-evento">
+            🌙 Pós-Evento
+          </a>
+        )}
+
+        {(isManagementAdmin ||
+          isTeamAdmin) && (
+          <a href="#relatorios-equipes">
+            🤝 Relatórios
           </a>
         )}
 
@@ -548,6 +563,29 @@ function AdminPage({
             </div>
           </details>
         </section>
+        )}
+
+        {isManagementAdmin && (
+          <AdminPostEventPanel
+            events={
+              data.events || []
+            }
+            onUpdated={
+              reloadAdmin
+            }
+          />
+        )}
+
+        {(isManagementAdmin ||
+          isTeamAdmin) && (
+          <AdminPostEventTeamReports
+            events={
+              data.events || []
+            }
+            access={
+              data.adminAccess
+            }
+          />
         )}
 
         {data.adminAccess
