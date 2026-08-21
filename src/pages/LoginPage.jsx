@@ -383,7 +383,7 @@ function LoginPage({ onLogin }) {
 
               <p className="login-v3-description">
                 Entre para acompanhar eventos,
-                missões e tudo o que conecta
+                atividades e tudo o que conecta
                 você ao Sonhar Acordado.
               </p>
 

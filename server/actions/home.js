@@ -376,94 +376,6 @@ export default async function handler(request, response) {
     `
 
     // =====================================================
-    // AVAILABLE TASKS
-    // =====================================================
-    const allTasks = await sql`
-      SELECT
-        tasks.id,
-        tasks.title,
-        tasks.description,
-        tasks.project_id,
-        tasks.team_id,
-        teams.code AS team_code,
-        teams.name AS team_name,
-        tasks.deadline,
-        tasks.priority,
-        tasks.status,
-        tasks.volunteer_limit,
-        COUNT(task_users.id)::int AS volunteer_count,
-        CASE
-          WHEN tasks.deadline < CURRENT_TIMESTAMP
-          THEN 1
-          ELSE 0
-        END AS overdue
-      FROM tasks
-      LEFT JOIN teams
-        ON teams.id = tasks.team_id
-      LEFT JOIN task_users
-        ON task_users.task_id = tasks.id
-        AND task_users.status = 'active'
-      WHERE tasks.active = 1
-        AND tasks.status != 'completed'
-        AND NOT EXISTS (
-          SELECT 1
-          FROM task_users existing_participation
-          WHERE existing_participation.task_id = tasks.id
-            AND existing_participation.user_id = ${currentUser.id}
-            AND existing_participation.status = 'active'
-        )
-      GROUP BY
-        tasks.id,
-        tasks.title,
-        tasks.description,
-        tasks.project_id,
-        tasks.team_id,
-        teams.code,
-        teams.name,
-        tasks.deadline,
-        tasks.priority,
-        tasks.status,
-        tasks.volunteer_limit
-      ORDER BY
-        CASE tasks.priority
-          WHEN 'urgent' THEN 1
-          WHEN 'important' THEN 2
-          ELSE 3
-        END,
-        tasks.deadline ASC
-    `
-
-    // =====================================================
-    // CURRENT USER TASKS
-    // =====================================================
-    const tasks =
-      allTasks.filter(canSeeScopedContent)
-
-    const myTasks = await sql`
-      SELECT
-        task_users.id AS participation_id,
-        task_users.delivery_link,
-        task_users.submitted_at,
-        task_users.completed_at,
-        tasks.id AS task_id,
-        tasks.title,
-        tasks.description,
-        tasks.deadline,
-        tasks.priority,
-        tasks.status
-      FROM task_users
-      JOIN tasks
-        ON task_users.task_id = tasks.id
-      WHERE task_users.user_id = ${currentUser.id}
-        AND task_users.status = 'active'
-        AND task_users.completed_at IS NULL
-        AND tasks.active = 1
-      ORDER BY tasks.deadline ASC
-    `
-
-    // =====================================================
-    // ANNOUNCEMENTS
-    // =====================================================
     const allAnnouncements = await sql`
       SELECT
         announcements.id,
@@ -547,8 +459,6 @@ export default async function handler(request, response) {
       monthlyBirthdays,
       monthlyCommunity,
       pastEvents,
-      tasks,
-      myTasks,
       announcements,
     })
   } catch (error) {

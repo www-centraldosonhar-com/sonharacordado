@@ -273,12 +273,6 @@ function HomePage({
   // MISSIONS / ANNOUNCEMENTS
   // =====================================================
 
-  const visibleTasks =
-    data.tasks.filter(
-      isGeneralView
-        ? matchesGeneralContent
-        : matchesTeamContent
-    )
 
   const visibleAnnouncements =
     data.announcements.filter(
@@ -402,9 +396,7 @@ function HomePage({
                 📅 Encontros
               </a>
 
-              <a href="#missoes">
-                💡 Missões
-              </a>
+              
 
               <a href="#mural">
                 📢 Mural
@@ -469,11 +461,9 @@ function HomePage({
                   )
                 })
               }
-              visibleTasks={visibleTasks}
               visibleAnnouncements={
                 visibleAnnouncements
               }
-              myTasks={data?.myTasks || []}
               communityCommitments={
                 (data?.myConfirmations || []).filter(
                   (item) =>
@@ -557,10 +547,7 @@ function HomePage({
 
         {isGeneralView && (
           <>
-            <a href="#missoes">
-              <span>🚀</span>
-              <small>Missões</small>
-            </a>
+            
 
             <a href="#mural">
               <span>📢</span>
@@ -581,10 +568,7 @@ function HomePage({
               <small>Combinados</small>
             </a>
 
-            <a href="#minhas-missoes">
-              <span>🚀</span>
-              <small>Minhas</small>
-            </a>
+            
 
             <a href="#mural">
               <span>📢</span>

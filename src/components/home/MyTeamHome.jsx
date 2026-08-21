@@ -1,4 +1,3 @@
-import MissionCard from '../MissionCard'
 import AnnouncementCard from '../AnnouncementCard'
 import PhotoDeliveryPanel from '../PhotoDeliveryPanel'
 import CommitmentCard from '../CommitmentCard'
@@ -8,9 +7,7 @@ function MyTeamHome({
   project,
   currentUser,
   projectEvents = [],
-  visibleTasks,
   visibleAnnouncements,
-  myTasks,
   communityCommitments = [],
   photoDeliveries = [],
   loadHome,
@@ -92,7 +89,7 @@ const projectWelcome = {
                 </div>
 
                 <p>
-                  encontros · missões · memórias
+                  encontros · atividades · memórias
                 </p>
               </div>
             </div>
@@ -205,78 +202,12 @@ const projectWelcome = {
           🤝 Combinados
         </a>
 
-        <a href="#minhas-missoes">
-          🚀 Minhas missões
-        </a>
+        
       </nav>
 
-      <section
-        className="section-block"
-        id="missoes"
-      >
-        <div className="section-heading">
-          <p className="eyebrow eyebrow-blue">
-            MISSÕES DISPONÍVEIS
-          </p>
+      
 
-          <h2>
-            Tem algo aqui que combina com você? ✨
-          </h2>
-        </div>
-
-        {visibleTasks.length > 0 ? (
-          <div className="cards-grid">
-            {visibleTasks.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                onUpdated={loadHome}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <p>
-              Nenhuma missão disponível agora.
-            </p>
-          </div>
-        )}
-      </section>
-
-      <section
-        className="section-block"
-        id="minhas-missoes"
-      >
-        <div className="section-heading">
-          <p className="eyebrow eyebrow-blue">
-            MINHAS MISSÕES
-          </p>
-
-          <h2>
-            Tudo que você topou ajudar
-            a tirar do papel 🚀
-          </h2>
-        </div>
-
-        {myTasks.length > 0 ? (
-          <div className="cards-stack">
-            {myTasks.map((mission) => (
-              <MissionCard
-                key={mission.participation_id}
-                mission={mission}
-                mine
-                onUpdated={loadHome}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <p>
-              Você ainda não pegou nenhuma missão.
-            </p>
-          </div>
-        )}
-      </section>
+      
 
       {communityCommitments.length > 0 && (
         <section

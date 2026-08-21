@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
   formatDateBr,
-  formatDateTimeBr,
   formatTimeBr,
 } from '../utils/formatters'
 import AdminCreatePanel from '../components/AdminCreatePanel'
 import AdminManageActions from '../components/AdminManageActions'
 import AdminImageUpload from '../components/AdminImageUpload'
-import AdminParticipantAction from '../components/AdminParticipantAction'
 import AdminChecklistPanel from '../components/AdminChecklistPanel'
 import AdminRegistrationsPanel from '../components/AdminRegistrationsPanel'
 import AdminVolunteerOverview from '../components/AdminVolunteerOverview'
@@ -33,6 +31,11 @@ function AdminPage({
   const [userTeam, setUserTeam] = useState('all')
   const [userStatus, setUserStatus] = useState('all')
   const [userPinStatus, setUserPinStatus] = useState('all')
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [userProfileTab, setUserProfileTab] = useState('overview')
+  const [userParticipation, setUserParticipation] = useState([])
+  const [userParticipationLoading, setUserParticipationLoading] = useState(false)
+  const [userParticipationError, setUserParticipationError] = useState('')
 
   async function reloadAdmin() {
     const response = await fetch('/api/admin?action=data')
@@ -225,6 +228,46 @@ function AdminPage({
       userPinStatus !== 'all'
     )
 
+  async function loadUserParticipation(userId) {
+    if (!userId) {
+      return
+    }
+
+    setUserParticipationLoading(true)
+    setUserParticipationError('')
+
+    try {
+      const response = await fetch(
+        `/api/admin?action=user-participation&userId=${encodeURIComponent(
+          userId
+        )}`
+      )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível carregar as participações.'
+        )
+      }
+
+      setUserParticipation(
+        result.participations || []
+      )
+    } catch (error) {
+      setUserParticipation([])
+      setUserParticipationError(
+        error?.message ||
+        'Não foi possível carregar as participações.'
+      )
+    } finally {
+      setUserParticipationLoading(false)
+    }
+  }
+
+
   const adminScope =
     data.adminAccess?.scope || null
 
@@ -274,10 +317,6 @@ function AdminPage({
     isManagementAdmin ||
     isMediaAdmin ||
     isVolunteerAdmin
-
-  const canSeeMissions =
-    isManagementAdmin ||
-    isTeamAdmin
 
   const canSeeAnnouncements =
     isManagementAdmin ||
@@ -382,11 +421,7 @@ function AdminPage({
           </a>
         )}
 
-        {canSeeMissions && (
-          <a href="#missoes">
-            🚀 Missões
-          </a>
-        )}
+        
 
                 
 
@@ -580,15 +615,6 @@ function AdminPage({
             </span>
           </article>
 
-          <article>
-            <strong>
-              {data.tasks.length}
-            </strong>
-
-            <span>
-              missões
-            </span>
-          </article>
         </section>
         )}
 
@@ -794,6 +820,30 @@ function AdminPage({
               <article
                 className="admin-card"
                 key={person.id}
+              
+                onClick={(event) => {
+                  if (
+                    event.target.closest(
+                      'button, a, input, select, textarea, label, form'
+                    )
+                  ) {
+                    return
+                  }
+
+                  setSelectedUser(person)
+                  setUserProfileTab('overview')
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === 'Enter' ||
+                    event.key === ' '
+                  ) {
+                    setSelectedUser(person)
+                    setUserProfileTab('overview')
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
                 <div className="admin-user-top">
                   {person.avatar_path ? (
@@ -1220,11 +1270,7 @@ function AdminPage({
                               )}
                             </div>
 
-                            <AdminParticipantAction
-                              type="activity"
-                              participant={participant}
-                              onUpdated={reloadAdmin}
-                            />
+                            
                           </div>
                         ))}
                     </div>
@@ -1237,143 +1283,7 @@ function AdminPage({
           </details>
         </section>
         )}
-        {canSeeMissions && (
-        <section
-          id="missoes"
-          className="admin-section admin-section-collapsible"
-        >
-          <details className="admin-collapsible">
-            <summary className="admin-collapsible-summary">
-              <div className="admin-collapsible-title">
-                <span className="admin-collapsible-icon">
-                  🚀
-                </span>
-
-                <div>
-                  <small>
-                    TIRANDO DO PAPEL
-                  </small>
-
-                  <strong>
-                    Missões
-                  </strong>
-                </div>
-              </div>
-
-              <span className="admin-collapsible-count">
-                {data.tasks.length}
-              </span>
-            </summary>
-
-            <div className="admin-collapsible-body">
-              <div className="admin-grid">
-            {data.tasks.map((task) => (
-              <article
-                className="admin-card"
-                key={task.id}
-              >
-                <h3>
-                  {task.title}
-                </h3>
-
-                {task.description && (
-                  <p>
-                    {task.description}
-                  </p>
-                )}
-
-                <p>
-                  ⏰ {formatDateTimeBr(
-                    task.deadline
-                  )}
-                </p>
-
-                <p>
-                  Prioridade:
-                  {' '}
-                  {task.priority}
-                </p>
-
-                <p>
-                  👥 {task.volunteer_count}
-                  {' de '}
-                  {task.volunteer_limit}
-                </p>
-
-                <p>
-                  Status: {task.status}
-                </p>
-
-                <AdminManageActions
-                  type="task"
-                  item={task}
-                  events={data.events}
-                  onUpdated={reloadAdmin}
-                />
-
-                {data.taskParticipants
-                  ?.filter(
-                    (participant) =>
-                      Number(participant.task_id) ===
-                      Number(task.id)
-                  )
-                  .length > 0 && (
-                  <div className="admin-participants">
-                    <h4>
-                      👥 Participantes
-                    </h4>
-
-                    {data.taskParticipants
-                      .filter(
-                        (participant) =>
-                          Number(participant.task_id) ===
-                          Number(task.id)
-                      )
-                      .map((participant) => (
-                        <div
-                          className="admin-participant"
-                          key={
-                            participant.participation_id
-                          }
-                        >
-                          <div>
-                            <strong>
-                              {participant.user_name}
-                            </strong>
-
-                            <span>
-                              {participant.project_name}
-                            </span>
-
-                            {participant.delivery_link && (
-                              <a
-                                href={
-                                  participant.delivery_link
-                                }
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                🔗 Ver entrega
-                              </a>
-                            )}
-                          </div>
-
-                          <AdminParticipantAction
-                            type="task"
-                            participant={participant}
-                            onUpdated={reloadAdmin}
-                          />
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </article>
-            ))}
-              </div>
-            </div>
-          </details>
-        </section>
-        )}
+        
         {canSeeAnnouncements && (
         <section
           id="comunicados"
@@ -1450,6 +1360,426 @@ function AdminPage({
         </section>
         )}
       </main>
+
+      {selectedUser && (
+        <div
+          className="admin-user-profile-backdrop"
+          role="presentation"
+          onClick={() =>
+            setSelectedUser(null)
+          }
+        >
+          <section
+            className="admin-user-profile-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Perfil de ${
+              selectedUser.full_name ||
+              selectedUser.name ||
+              'voluntário'
+            }`}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <button
+              type="button"
+              className="admin-user-profile-close"
+              onClick={() =>
+                setSelectedUser(null)
+              }
+              aria-label="Fechar perfil"
+            >
+              ×
+            </button>
+
+            <header className="admin-user-profile-header">
+              <div className="admin-user-profile-avatar">
+                {selectedUser.avatar_path ? (
+                  <img
+                    src={selectedUser.avatar_path}
+                    alt=""
+                  />
+                ) : (
+                  <span>
+                    {String(
+                      selectedUser.full_name ||
+                      selectedUser.name ||
+                      '?'
+                    )
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <span className="admin-user-profile-eyebrow">
+                  Perfil do voluntário
+                </span>
+
+                <h2>
+                  {selectedUser.full_name ||
+                    selectedUser.name}
+                </h2>
+
+                <p>
+                  {selectedUser.username
+                    ? `@${selectedUser.username}`
+                    : 'Sem usuário'}
+                  {' · '}
+                  {selectedUser.project ||
+                    'Sem projeto'}
+                </p>
+
+                <div className="admin-user-profile-badges">
+                  <span>
+                    {selectedUser.permissions?.includes(
+                      'admin'
+                    )
+                      ? selectedUser.admin_scope === 'global'
+                        ? '🛡️ Admin Geral'
+                        : selectedUser.admin_scope === 'project'
+                          ? '🏠 Admin de Projeto'
+                          : '⚙️ Admin de equipe'
+                      : selectedUser.permissions?.includes(
+                          'volunteer'
+                        )
+                        ? '🫶 Voluntário'
+                        : selectedUser.permissions?.includes(
+                            'dreamer'
+                          )
+                          ? '❤️ Sócio Sonhador'
+                          : '— Sem acesso'}
+                  </span>
+
+                  <span>
+                    {selectedUser.active
+                      ? '● Ativo'
+                      : '○ Inativo'}
+                  </span>
+
+                  <span>
+                    {selectedUser.has_pin
+                      ? '🔐 PIN configurado'
+                      : '⌛ Primeiro acesso pendente'}
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            <nav
+              className="admin-user-profile-tabs"
+              aria-label="Seções do perfil"
+            >
+              {[
+                {
+                  key: 'overview',
+                  label: 'Visão geral',
+                },
+                {
+                  key: 'participation',
+                  label: 'Participações',
+                },
+                {
+                  key: 'access',
+                  label: 'Acesso',
+                },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={
+                    userProfileTab === tab.key
+                      ? 'is-active'
+                      : ''
+                  }
+                  onClick={() => {
+                    setUserProfileTab(
+                      tab.key
+                    )
+
+                    if (
+                      tab.key ===
+                        'participation' &&
+                      selectedUser?.id
+                    ) {
+                      loadUserParticipation(
+                        selectedUser.id
+                      )
+                    }
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+
+            {userProfileTab === 'overview' && (
+              <div className="admin-user-profile-tab-content">
+            <div className="admin-user-profile-grid">
+              <div>
+                <span>E-mail</span>
+                <strong>
+                  {selectedUser.email ||
+                    'Não informado'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Telefone</span>
+                <strong>
+                  {selectedUser.phone ||
+                    'Não informado'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Nascimento</span>
+                <strong>
+                  {selectedUser.birth_date ||
+                    'Não informado'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Projeto</span>
+                <strong>
+                  {selectedUser.project ||
+                    'Não definido'}
+                </strong>
+              </div>
+
+              <div className="is-wide">
+                <span>Equipes</span>
+
+                <strong>
+                  {Array.isArray(
+                    selectedUser.team_names
+                  ) &&
+                  selectedUser.team_names.length
+                    ? selectedUser.team_names.join(
+                        ' · '
+                      )
+                    : 'Nenhuma equipe vinculada'}
+                </strong>
+              </div>
+
+              <div className="is-wide">
+                <span>
+                  Alergias / restrições
+                </span>
+
+                <strong>
+                  {selectedUser.allergies ||
+                    'Nenhuma informação cadastrada'}
+                </strong>
+              </div>
+            </div>
+
+              </div>
+            )}
+
+            {userProfileTab === 'participation' && (
+              <div className="admin-user-profile-tab-content">
+                {userParticipationLoading ? (
+                  <div className="admin-user-participation-state">
+                    <span className="admin-user-participation-loader" />
+
+                    <strong>
+                      Carregando histórico...
+                    </strong>
+                  </div>
+                ) : userParticipationError ? (
+                  <div className="admin-user-participation-state is-error">
+                    <strong>
+                      Não foi possível carregar
+                    </strong>
+
+                    <p>
+                      {userParticipationError}
+                    </p>
+                  </div>
+                ) : userParticipation.length ? (
+                  <div className="admin-user-participation-list">
+                    <div className="admin-user-participation-summary">
+                      <strong>
+                        {userParticipation.length}
+                      </strong>
+
+                      <span>
+                        participações encontradas
+                      </span>
+                    </div>
+
+                    {userParticipation.map(
+                      (participation) => (
+                        <article
+                          key={participation.id}
+                          className="admin-user-participation-card"
+                        >
+                          <div className="admin-user-participation-date">
+                            <strong>
+                              {participation.event_date
+                                ? new Date(
+                                    `${participation.event_date}T12:00:00`
+                                  ).toLocaleDateString(
+                                    'pt-BR',
+                                    {
+                                      day: '2-digit',
+                                      month: 'short',
+                                    }
+                                  )
+                                : '—'}
+                            </strong>
+                          </div>
+
+                          <div className="admin-user-participation-main">
+                            <span>
+                              Evento
+                            </span>
+
+                            <h4>
+                              {participation.event_name}
+                            </h4>
+
+                            <p>
+                              {participation.location ||
+                                'Local não informado'}
+                            </p>
+                          </div>
+
+                          <div className="admin-user-participation-meta">
+                            <span>
+                              {participation.team ||
+                                'Sem equipe'}
+                            </span>
+
+                            <strong
+                              className={`is-${String(
+                                participation.status ||
+                                'unknown'
+                              ).toLowerCase()}`}
+                            >
+                              {participation.status ===
+                              'confirmed'
+                                ? 'Confirmado'
+                                : participation.status ===
+                                    'pending'
+                                  ? 'Pendente'
+                                  : participation.status ===
+                                      'rejected'
+                                    ? 'Recusado'
+                                    : participation.status ||
+                                      'Sem status'}
+                            </strong>
+                          </div>
+                        </article>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="admin-user-profile-empty-state">
+                    <span aria-hidden="true">
+                      ✦
+                    </span>
+
+                    <strong>
+                      Nenhuma participação ainda
+                    </strong>
+
+                    <p>
+                      Quando este voluntário se inscrever em eventos,
+                      o histórico aparecerá aqui.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {userProfileTab === 'access' && (
+              <div className="admin-user-profile-tab-content">
+                <div className="admin-user-access-grid">
+                  <div>
+                    <span>
+                      Usuário
+                    </span>
+
+                    <strong>
+                      {selectedUser.username
+                        ? `@${selectedUser.username}`
+                        : 'Sem usuário'}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      PIN
+                    </span>
+
+                    <strong>
+                      {selectedUser.has_pin
+                        ? 'Configurado'
+                        : 'Primeiro acesso pendente'}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Status
+                    </span>
+
+                    <strong>
+                      {selectedUser.active
+                        ? 'Ativo'
+                        : 'Inativo'}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Permissão
+                    </span>
+
+                    <strong>
+                      {selectedUser.permissions?.includes(
+                        'admin'
+                      )
+                        ? 'Administrador'
+                        : selectedUser.permissions?.includes(
+                            'volunteer'
+                          )
+                          ? 'Voluntário'
+                          : selectedUser.permissions?.includes(
+                              'dreamer'
+                            )
+                            ? 'Sócio Sonhador'
+                            : 'Sem acesso definido'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <footer className="admin-user-profile-footer">
+              <small>
+                Em breve: histórico de eventos,
+                atividades e participações.
+              </small>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedUser(null)
+                }
+              >
+                Fechar
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

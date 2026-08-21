@@ -141,7 +141,7 @@ function SpaceSelectorPage({
 
                 <p>
                   Eventos, atividades,
-                  missões e tudo o que está
+                  atividades e tudo o que está
                   acontecendo por aqui.
                 </p>
               </div>

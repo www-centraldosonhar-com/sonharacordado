@@ -348,58 +348,6 @@ export async function adminCanAccessUser(
 
 
 // ---------------------------------------------------------
-// TASK
-// ---------------------------------------------------------
-// Enquanto tasks não possuir project_id/team_id:
-//
-// tarefa ligada a evento:
-// segue acesso ao evento.
-//
-// tarefa sem evento:
-// somente Admin Geral.
-// ---------------------------------------------------------
-
-export async function adminCanAccessTask(
-  admin,
-  taskId
-) {
-  const numericTaskId =
-    Number(taskId)
-
-  if (
-    !Number.isInteger(numericTaskId)
-  ) {
-    return false
-  }
-
-  const rows = await sql`
-    SELECT
-      id,
-      event_id
-    FROM tasks
-    WHERE id = ${numericTaskId}
-    LIMIT 1
-  `
-
-  const task =
-    rows[0]
-
-  if (!task) {
-    return false
-  }
-
-  if (!task.event_id) {
-    return isGlobalAdmin(admin)
-  }
-
-  return adminCanAccessEvent(
-    admin,
-    task.event_id
-  )
-}
-
-
-// ---------------------------------------------------------
 // ACTIVITY
 // ---------------------------------------------------------
 

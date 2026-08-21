@@ -4033,3 +4033,1804 @@ button:disabled {
   color:
     rgba(43, 58, 76, .30);
 }
+
+/* =========================================================
+   ADMIN USER PROFILE — PREMIUM MODAL
+   ========================================================= */
+
+.admin-user-profile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+
+  display: grid;
+  place-items: center;
+
+  padding: 22px;
+
+  background:
+    rgba(22, 30, 41, .24);
+
+  backdrop-filter:
+    blur(10px);
+
+  -webkit-backdrop-filter:
+    blur(10px);
+}
+
+
+.admin-user-profile-modal {
+  position: relative;
+
+  width:
+    min(100%, 720px);
+
+  max-height:
+    min(88vh, 760px);
+
+  overflow-y: auto;
+
+  padding: 26px;
+
+  border:
+    1px solid
+    rgba(43, 59, 79, .07);
+
+  border-radius: 26px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.985),
+      rgba(246,249,253,.97)
+    );
+
+  box-shadow:
+    0 28px 90px
+    rgba(18, 30, 45, .18);
+}
+
+
+.admin-user-profile-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  width: 34px;
+  height: 34px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background:
+    rgba(44, 58, 75, .055);
+
+  color:
+    rgba(43, 55, 70, .58);
+
+  font-size: 1.1rem;
+
+  cursor: pointer;
+}
+
+
+.admin-user-profile-header {
+  display: grid;
+
+  grid-template-columns:
+    auto minmax(0, 1fr);
+
+  gap: 18px;
+
+  align-items: center;
+
+  padding-right: 42px;
+}
+
+
+.admin-user-profile-avatar {
+  width: 72px;
+  height: 72px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #eef3f8,
+      #ffffff
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(42, 58, 78, .06);
+}
+
+
+.admin-user-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.admin-user-profile-avatar span {
+  color:
+    rgba(48, 66, 87, .58);
+
+  font-size: 1.4rem;
+  font-weight: 760;
+}
+
+
+.admin-user-profile-eyebrow {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color:
+    rgba(44, 58, 75, .36);
+
+  font-size: .54rem;
+  font-weight: 760;
+
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+
+.admin-user-profile-header h2 {
+  margin: 0;
+
+  color: #293643;
+
+  font-size: 1.28rem;
+  font-weight: 740;
+
+  letter-spacing: -.025em;
+}
+
+
+.admin-user-profile-header p {
+  margin:
+    4px 0 0;
+
+  color:
+    rgba(43, 57, 74, .47);
+
+  font-size: .65rem;
+}
+
+
+.admin-user-profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top: 10px;
+}
+
+
+.admin-user-profile-badges span {
+  padding:
+    5px 8px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(49, 67, 89, .045);
+
+  color:
+    rgba(45, 59, 77, .61);
+
+  font-size: .53rem;
+  font-weight: 680;
+}
+
+
+.admin-user-profile-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin-top: 24px;
+}
+
+
+.admin-user-profile-grid > div {
+  display: grid;
+
+  gap: 4px;
+
+  padding: 13px;
+
+  border:
+    1px solid
+    rgba(42, 57, 75, .045);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, .66);
+}
+
+
+.admin-user-profile-grid > div.is-wide {
+  grid-column:
+    1 / -1;
+}
+
+
+.admin-user-profile-grid span {
+  color:
+    rgba(43, 57, 74, .36);
+
+  font-size: .52rem;
+  font-weight: 680;
+}
+
+
+.admin-user-profile-grid strong {
+  color:
+    rgba(39, 52, 68, .76);
+
+  font-size: .64rem;
+  font-weight: 660;
+
+  word-break: break-word;
+}
+
+
+.admin-user-profile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin-top: 22px;
+}
+
+
+.admin-user-profile-footer small {
+  max-width: 430px;
+
+  color:
+    rgba(42, 56, 73, .34);
+
+  font-size: .52rem;
+  line-height: 1.45;
+}
+
+
+.admin-user-profile-footer button {
+  flex: 0 0 auto;
+
+  min-height: 38px;
+
+  padding:
+    8px 14px;
+
+  border:
+    1px solid
+    rgba(45, 62, 82, .07);
+
+  border-radius: 11px;
+
+  background:
+    rgba(255,255,255,.88);
+
+  color:
+    rgba(43, 57, 75, .68);
+
+  font-family: inherit;
+  font-size: .59rem;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.admin-card {
+  cursor: pointer;
+}
+
+
+@media (max-width: 680px) {
+  .admin-user-profile-backdrop {
+    align-items: end;
+
+    padding: 10px;
+  }
+
+  .admin-user-profile-modal {
+    width: 100%;
+
+    max-height: 92vh;
+
+    padding: 20px 16px 18px;
+
+    border-radius:
+      24px 24px 18px 18px;
+  }
+
+  .admin-user-profile-header {
+    grid-template-columns:
+      auto minmax(0, 1fr);
+
+    gap: 13px;
+
+    padding-right: 34px;
+  }
+
+  .admin-user-profile-avatar {
+    width: 58px;
+    height: 58px;
+
+    border-radius: 18px;
+  }
+
+  .admin-user-profile-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .admin-user-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-profile-grid > div.is-wide {
+    grid-column: auto;
+  }
+
+  .admin-user-profile-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-user-profile-footer button {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   ADMIN USER PROFILE — SIGNATURE DESIGN
+   Visual premium da Central do Sonhar
+   ========================================================= */
+
+.admin-user-profile-backdrop {
+  background:
+    rgba(18, 25, 34, .38);
+
+  backdrop-filter:
+    blur(16px) saturate(115%);
+
+  -webkit-backdrop-filter:
+    blur(16px) saturate(115%);
+}
+
+
+.admin-user-profile-modal {
+  isolation: isolate;
+
+  width:
+    min(100%, 760px);
+
+  padding: 0;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, .72);
+
+  border-radius: 30px;
+
+  background:
+    #f8f9fb;
+
+  box-shadow:
+    0 40px 120px
+    rgba(15, 24, 36, .22),
+    0 8px 30px
+    rgba(15, 24, 36, .08);
+
+  animation:
+    adminProfileEnter
+    .28s
+    cubic-bezier(.2, .8, .2, 1);
+}
+
+
+/* luzes discretas da identidade Sonhar */
+
+.admin-user-profile-modal::before {
+  content: "";
+
+  position: absolute;
+  z-index: -1;
+
+  width: 330px;
+  height: 330px;
+
+  top: -220px;
+  right: -80px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(216, 67, 64, .13),
+      rgba(231, 115, 42, .06) 43%,
+      transparent 70%
+    );
+
+  pointer-events: none;
+}
+
+
+.admin-user-profile-modal::after {
+  content: "";
+
+  position: absolute;
+  z-index: -1;
+
+  width: 260px;
+  height: 260px;
+
+  top: 10px;
+  left: -190px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(54, 103, 168, .11),
+      transparent 68%
+    );
+
+  pointer-events: none;
+}
+
+
+@keyframes adminProfileEnter {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(12px)
+      scale(.985);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   CLOSE
+   ========================================================= */
+
+.admin-user-profile-close {
+  top: 18px;
+  right: 18px;
+
+  z-index: 4;
+
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(38, 51, 67, .07);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, .72);
+
+  color:
+    rgba(37, 49, 64, .52);
+
+  font-size: 1.12rem;
+  font-weight: 400;
+
+  box-shadow:
+    0 8px 20px
+    rgba(23, 34, 48, .05);
+
+  backdrop-filter:
+    blur(8px);
+
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    color .18s ease;
+}
+
+
+.admin-user-profile-close:hover {
+  transform:
+    rotate(3deg)
+    scale(1.04);
+
+  background: #fff;
+
+  color: #263545;
+}
+
+
+/* =========================================================
+   HERO / IDENTITY
+   ========================================================= */
+
+.admin-user-profile-header {
+  position: relative;
+
+  grid-template-columns:
+    auto minmax(0, 1fr);
+
+  gap: 21px;
+
+  padding:
+    31px 64px 29px 30px;
+
+  border-bottom:
+    1px solid
+    rgba(39, 54, 73, .055);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, .93),
+      rgba(246, 248, 251, .74)
+    );
+}
+
+
+/* pequeno detalhe assinatura */
+
+.admin-user-profile-header::after {
+  content: "";
+
+  position: absolute;
+
+  left: 30px;
+  bottom: -1px;
+
+  width: 58px;
+  height: 2px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #d74c49 0 33%,
+      #e78a3d 33% 66%,
+      #4d78ae 66% 100%
+    );
+}
+
+
+.admin-user-profile-avatar {
+  width: 82px;
+  height: 82px;
+
+  border:
+    4px solid
+    rgba(255, 255, 255, .94);
+
+  border-radius: 25px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #eef2f7,
+      #ffffff
+    );
+
+  box-shadow:
+    0 13px 32px
+    rgba(29, 45, 65, .12),
+    inset 0 0 0 1px
+    rgba(42, 59, 79, .045);
+
+  transform:
+    rotate(-1deg);
+}
+
+
+.admin-user-profile-eyebrow {
+  margin-bottom: 6px;
+
+  color:
+    rgba(50, 64, 82, .38);
+
+  font-size: .51rem;
+  font-weight: 800;
+
+  letter-spacing: .16em;
+}
+
+
+.admin-user-profile-header h2 {
+  max-width: 520px;
+
+  color: #263442;
+
+  font-size: 1.38rem;
+  font-weight: 750;
+
+  line-height: 1.12;
+
+  letter-spacing: -.035em;
+}
+
+
+.admin-user-profile-header p {
+  margin-top: 7px;
+
+  color:
+    rgba(39, 55, 75, .50);
+
+  font-size: .66rem;
+  font-weight: 590;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.admin-user-profile-badges {
+  gap: 6px;
+
+  margin-top: 13px;
+}
+
+
+.admin-user-profile-badges span {
+  position: relative;
+
+  padding:
+    6px 9px;
+
+  border:
+    1px solid
+    rgba(42, 57, 75, .055);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, .68);
+
+  color:
+    rgba(42, 56, 73, .62);
+
+  font-size: .51rem;
+  font-weight: 700;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, .76);
+}
+
+
+.admin-user-profile-badges span:nth-child(2) {
+  color: #3d765d;
+
+  background:
+    rgba(66, 135, 101, .07);
+
+  border-color:
+    rgba(66, 135, 101, .08);
+}
+
+
+/* =========================================================
+   INFORMATION AREA
+   ========================================================= */
+
+.admin-user-profile-grid {
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 11px;
+
+  margin: 0;
+
+  padding:
+    24px 27px 9px;
+}
+
+
+.admin-user-profile-grid > div {
+  position: relative;
+
+  min-height: 72px;
+
+  align-content: center;
+
+  gap: 7px;
+
+  padding:
+    15px 16px;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(37, 52, 70, .055);
+
+  border-radius: 17px;
+
+  background:
+    rgba(255, 255, 255, .72);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, .86);
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+
+
+.admin-user-profile-grid > div:hover {
+  transform:
+    translateY(-1px);
+
+  border-color:
+    rgba(55, 79, 108, .085);
+
+  box-shadow:
+    0 10px 25px
+    rgba(28, 42, 60, .045);
+}
+
+
+.admin-user-profile-grid > div::after {
+  content: "";
+
+  position: absolute;
+
+  width: 34px;
+  height: 34px;
+
+  right: -15px;
+  bottom: -17px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(72, 101, 139, .025);
+}
+
+
+.admin-user-profile-grid span {
+  color:
+    rgba(43, 56, 73, .34);
+
+  font-size: .49rem;
+  font-weight: 760;
+
+  letter-spacing: .045em;
+
+  text-transform: uppercase;
+}
+
+
+.admin-user-profile-grid strong {
+  color:
+    rgba(35, 48, 64, .78);
+
+  font-size: .64rem;
+  font-weight: 650;
+
+  line-height: 1.45;
+}
+
+
+.admin-user-profile-grid > div.is-wide {
+  min-height: 67px;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.admin-user-profile-footer {
+  margin: 0;
+
+  padding:
+    17px 27px 24px;
+
+  border-top:
+    1px solid
+    rgba(42, 58, 76, .045);
+}
+
+
+.admin-user-profile-footer small {
+  color:
+    rgba(41, 55, 72, .32);
+
+  font-size: .51rem;
+}
+
+
+.admin-user-profile-footer button {
+  min-width: 86px;
+
+  padding:
+    9px 15px;
+
+  border:
+    1px solid
+    rgba(43, 58, 77, .07);
+
+  border-radius: 12px;
+
+  background:
+    #ffffff;
+
+  color: #34465a;
+
+  box-shadow:
+    0 7px 18px
+    rgba(30, 44, 61, .055);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+
+.admin-user-profile-footer button:hover {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 10px 25px
+    rgba(30, 44, 61, .085);
+}
+
+
+/* =========================================================
+   MOBILE — PROFILE SHEET
+   ========================================================= */
+
+@media (max-width: 680px) {
+  .admin-user-profile-backdrop {
+    align-items: end;
+
+    padding:
+      8px 8px 0;
+  }
+
+
+  .admin-user-profile-modal {
+    max-height: 94vh;
+
+    border-radius:
+      28px 28px 0 0;
+
+    animation:
+      adminProfileMobileEnter
+      .30s
+      cubic-bezier(.2, .8, .2, 1);
+  }
+
+
+  @keyframes adminProfileMobileEnter {
+    from {
+      opacity: 0;
+
+      transform:
+        translateY(32px);
+    }
+
+    to {
+      opacity: 1;
+
+      transform:
+        translateY(0);
+    }
+  }
+
+
+  .admin-user-profile-modal::before {
+    width: 230px;
+    height: 230px;
+
+    top: -160px;
+  }
+
+
+  .admin-user-profile-header {
+    gap: 14px;
+
+    padding:
+      25px 48px 22px 19px;
+  }
+
+
+  .admin-user-profile-header::after {
+    left: 19px;
+  }
+
+
+  .admin-user-profile-avatar {
+    width: 64px;
+    height: 64px;
+
+    border-radius: 20px;
+  }
+
+
+  .admin-user-profile-header h2 {
+    font-size: 1.08rem;
+  }
+
+
+  .admin-user-profile-badges {
+    gap: 5px;
+  }
+
+
+  .admin-user-profile-grid {
+    grid-template-columns: 1fr;
+
+    padding:
+      18px 16px 7px;
+  }
+
+
+  .admin-user-profile-grid > div {
+    min-height: 62px;
+  }
+
+
+  .admin-user-profile-footer {
+    padding:
+      15px 16px 20px;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-user-profile-modal {
+    animation: none;
+  }
+}
+
+
+/* =========================================================
+   ADMIN USER PROFILE — MICROINTERACTIONS
+   ========================================================= */
+
+/* Entrada mais viva do backdrop */
+
+.admin-user-profile-backdrop {
+  animation:
+    adminProfileBackdropIn
+    .22s
+    ease-out;
+}
+
+@keyframes adminProfileBackdropIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+/* Modal com profundidade */
+
+.admin-user-profile-modal {
+  transform-origin:
+    center 58%;
+}
+
+
+/* Avatar com movimento sutil */
+
+.admin-user-profile-avatar {
+  animation:
+    adminProfileAvatarFloat
+    4.8s
+    ease-in-out
+    infinite;
+}
+
+@keyframes adminProfileAvatarFloat {
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotate(-1deg);
+  }
+
+  50% {
+    transform:
+      translateY(-3px)
+      rotate(.4deg);
+  }
+}
+
+
+/* Badge aparece em sequência */
+
+.admin-user-profile-badges span {
+  opacity: 0;
+
+  transform:
+    translateY(5px);
+
+  animation:
+    adminProfileBadgeIn
+    .35s
+    ease-out
+    forwards;
+}
+
+.admin-user-profile-badges span:nth-child(1) {
+  animation-delay: .10s;
+}
+
+.admin-user-profile-badges span:nth-child(2) {
+  animation-delay: .16s;
+}
+
+.admin-user-profile-badges span:nth-child(3) {
+  animation-delay: .22s;
+}
+
+@keyframes adminProfileBadgeIn {
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+
+/* Cards entram discretamente */
+
+.admin-user-profile-grid > div {
+  opacity: 0;
+
+  transform:
+    translateY(7px);
+
+  animation:
+    adminProfileInfoIn
+    .38s
+    ease-out
+    forwards;
+}
+
+.admin-user-profile-grid > div:nth-child(1) {
+  animation-delay: .08s;
+}
+
+.admin-user-profile-grid > div:nth-child(2) {
+  animation-delay: .12s;
+}
+
+.admin-user-profile-grid > div:nth-child(3) {
+  animation-delay: .16s;
+}
+
+.admin-user-profile-grid > div:nth-child(4) {
+  animation-delay: .20s;
+}
+
+.admin-user-profile-grid > div:nth-child(5) {
+  animation-delay: .24s;
+}
+
+.admin-user-profile-grid > div:nth-child(6) {
+  animation-delay: .28s;
+}
+
+@keyframes adminProfileInfoIn {
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+
+/* Pequeno efeito de luz ao hover */
+
+.admin-user-profile-grid > div::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  opacity: 0;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      120deg,
+      transparent 10%,
+      rgba(255, 255, 255, .50) 42%,
+      transparent 72%
+    );
+
+  transform:
+    translateX(-110%);
+
+  transition:
+    transform .55s ease,
+    opacity .35s ease;
+
+  pointer-events: none;
+}
+
+.admin-user-profile-grid > div:hover::before {
+  opacity: .7;
+
+  transform:
+    translateX(110%);
+}
+
+
+/* Header aparece um pouco depois do modal */
+
+.admin-user-profile-header > * {
+  animation:
+    adminProfileHeaderIn
+    .4s
+    cubic-bezier(.2, .8, .2, 1)
+    both;
+}
+
+.admin-user-profile-header > *:nth-child(1) {
+  animation-delay: .04s;
+}
+
+.admin-user-profile-header > *:nth-child(2) {
+  animation-delay: .09s;
+}
+
+@keyframes adminProfileHeaderIn {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+
+/* Fecha com mais sensação de botão real */
+
+.admin-user-profile-close:active,
+.admin-user-profile-footer button:active {
+  transform:
+    scale(.96);
+}
+
+
+/* Mobile: sensação de bottom sheet */
+
+@media (max-width: 680px) {
+  .admin-user-profile-modal {
+    transform-origin:
+      center bottom;
+  }
+
+  .admin-user-profile-avatar {
+    animation-duration:
+      5.5s;
+  }
+}
+
+
+/* Acessibilidade */
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-user-profile-backdrop,
+  .admin-user-profile-avatar,
+  .admin-user-profile-badges span,
+  .admin-user-profile-grid > div,
+  .admin-user-profile-header > * {
+    animation: none !important;
+
+    opacity: 1 !important;
+
+    transform: none !important;
+  }
+
+  .admin-user-profile-grid > div::before {
+    display: none;
+  }
+}
+
+/* =========================================================
+   ADMIN USER PROFILE — TABS
+   ========================================================= */
+
+.admin-user-profile-tabs {
+  display: flex;
+  gap: 6px;
+
+  padding:
+    15px 27px 0;
+}
+
+.admin-user-profile-tabs button {
+  position: relative;
+
+  padding:
+    7px 10px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+
+  color:
+    rgba(41, 55, 73, .42);
+
+  font-family: inherit;
+  font-size: .56rem;
+  font-weight: 720;
+
+  cursor: pointer;
+
+  transition:
+    color .18s ease,
+    background .18s ease,
+    transform .18s ease;
+}
+
+.admin-user-profile-tabs button:hover {
+  color:
+    rgba(41, 55, 73, .72);
+
+  transform:
+    translateY(-1px);
+}
+
+.admin-user-profile-tabs button.is-active {
+  color: #304964;
+
+  background:
+    rgba(255, 255, 255, .74);
+
+  box-shadow:
+    0 6px 16px
+    rgba(27, 41, 58, .045);
+}
+
+.admin-user-profile-tabs button.is-active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 10px;
+  right: 10px;
+  bottom: -2px;
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #d74c49,
+      #e78a3d,
+      #4d78ae
+    );
+}
+
+
+/* =========================================================
+   TAB CONTENT
+   ========================================================= */
+
+.admin-user-profile-tab-content {
+  animation:
+    adminUserTabIn
+    .22s
+    ease-out;
+}
+
+@keyframes adminUserTabIn {
+  from {
+    opacity: 0;
+
+    transform:
+      translateX(7px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateX(0);
+  }
+}
+
+
+/* =========================================================
+   PARTICIPATIONS EMPTY STATE
+   ========================================================= */
+
+.admin-user-profile-empty-state {
+  display: grid;
+  place-items: center;
+
+  gap: 8px;
+
+  min-height: 220px;
+
+  margin:
+    22px 27px 10px;
+
+  padding: 28px;
+
+  border:
+    1px dashed
+    rgba(44, 60, 78, .09);
+
+  border-radius: 18px;
+
+  background:
+    rgba(255, 255, 255, .52);
+
+  text-align: center;
+}
+
+.admin-user-profile-empty-state > span {
+  display: grid;
+  place-items: center;
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(75, 104, 141, .055);
+
+  color:
+    rgba(61, 91, 128, .55);
+
+  font-size: .9rem;
+}
+
+.admin-user-profile-empty-state strong {
+  color:
+    rgba(37, 50, 65, .72);
+
+  font-size: .67rem;
+}
+
+.admin-user-profile-empty-state p {
+  max-width: 340px;
+
+  margin: 0;
+
+  color:
+    rgba(43, 57, 74, .36);
+
+  font-size: .54rem;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   ACCESS TAB
+   ========================================================= */
+
+.admin-user-access-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+
+  padding:
+    22px 27px 9px;
+}
+
+.admin-user-access-grid > div {
+  display: grid;
+
+  gap: 6px;
+
+  min-height: 72px;
+
+  align-content: center;
+
+  padding: 15px;
+
+  border:
+    1px solid
+    rgba(42, 57, 75, .05);
+
+  border-radius: 16px;
+
+  background:
+    rgba(255, 255, 255, .7);
+}
+
+.admin-user-access-grid span {
+  color:
+    rgba(43, 57, 74, .35);
+
+  font-size: .49rem;
+  font-weight: 760;
+
+  letter-spacing: .045em;
+
+  text-transform: uppercase;
+}
+
+.admin-user-access-grid strong {
+  color:
+    rgba(37, 50, 65, .76);
+
+  font-size: .65rem;
+  font-weight: 670;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 680px) {
+  .admin-user-profile-tabs {
+    padding:
+      13px 16px 0;
+
+    overflow-x: auto;
+  }
+
+  .admin-user-profile-tabs button {
+    flex: 0 0 auto;
+  }
+
+  .admin-user-access-grid {
+    grid-template-columns: 1fr;
+
+    padding:
+      18px 16px 7px;
+  }
+
+  .admin-user-profile-empty-state {
+    margin:
+      18px 16px 7px;
+
+    min-height: 190px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-user-profile-tab-content {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   ADMIN USER PROFILE — PARTICIPATIONS
+   ========================================================= */
+
+.admin-user-participation-state {
+  display: grid;
+  place-items: center;
+
+  gap: 9px;
+
+  min-height: 210px;
+
+  margin:
+    18px 27px 8px;
+
+  border:
+    1px solid
+    rgba(42, 57, 75, .05);
+
+  border-radius: 18px;
+
+  background:
+    rgba(255,255,255,.56);
+
+  color:
+    rgba(42, 56, 73, .48);
+
+  text-align: center;
+}
+
+.admin-user-participation-state strong {
+  font-size: .61rem;
+}
+
+.admin-user-participation-state p {
+  margin: 0;
+
+  max-width: 340px;
+
+  color:
+    rgba(42, 56, 73, .38);
+
+  font-size: .53rem;
+}
+
+.admin-user-participation-loader {
+  width: 24px;
+  height: 24px;
+
+  border:
+    2px solid
+    rgba(57, 78, 104, .10);
+
+  border-top-color:
+    rgba(57, 78, 104, .52);
+
+  border-radius: 50%;
+
+  animation:
+    adminUserParticipationSpin
+    .7s linear infinite;
+}
+
+@keyframes adminUserParticipationSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.admin-user-participation-list {
+  display: grid;
+  gap: 9px;
+
+  padding:
+    20px 27px 10px;
+}
+
+.admin-user-participation-summary {
+  display: flex;
+  align-items: baseline;
+
+  gap: 6px;
+
+  margin-bottom: 2px;
+}
+
+.admin-user-participation-summary strong {
+  color: #314b69;
+
+  font-size: .88rem;
+}
+
+.admin-user-participation-summary span {
+  color:
+    rgba(43, 57, 74, .38);
+
+  font-size: .52rem;
+}
+
+
+.admin-user-participation-card {
+  display: grid;
+
+  grid-template-columns:
+    62px minmax(0, 1fr) auto;
+
+  gap: 13px;
+
+  align-items: center;
+
+  padding: 13px;
+
+  border:
+    1px solid
+    rgba(42, 57, 75, .05);
+
+  border-radius: 16px;
+
+  background:
+    rgba(255,255,255,.72);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255,255,255,.85);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.admin-user-participation-card:hover {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 10px 25px
+    rgba(30, 44, 61, .045);
+}
+
+
+.admin-user-participation-date {
+  display: grid;
+  place-items: center;
+
+  min-height: 50px;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(229, 238, 248, .72),
+      rgba(255,255,255,.86)
+    );
+}
+
+.admin-user-participation-date strong {
+  color:
+    rgba(47, 72, 100, .72);
+
+  font-size: .59rem;
+
+  text-transform: uppercase;
+}
+
+
+.admin-user-participation-main > span {
+  color:
+    rgba(43, 57, 74, .31);
+
+  font-size: .46rem;
+  font-weight: 760;
+
+  text-transform: uppercase;
+}
+
+.admin-user-participation-main h4 {
+  margin:
+    3px 0 2px;
+
+  color:
+    rgba(37, 50, 65, .79);
+
+  font-size: .67rem;
+  font-weight: 700;
+}
+
+.admin-user-participation-main p {
+  margin: 0;
+
+  color:
+    rgba(43, 57, 74, .39);
+
+  font-size: .51rem;
+}
+
+
+.admin-user-participation-meta {
+  display: grid;
+
+  justify-items: end;
+
+  gap: 6px;
+}
+
+.admin-user-participation-meta > span {
+  padding:
+    4px 7px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(52, 75, 103, .045);
+
+  color:
+    rgba(43, 57, 74, .49);
+
+  font-size: .48rem;
+  font-weight: 680;
+}
+
+.admin-user-participation-meta strong {
+  font-size: .49rem;
+  font-weight: 730;
+}
+
+.admin-user-participation-meta strong.is-confirmed {
+  color: #38775b;
+}
+
+.admin-user-participation-meta strong.is-pending {
+  color: #9a702f;
+}
+
+.admin-user-participation-meta strong.is-rejected {
+  color: #a44d4d;
+}
+
+
+@media (max-width: 680px) {
+  .admin-user-participation-list {
+    padding:
+      17px 16px 7px;
+  }
+
+  .admin-user-participation-card {
+    grid-template-columns:
+      52px minmax(0, 1fr);
+
+    gap: 10px;
+  }
+
+  .admin-user-participation-meta {
+    grid-column:
+      2;
+
+    justify-items: start;
+
+    grid-auto-flow: column;
+
+    justify-content: start;
+  }
+
+  .admin-user-participation-state {
+    margin:
+      17px 16px 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-user-participation-loader {
+    animation: none;
+  }
+}

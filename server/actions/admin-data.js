@@ -350,82 +350,6 @@ export default async function handler(request, response) {
         r.name
     `
 
-    const tasks = await sql`
-      SELECT
-        t.id,
-        t.title,
-        t.description,
-        t.event_id,
-        t.project_id,
-        t.team_id,
-        project.name AS project_name,
-        team.code AS team_code,
-        team.name AS team_name,
-        t.deadline,
-        t.priority,
-        t.status,
-        t.volunteer_limit,
-        t.active,
-        e.name AS event_name,
-        COUNT(tu.id)::int AS volunteer_count
-      FROM tasks t
-      LEFT JOIN events e
-        ON t.event_id = e.id
-      LEFT JOIN projects project
-        ON project.id = t.project_id
-      LEFT JOIN teams team
-        ON team.id = t.team_id
-      LEFT JOIN task_users tu
-        ON tu.task_id = t.id
-        AND tu.status = 'active'
-
-      WHERE
-        ${globalAdmin}
-
-        OR (
-          ${projectAdmin}
-          AND t.project_id =
-            ${admin.projectId}
-        )
-
-        OR (
-          ${mediaAdmin}
-          AND t.team_id =
-            ANY(${adminTeamIds})
-        )
-
-        OR (
-          ${!globalAdmin &&
-            !projectAdmin &&
-            !mediaAdmin}
-
-          AND t.project_id =
-            ${admin.projectId}
-
-          AND t.team_id =
-            ANY(${adminTeamIds})
-        )
-
-      GROUP BY
-        t.id,
-        t.title,
-        t.description,
-        t.event_id,
-        t.project_id,
-        t.team_id,
-        project.name,
-        team.code,
-        team.name,
-        t.deadline,
-        t.priority,
-        t.status,
-        t.volunteer_limit,
-        t.active,
-        e.name
-      ORDER BY
-        t.deadline DESC
-    `
-
     // =====================================================
     // ACTIVITY PARTICIPANTS
     // =====================================================
@@ -493,68 +417,6 @@ export default async function handler(request, response) {
       ORDER BY
         e.event_date DESC,
         r.name,
-        u.name
-    `
-
-    // =====================================================
-    // MISSION PARTICIPANTS
-    // =====================================================
-    // Lista quem assumiu cada missão e permite que o Admin
-    // acompanhe entrega e conclusão individual.
-    // =====================================================
-
-    const taskParticipants = await sql`
-      SELECT
-        tu.id AS participation_id,
-        tu.task_id,
-        tu.user_id,
-        tu.status,
-        tu.delivery_link,
-        tu.submitted_at,
-        tu.completed_at,
-        u.name AS user_name,
-        p.name AS project_name,
-        t.title AS task_title
-      FROM task_users tu
-      JOIN users u
-        ON tu.user_id = u.id
-      JOIN projects p
-        ON u.project_id = p.id
-      JOIN tasks t
-        ON tu.task_id = t.id
-
-      WHERE
-        tu.status = 'active'
-
-        AND (
-          ${globalAdmin}
-
-          OR (
-            ${projectAdmin}
-            AND t.project_id =
-              ${admin.projectId}
-          )
-
-          OR (
-            ${mediaAdmin}
-            AND t.team_id =
-              ANY(${adminTeamIds})
-          )
-
-          OR (
-            ${!globalAdmin &&
-              !projectAdmin &&
-              !mediaAdmin}
-
-            AND t.project_id =
-              ${admin.projectId}
-
-            AND t.team_id =
-              ANY(${adminTeamIds})
-          )
-        )
-      ORDER BY
-        t.deadline DESC,
         u.name
     `
 
@@ -971,13 +833,11 @@ export default async function handler(request, response) {
       events,
       roles,
       eventRoles,
-      tasks,
       registrationCoupons,
       registrations,
       volunteerEventStats,
       activitiesEventStats,
       activityParticipants,
-      taskParticipants,
       announcements,
       confirmations,
       monthlyCommunity,

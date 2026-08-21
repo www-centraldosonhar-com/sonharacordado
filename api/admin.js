@@ -9,6 +9,7 @@ import adminRegistrationHandler from '../server/actions/admin-registration.js'
 import adminExpenseHandler from '../server/actions/admin-expenses.js'
 import postEventHandler from '../server/actions/post-event.js'
 import financeRequestsAdminHandler from '../server/actions/finance-requests-admin.js'
+import adminUserParticipationHandler from '../server/actions/admin-user-participation.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -110,6 +111,30 @@ export default async function handler(request, response) {
       })
     }
   }
+
+  if (
+    action ===
+    'user-participation'
+  ) {
+    try {
+      return await adminUserParticipationHandler(
+        request,
+        response
+      )
+    } catch (error) {
+      console.error(
+        'ADMIN USER PARTICIPATION ERROR:',
+        error
+      )
+
+      return response.status(500).json({
+        error:
+          error?.message ||
+          'Não foi possível carregar o histórico do voluntário.',
+      })
+    }
+  }
+
 
   if (action === 'registrations') {
     return adminRegistrationHandler(
