@@ -202,7 +202,7 @@ function FinancePage({
             </h1>
 
             <p>
-              Oi, {user.name}! 👋
+              Oi, {String(user.name || '').trim().split(/\s+/)[0]}! 👋
             </p>
           </div>
 

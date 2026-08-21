@@ -5,6 +5,7 @@ import {
   adminCanAccessEvent,
   adminCanAccessProject,
   isGlobalAdmin,
+  isMediaAdmin,
   isProjectAdmin,
   isTeamAdmin,
   isVolunteerTeamAdmin,
@@ -397,6 +398,7 @@ export default async function handler(request, response) {
         requiresDelivery,
         deliveryDeadline,
         teamId,
+        communityVisible,
       } = data
 
       const limit = Number(vacancyLimit)
@@ -410,6 +412,10 @@ export default async function handler(request, response) {
         Number(requiresDelivery) === 1
           ? 1
           : 0
+
+      const communityRequested =
+        Number(communityVisible) === 1
+
 
       if (
         !eventId ||
@@ -468,6 +474,49 @@ export default async function handler(request, response) {
         return forbidden(response)
       }
 
+      let communityEnabled = 0
+
+      if (communityRequested) {
+        const canPublishCommunity =
+          isGlobalAdmin(admin) ||
+          isMediaAdmin(admin)
+
+        if (!canPublishCommunity) {
+          return response.status(403).json({
+            error:
+              'Somente Admin de Mídias ou Admin Geral pode publicar atividades na Comunidade.',
+          })
+        }
+
+        if (!numericTeamId) {
+          return response.status(400).json({
+            error:
+              'A atividade comunitária precisa pertencer à equipe de Mídias.',
+          })
+        }
+
+        const teamRows = await sql`
+          SELECT code
+          FROM teams
+          WHERE id = ${numericTeamId}
+          LIMIT 1
+        `
+
+        const teamCode =
+          String(teamRows[0]?.code || '')
+            .trim()
+            .toLowerCase()
+
+        if (teamCode !== 'media') {
+          return response.status(400).json({
+            error:
+              'Somente atividades da equipe de Mídias podem ser publicadas na Comunidade.',
+          })
+        }
+
+        communityEnabled = 1
+      }
+
       await sql`
         INSERT INTO event_roles (
           event_id,
@@ -477,7 +526,8 @@ export default async function handler(request, response) {
           active,
           requires_delivery,
           delivery_deadline,
-          team_id
+          team_id,
+          community_visible
         )
         VALUES (
           ${eventId},
@@ -492,7 +542,8 @@ export default async function handler(request, response) {
               ? deliveryDeadline
               : null
           },
-          ${numericTeamId}
+          ${numericTeamId},
+          ${communityEnabled}
         )
       `
 
@@ -624,6 +675,8 @@ export default async function handler(request, response) {
         primaryTeamId,
         mediaSupport,
         password,
+        birthDate,
+        allergies,
       } = data
 
       if (
@@ -721,7 +774,9 @@ export default async function handler(request, response) {
           email,
           password_hash,
           user_type,
-          active
+          active,
+          birth_date,
+          allergies
         )
         VALUES (
           ${name.trim()},
@@ -735,7 +790,9 @@ export default async function handler(request, response) {
               ? 'admin'
               : 'volunteer'
           },
-          1
+          1,
+          ${birthDate || null},
+          ${allergies?.trim() || null}
         )
         RETURNING id
       `
@@ -743,26 +800,8 @@ export default async function handler(request, response) {
       const createdUserId =
         createdUsers[0].id
 
-      // Todos possuem acesso ao Sócio Sonhador.
-      await sql`
-        INSERT INTO user_permissions (
-          user_id,
-          permission,
-          admin_scope,
-          active
-        )
-        VALUES (
-          ${createdUserId},
-          'dreamer',
-          NULL,
-          1
-        )
-        ON CONFLICT (
-          user_id,
-          permission
-        )
-        DO NOTHING
-      `
+      // Sócio Sonhador é uma condição separada.
+      // Não deve ser concedido automaticamente.
 
       // Usuários criados pelo Admin são voluntários.
       await sql`

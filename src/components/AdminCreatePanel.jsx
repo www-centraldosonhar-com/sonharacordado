@@ -1018,7 +1018,24 @@ function AdminCreatePanel({
               </>
             )}
 
-            <label>
+                      <label>Data de nascimento</label>
+
+          <input
+            type="date"
+            name="birthDate"
+          />
+
+          <label>
+            Alergias / restrições alimentares
+          </label>
+
+          <textarea
+            name="allergies"
+            rows="3"
+            placeholder="Ex.: amendoim, lactose..."
+          />
+
+<label>
               Senha
             </label>
 

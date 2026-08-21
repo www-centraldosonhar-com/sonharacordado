@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import AppHeader from '../components/AppHeader'
+import CommitmentCard from '../components/CommitmentCard'
+import PhotoDeliveryPanel from '../components/PhotoDeliveryPanel'
 import VolunteerChecklistPanel from '../components/VolunteerChecklistPanel'
 import VolunteerAreaSelector from '../components/VolunteerAreaSelector'
 
@@ -336,7 +338,6 @@ function HomePage({
   }
 
   const universalEvents =
-    data?.nextEvents ||
     data?.upcomingEvents ||
     data?.events ||
     []
@@ -402,73 +403,9 @@ function HomePage({
                 📅 Encontros
               </a>
 
-              <a href="#missoes">
-                💡 Missões
-              </a>
-
-              <a href="#mural">
-                📢 Mural
-              </a>
-
-              {isGeneralView && (
-                <a href="#memorias">
-                  📸 Memórias
-                </a>
-              )}
-            </nav>
-          </div>
-        </aside>
-
-        <main
-          className={`app-shell home-main project-theme-${String(
-            currentUser?.project || ''
-          ).toLowerCase()}`}
-          id="inicio"
-        >
-          <VolunteerAreaSelector
-            access={volunteerAccess}
-            selectedArea={activeView}
-            onSelect={setSelectedArea}
-            primaryTeam={volunteerAccess?.primaryTeam}
-            project={currentUser?.project}
-          />
-
-          {isTeamView && (
-            <VolunteerChecklistPanel
-              onUpdated={loadHome}
-            />
-          )}
-
-          
-
-          {isTeamView && (
+              {isTeamView && (
             <MyTeamHome
               project={currentUser?.project}
-              currentUser={currentUser}
-              projectEvents={
-                (data?.nextEvents || []).filter((event) => {
-                  const userProject =
-                    String(
-                      currentUser?.project || ''
-                    )
-                      .trim()
-                      .toUpperCase()
-
-                  const eventProject =
-                    String(
-                      event?.project ||
-                      event?.project_code ||
-                      event?.projectCode ||
-                      ''
-                    )
-                      .trim()
-                      .toUpperCase()
-
-                  return (
-                    eventProject === userProject
-                  )
-                })
-              }
               visibleTasks={visibleTasks}
               visibleAnnouncements={
                 visibleAnnouncements
@@ -508,6 +445,45 @@ function HomePage({
             />
           )}
 
+              <a href="#missoes">
+                💡 Missões
+              </a>
+
+              <a href="#mural">
+                📢 Mural
+              </a>
+
+              {isGeneralView && (
+                <a href="#memorias">
+                  📸 Memórias
+                </a>
+              )}
+            </nav>
+          </div>
+        </aside>
+
+        <main
+          className={`app-shell home-main project-theme-${String(
+            currentUser?.project || ''
+          ).toLowerCase()}`}
+          id="inicio"
+        >
+          <VolunteerAreaSelector
+            access={volunteerAccess}
+            selectedArea={activeView}
+            onSelect={setSelectedArea}
+            primaryTeam={volunteerAccess?.primaryTeam}
+            project={currentUser?.project}
+          />
+
+          {isTeamView && (
+            <VolunteerChecklistPanel
+              onUpdated={loadHome}
+            />
+          )}
+
+          
+
           {isGeneralView && (
             <CommunityHome
               currentMonthLabel={currentMonthLabel}
@@ -517,21 +493,104 @@ function HomePage({
                 universalMediaActivities
               }
               monthlyBirthdays={monthlyBirthdays}
-              monthlyCommunity={data?.monthlyCommunity}
               isBirthdayToday={isBirthdayToday}
-              currentUser={currentUser}
-              loadHome={loadHome}
             />
           )}
 
 
           
 
+          {isGeneralView &&
+            data.myConfirmations
+              .filter((confirmation) => {
+                // Entregas ficam na área geral / Mídias.
+                const requiresDelivery =
+                  Number(
+                    confirmation.requires_delivery
+                  ) === 1
+
+                const eventDate =
+                  String(
+                    confirmation.event_date
+                  ).slice(0, 10)
+
+                const eventAlreadyHappened =
+                  eventDate &&
+                  new Date(
+                    `${eventDate}T23:59:59`
+                  ) < new Date()
+
+              
+  // =======================================================
+  // UNIVERSAL COMMUNITY DATA
+  // =======================================================
 
 
+  return (
+                  requiresDelivery &&
+                  eventAlreadyHappened
+                )
+              })
+              .map((confirmation) => (
+                <PhotoDeliveryPanel
+                  key={
+                    `photos-${confirmation.id}`
+                  }
+                  event={{
+                    id:
+                      confirmation.event_id,
 
+                    name:
+                      confirmation.event_name,
+                  }}
+                  photographerName={
+                    data.currentUser.name
+                  }
+                  confirmationId={
+                    confirmation.id
+                  }
+                  photoSubmittedAt={
+                    confirmation.photo_submitted_at
+                  }
+                />
+              ))}
 
+          {isTeamView && (
+          <section
+            className="section-block"
+            id="combinados"
+          >
+            <div className="section-heading">
+              <p className="eyebrow eyebrow-red">
+                MEUS COMBINADOS
+              </p>
 
+              <h2>
+                Onde você já disse “conta comigo” 🤝
+              </h2>
+            </div>
+
+            {data.myConfirmations.length > 0 ? (
+              <div className="cards-grid">
+                {data.myConfirmations.map(
+                  (confirmation) => (
+                    <CommitmentCard
+                      key={confirmation.id}
+                      confirmation={confirmation}
+                      onUpdated={loadHome}
+                    />
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>
+                  Você ainda não confirmou nenhuma atividade.
+                </p>
+              </div>
+            )}
+          </section>
+          )}
 
           
 

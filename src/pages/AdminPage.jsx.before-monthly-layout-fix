@@ -18,7 +18,6 @@ import AdminPostEventTeamReports from '../components/AdminPostEventTeamReports'
 import '../styles/admin.css'
 import '../styles/admin-premium.css'
 import AdminFinanceRequestsPanel from '../components/AdminFinanceRequestsPanel'
-import AdminPeopleImport from '../components/AdminPeopleImport.jsx'
 
 function AdminPage({
   user,
@@ -28,10 +27,6 @@ function AdminPage({
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [userSearch, setUserSearch] = useState('')
-  const [userProject, setUserProject] = useState('all')
-  const [userTeam, setUserTeam] = useState('all')
-  const [userStatus, setUserStatus] = useState('all')
 
   async function reloadAdmin() {
     const response = await fetch('/api/admin?action=data')
@@ -118,97 +113,6 @@ function AdminPage({
   // limpa e adequada à função de cada Admin.
   // =====================================================
 
-  const normalizedUserSearch =
-    userSearch
-      .trim()
-      .toLowerCase()
-
-  const availableUserTeams =
-    Array.from(
-      new Set(
-        (data?.users || [])
-          .filter((person) =>
-            userProject === 'all'
-              ? true
-              : person.project === userProject
-          )
-          .flatMap((person) =>
-            Array.isArray(person.team_names)
-              ? person.team_names
-              : person.team_names
-                ? [person.team_names]
-                : []
-          )
-          .filter(Boolean)
-      )
-    )
-      .sort((a, b) =>
-        String(a).localeCompare(
-          String(b),
-          'pt-BR'
-        )
-      )
-
-  const filteredUsers =
-    (data?.users || []).filter((person) => {
-      const searchableText = [
-        person.full_name,
-        person.name,
-        person.username,
-        person.email,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-
-      const matchesSearch =
-        !normalizedUserSearch ||
-        searchableText.includes(
-          normalizedUserSearch.replace(/^@/, '')
-        ) ||
-        searchableText.includes(
-          normalizedUserSearch
-        )
-
-      const matchesProject =
-        userProject === 'all' ||
-        person.project === userProject
-
-      const personTeams =
-        Array.isArray(person.team_names)
-          ? person.team_names
-          : person.team_names
-            ? [person.team_names]
-            : []
-
-      const matchesTeam =
-        userTeam === 'all' ||
-        personTeams.includes(userTeam)
-
-      const matchesStatus =
-        userStatus === 'all' ||
-        (
-          userStatus === 'active'
-            ? Boolean(person.active)
-            : !person.active
-        )
-
-      return (
-        matchesSearch &&
-        matchesProject &&
-        matchesTeam &&
-        matchesStatus
-      )
-    })
-
-  const hasUserFilters =
-    Boolean(
-      userSearch.trim() ||
-      userProject !== 'all' ||
-      userTeam !== 'all' ||
-      userStatus !== 'all'
-    )
-
   const adminScope =
     data.adminAccess?.scope || null
 
@@ -292,7 +196,7 @@ function AdminPage({
             </h1>
 
             <p>
-              Oi, {String(user.name || '').trim().split(/\s+/)[0]}! 👋
+              Oi, {user.name}! 👋
             </p>
           </div>
 
@@ -372,18 +276,7 @@ function AdminPage({
           </a>
         )}
 
-                
-
-{canSeeAnnouncements && (
-          <a href="#comunicados">
-            📢 Comunicados
-          </a>
-        )}
-      </nav>
-
-      <main className="admin-shell">
-
-        {canEditMonthlyCommunity && (
+                {canEditMonthlyCommunity && (
           <section className="admin-section admin-monthly-section">
             <details
               className="admin-collapsible"
@@ -513,6 +406,14 @@ function AdminPage({
           </section>
         )}
 
+{canSeeAnnouncements && (
+          <a href="#comunicados">
+            📢 Comunicados
+          </a>
+        )}
+      </nav>
+
+      <main className="admin-shell">
         {isProjectAdmin && (
           <AdminFinanceRequestsPanel />
         )}
@@ -581,15 +482,6 @@ function AdminPage({
           id="usuarios"
           className="admin-section admin-section-collapsible"
         >
-
-          {(
-            isGlobalAdmin ||
-            isProjectAdmin ||
-            isVolunteerAdmin
-          ) && (
-            <AdminPeopleImport />
-          )}
-
           <details className="admin-collapsible">
             <summary className="admin-collapsible-summary">
               <div className="admin-collapsible-title">
@@ -609,143 +501,13 @@ function AdminPage({
               </div>
 
               <span className="admin-collapsible-count">
-                {hasUserFilters
-                  ? `${filteredUsers.length}/${data.users.length}`
-                  : data.users.length}
+                {data.users.length}
               </span>
             </summary>
 
             <div className="admin-collapsible-body">
-              <div className="admin-user-filters">
-                <div className="admin-user-search-wrap">
-                  <span aria-hidden="true">
-                    ⌕
-                  </span>
-
-                  <input
-                    type="search"
-                    value={userSearch}
-                    onChange={(event) =>
-                      setUserSearch(
-                        event.target.value
-                      )
-                    }
-                    placeholder="Buscar por nome ou @usuário"
-                  />
-                </div>
-
-                <div className="admin-user-project-tabs">
-                  {['all', 'APS', 'PPF', 'SJ'].map(
-                    (project) => (
-                      <button
-                        key={project}
-                        type="button"
-                        className={
-                          userProject === project
-                            ? 'is-active'
-                            : ''
-                        }
-                        onClick={() => {
-                          setUserProject(project)
-                          setUserTeam('all')
-                        }}
-                      >
-                        {project === 'all'
-                          ? 'Todos'
-                          : project}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                <div className="admin-user-filter-selects">
-                  <label>
-                    <span>
-                      Equipe
-                    </span>
-
-                    <select
-                      value={userTeam}
-                      onChange={(event) =>
-                        setUserTeam(
-                          event.target.value
-                        )
-                      }
-                    >
-                      <option value="all">
-                        Todas as equipes
-                      </option>
-
-                      {availableUserTeams.map(
-                        (team) => (
-                          <option
-                            key={team}
-                            value={team}
-                          >
-                            {team}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </label>
-
-                  <label>
-                    <span>
-                      Status
-                    </span>
-
-                    <select
-                      value={userStatus}
-                      onChange={(event) =>
-                        setUserStatus(
-                          event.target.value
-                        )
-                      }
-                    >
-                      <option value="all">
-                        Todos
-                      </option>
-
-                      <option value="active">
-                        Ativos
-                      </option>
-
-                      <option value="inactive">
-                        Inativos
-                      </option>
-                    </select>
-                  </label>
-                </div>
-
-                <div className="admin-user-filter-footer">
-                  <span>
-                    {filteredUsers.length}
-                    {' '}
-                    de
-                    {' '}
-                    {data.users.length}
-                    {' '}
-                    usuários
-                  </span>
-
-                  {hasUserFilters && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserSearch('')
-                        setUserProject('all')
-                        setUserTeam('all')
-                        setUserStatus('all')
-                      }}
-                    >
-                      Limpar filtros
-                    </button>
-                  )}
-                </div>
-              </div>
-
               <div className="admin-grid">
-            {filteredUsers.map((person) => (
+            {data.users.map((person) => (
               <article
                 className="admin-card"
                 key={person.id}
@@ -754,9 +516,7 @@ function AdminPage({
                   {person.avatar_path ? (
                     <img
                       src={person.avatar_path}
-                      alt={`Avatar de ${person.username
-  ? `@${person.username}`
-  : person.name}`}
+                      alt={`Avatar de ${person.name}`}
                       className="admin-avatar"
                     />
                   ) : (
@@ -769,15 +529,11 @@ function AdminPage({
 
                   <div>
                     <h3>
-                      {person.full_name || person.name}
+                      {person.name}
                     </h3>
 
-                    <span className="admin-user-identity">
-                      {person.username
-                        ? `@${person.username}`
-                        : 'Sem usuário'}
-                      {' · '}
-                      {person.project || 'Sem projeto'}
+                    <span className="admin-tag">
+                      {person.project}
                     </span>
                   </div>
                 </div>
@@ -798,11 +554,7 @@ function AdminPage({
                         'volunteer'
                       )
                       ? '🫶 Voluntário'
-                      : person.permissions?.includes(
-                          'dreamer'
-                        )
-                        ? '❤️ Sócio Sonhador'
-                        : '— Sem acesso definido'}
+                      : '❤️ Sócio Sonhador'}
                 </p>
 
                 {person.team_names?.length > 0 && (

@@ -8,6 +8,7 @@ import {
   adminCanAccessUser,
   adminCanAccessProject,
   isGlobalAdmin,
+  isMediaAdmin,
   isTeamAdmin,
   requireAdmin,
   sql,
@@ -153,7 +154,6 @@ export default async function handler(
     }
 
     if (action === 'update-user') {
-      const name = cleanText(data.name)
       const email = cleanText(data.email)
       const projectId =
         Number(data.projectId)
@@ -266,8 +266,26 @@ export default async function handler(
         normalizedTeamIds.length = 0
       }
 
+      const fullName =
+        String(
+          data.fullName ||
+          data.name ||
+          ''
+        )
+          .trim()
+          .replace(/\s+/g, ' ')
+
+      const username =
+        String(
+          data.username || ''
+        )
+          .trim()
+          .replace(/^@+/, '')
+          .toLowerCase()
+
       if (
-        !name ||
+        !fullName ||
+        !username ||
         !Number.isInteger(projectId) ||
         ![
           'volunteer',
@@ -281,10 +299,12 @@ export default async function handler(
         })
       }
 
-      if (/\s/.test(name)) {
+      if (
+        !/^[a-z0-9._]+$/.test(username)
+      ) {
         return response.status(400).json({
           error:
-            'O usuário não pode conter espaços.',
+            'O @usuário deve usar apenas letras, números, ponto ou underline.',
         })
       }
 
@@ -317,19 +337,21 @@ export default async function handler(
         return forbidden(response)
       }
 
-      const duplicate = await sql`
-        SELECT id
-        FROM users
-        WHERE LOWER(name) = LOWER(${name})
-          AND project_id = ${projectId}
-          AND id != ${recordId}
-        LIMIT 1
-      `
+      const duplicateUsername =
+        await sql`
+          SELECT id
+          FROM users
+          WHERE
+            LOWER(username) =
+              LOWER(${username})
+            AND id != ${recordId}
+          LIMIT 1
+        `
 
-      if (duplicate[0]) {
+      if (duplicateUsername[0]) {
         return response.status(409).json({
           error:
-            'Já existe esse usuário nesse projeto.',
+            'Este @usuário já está em uso.',
         })
       }
 
@@ -344,10 +366,18 @@ export default async function handler(
         })
       }
 
+      const birthDate =
+        data.birthDate || null
+
+      const allergies =
+        data.allergies?.trim() || null
+
       const updated = await sql`
         UPDATE users
         SET
-          name = ${name},
+          name = ${fullName},
+          full_name = ${fullName},
+          username = ${username},
           email = ${email || null},
           project_id = ${projectId},
           user_type = ${
@@ -356,7 +386,9 @@ export default async function handler(
             userType === 'team_admin'
               ? 'admin'
               : 'volunteer'
-          }
+          },
+          birth_date = ${birthDate},
+          allergies = ${allergies}
         WHERE id = ${recordId}
         RETURNING id
       `
@@ -370,27 +402,11 @@ export default async function handler(
       // -----------------------------------------------
       // DREAMER ACCESS
       // -----------------------------------------------
-
-      await sql`
-        INSERT INTO user_permissions (
-          user_id,
-          permission,
-          admin_scope,
-          active
-        )
-        VALUES (
-          ${recordId},
-          'dreamer',
-          NULL,
-          1
-        )
-        ON CONFLICT (
-          user_id,
-          permission
-        )
-        DO UPDATE SET active = 1
-      `
-
+      //
+      // Sócio Sonhador é uma condição separada.
+      // Não deve ser ativado automaticamente ao editar
+      // um voluntário/admin.
+      //
       // -----------------------------------------------
       // VOLUNTEER ACCESS
       // -----------------------------------------------
@@ -773,6 +789,13 @@ export default async function handler(
           ? Number(data.teamId)
           : null
 
+      const communityVisible =
+        data.communityVisible === true ||
+        data.communityVisible === 'true' ||
+        data.communityVisible === 1 ||
+        data.communityVisible === '1'
+
+
       if (
         !Number.isInteger(vacancyLimit) ||
         vacancyLimit < 1
@@ -807,6 +830,49 @@ export default async function handler(
         return forbidden(response)
       }
 
+      let communityEnabled = 0
+
+      if (communityVisible) {
+        const canPublishCommunity =
+          isGlobalAdmin(admin) ||
+          isMediaAdmin(admin)
+
+        if (!canPublishCommunity) {
+          return response.status(403).json({
+            error:
+              'Somente Admin de Mídias ou Admin Geral pode publicar atividades na Comunidade.',
+          })
+        }
+
+        if (!teamId) {
+          return response.status(400).json({
+            error:
+              'A atividade comunitária precisa pertencer à equipe de Mídias.',
+          })
+        }
+
+        const teamRows = await sql`
+          SELECT code
+          FROM teams
+          WHERE id = ${teamId}
+          LIMIT 1
+        `
+
+        const teamCode =
+          String(teamRows[0]?.code || '')
+            .trim()
+            .toLowerCase()
+
+        if (teamCode !== 'media') {
+          return response.status(400).json({
+            error:
+              'Somente atividades da equipe de Mídias podem ser publicadas na Comunidade.',
+          })
+        }
+
+        communityEnabled = 1
+      }
+
       const confirmed = await sql`
         SELECT COUNT(*)::int AS total
         FROM confirmations
@@ -836,7 +902,9 @@ export default async function handler(
           delivery_deadline =
             ${deliveryDeadline},
           team_id =
-            ${teamId}
+            ${teamId},
+          community_visible =
+            ${communityEnabled}
         WHERE id = ${recordId}
         RETURNING id
       `
@@ -1255,6 +1323,93 @@ export default async function handler(
         success: true,
         message:
           'Comunicado atualizado! 📢',
+      })
+    }
+
+    // ---------------------------------
+    // COMMUNITY — IDENTIDADE DO MÊS
+    // ---------------------------------
+
+    if (
+      action ===
+      'update-monthly-community'
+    ) {
+      if (
+        !isGlobalAdmin(admin) &&
+        !isMediaAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      const word =
+        cleanText(data.word)
+
+      const message =
+        cleanText(data.message)
+
+      if (!word) {
+        return response.status(400).json({
+          error:
+            'Informe a palavra do mês.',
+        })
+      }
+
+      if (word.length > 120) {
+        return response.status(400).json({
+          error:
+            'A palavra do mês é muito longa.',
+        })
+      }
+
+      const updated = await sql`
+        INSERT INTO
+          community_monthly_settings (
+            year,
+            month,
+            word,
+            message,
+            updated_by,
+            updated_at
+          )
+        VALUES (
+          EXTRACT(
+            YEAR FROM CURRENT_DATE
+          ),
+          EXTRACT(
+            MONTH FROM CURRENT_DATE
+          ),
+          ${word},
+          ${message || null},
+          ${admin.id},
+          CURRENT_TIMESTAMP
+        )
+
+        ON CONFLICT (year, month)
+        DO UPDATE SET
+          word =
+            EXCLUDED.word,
+          message =
+            EXCLUDED.message,
+          updated_by =
+            EXCLUDED.updated_by,
+          updated_at =
+            CURRENT_TIMESTAMP
+
+        RETURNING
+          id,
+          year,
+          month,
+          word,
+          message,
+          updated_at
+      `
+
+      return response.status(200).json({
+        success: true,
+        message:
+          'Identidade do mês atualizada! ✨',
+        monthlyCommunity:
+          updated[0],
       })
     }
 

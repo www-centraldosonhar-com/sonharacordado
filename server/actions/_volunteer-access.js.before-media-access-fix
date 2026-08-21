@@ -9,21 +9,18 @@ const sql = neon(process.env.DATABASE_URL)
 // =========================================================
 //
 // Voluntário:
-//   projeto próprio + equipes às quais pertence.
+//   equipe principal + Mídias.
 //
 // Admin de Equipe:
-//   mantém acesso normal de voluntário e administra
-//   somente as equipes sob sua responsabilidade.
+//   equipe administrada + Mídias.
 //
 // Admin de Projeto:
-//   administra as equipes do próprio projeto.
+//   todas as equipes do próprio projeto.
 //
 // Admin Geral:
-//   acesso administrativo global.
+//   todas as equipes de todos os projetos.
 //
-// Mídias NÃO é uma equipe universal.
-// Somente atividades explicitamente marcadas com
-// community_visible aparecem na Comunidade.
+// Mídias continua sendo uma área acessível a todos.
 // =========================================================
 
 export async function requireVolunteer(request) {
@@ -118,9 +115,7 @@ export async function requireVolunteer(request) {
     userTeams.find(
       (team) =>
         team.code !== 'media'
-    ) ||
-    userTeams[0] ||
-    null
+    ) || null
 
   const adminScope =
     user.admin_scope || null
@@ -176,9 +171,6 @@ export async function requireVolunteer(request) {
     primaryTeam,
 
     mediaSupport:
-      userTeams.some(
-        (team) =>
-          String(team.code).toLowerCase() === 'media'
-      ),
+      true,
   }
 }

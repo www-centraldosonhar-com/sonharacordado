@@ -1,21 +1,21 @@
 function VolunteerAreaSelector({
-  access,
   selectedArea,
   onSelect,
+  primaryTeam,
+  access,
+  project,
 }) {
-  if (!access) {
-    return null
-  }
+  const projectCode =
+    String(project || '')
+      .trim()
+      .toUpperCase()
 
-  const primaryTeam =
-    access.primaryTeam ||
-    access.availableTeams?.find(
-      (team) =>
-        team.code !== 'media'
-    ) ||
-    null
+  const roomLabel =
+    projectCode
+      ? `Sala ${projectCode}`
+      : 'Minha Sala'
 
-  return (
+return (
     <section className="volunteer-area-shell">
       <div className="volunteer-area-heading">
         <div>
@@ -56,7 +56,7 @@ function VolunteerAreaSelector({
           </span>
         </button>
 
-        {primaryTeam && (
+        {projectCode && (
           <button
             type="button"
             className={
@@ -74,13 +74,13 @@ function VolunteerAreaSelector({
 
             <span>
               <strong>
-                Minha Equipe
+                {roomLabel}
               </strong>
 
               <small>
-                {access.project?.name}
-                {' • '}
-                {primaryTeam.name}
+                {primaryTeam?.name
+                  ? `${access?.project?.name || projectCode} • ${primaryTeam.name}`
+                  : access?.project?.name || projectCode}
               </small>
             </span>
           </button>

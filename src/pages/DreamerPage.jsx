@@ -17,7 +17,7 @@ function DreamerPage({
       </p>
 
       <h1>
-        Oi, {user.name}! ✨
+        Oi, {String(user.name || '').trim().split(/\s+/)[0]}! ✨
       </h1>
 
       <p>

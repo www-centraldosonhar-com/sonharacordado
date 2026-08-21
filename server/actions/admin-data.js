@@ -86,6 +86,8 @@ export default async function handler(request, response) {
       SELECT
         u.id,
         u.name,
+        u.username,
+        u.full_name,
         u.email,
         u.user_type,
         u.active,
@@ -93,6 +95,8 @@ export default async function handler(request, response) {
         u.project_id,
         u.profile_review_required,
         u.profile_review_message,
+        u.birth_date,
+        u.allergies,
         p.name AS project,
 
         COALESCE(
@@ -203,6 +207,8 @@ export default async function handler(request, response) {
       GROUP BY
         u.id,
         u.name,
+        u.username,
+        u.full_name,
         u.email,
         u.user_type,
         u.active,
@@ -210,6 +216,8 @@ export default async function handler(request, response) {
         u.project_id,
         u.profile_review_required,
         u.profile_review_message,
+        u.birth_date,
+        u.allergies,
         p.name
 
       ORDER BY
@@ -911,6 +919,28 @@ export default async function handler(request, response) {
         u.name
     `
 
+    const monthlyCommunityRows = await sql`
+      SELECT
+        id,
+        year,
+        month,
+        word,
+        message,
+        updated_by,
+        updated_at
+      FROM community_monthly_settings
+      WHERE year = EXTRACT(
+        YEAR FROM CURRENT_DATE
+      )
+        AND month = EXTRACT(
+          MONTH FROM CURRENT_DATE
+        )
+      LIMIT 1
+    `
+
+    const monthlyCommunity =
+      monthlyCommunityRows[0] || null
+
     return response.status(200).json({
       projects,
       teams,
@@ -949,6 +979,7 @@ export default async function handler(request, response) {
       taskParticipants,
       announcements,
       confirmations,
+      monthlyCommunity,
     })
   } catch (error) {
     console.error(

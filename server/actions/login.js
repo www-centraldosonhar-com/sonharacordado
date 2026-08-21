@@ -3,6 +3,7 @@ import process from 'node:process'
 import { Buffer } from 'node:buffer'
 import { neon } from '@neondatabase/serverless'
 import { SignJWT } from 'jose'
+import { isValidPin, normalizePin } from './_pin.js'
 
 const sql = neon(process.env.DATABASE_URL)
 
@@ -117,11 +118,29 @@ export default async function handler(request, response) {
   }
 
   try {
-    const { name, project, password } = request.body ?? {}
+    const {
+      username: rawUsername,
+      name,
+      password,
+    } = request.body ?? {}
 
-    if (!name || !project || !password) {
+    const username =
+      String(
+        rawUsername ||
+        name ||
+        ''
+      )
+        .trim()
+        .replace(/^@+/, '')
+        .toLowerCase()
+
+    const pin =
+      normalizePin(password)
+
+    if (!username) {
       return response.status(400).json({
-        error: 'Preencha usuário, projeto e senha.',
+        error:
+          'Preencha seu usuário.',
       })
     }
 
@@ -129,6 +148,8 @@ export default async function handler(request, response) {
       SELECT
         u.id,
         u.name,
+        u.full_name,
+        u.username,
         u.password_hash,
         u.user_type,
         u.active,
@@ -136,8 +157,9 @@ export default async function handler(request, response) {
       FROM users u
       JOIN projects p
         ON p.id = u.project_id
-      WHERE LOWER(u.name) = LOWER(${name})
-        AND LOWER(p.name) = LOWER(${project})
+      WHERE
+        LOWER(u.username) =
+          LOWER(${username})
       LIMIT 1
     `
 
@@ -145,18 +167,59 @@ export default async function handler(request, response) {
 
     if (!user || !user.active) {
       return response.status(401).json({
-        error: 'Usuário, projeto ou senha inválidos.',
+        error: 'Usuário ou PIN inválidos.',
+      })
+    }
+
+    if (!user.password_hash) {
+      return response.status(200).json({
+        success: false,
+        requiresPinSetup: true,
+        user: {
+          id:
+            user.id,
+
+          name:
+            user.full_name ||
+            user.name,
+
+          full_name:
+            user.full_name ||
+            user.name,
+
+          username:
+            user.username,
+
+          project:
+            user.project,
+        },
+      })
+    }
+
+    /*
+     * A partir daqui a conta já possui acesso.
+     * Portanto, o PIN passa a ser obrigatório.
+     */
+    if (!pin) {
+      return response.status(400).json({
+        error: 'Informe seu PIN de acesso.',
+      })
+    }
+
+    if (!isValidPin(pin)) {
+      return response.status(400).json({
+        error: 'O PIN deve ter exatamente 4 números.',
       })
     }
 
     const passwordIsValid = await verifyWerkzeugPassword(
       user.password_hash,
-      password
+      pin
     )
 
     if (!passwordIsValid) {
       return response.status(401).json({
-        error: 'Usuário, projeto ou senha inválidos.',
+        error: 'Usuário ou PIN inválidos.',
       })
     }
 

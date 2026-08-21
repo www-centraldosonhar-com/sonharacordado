@@ -9,10 +9,13 @@ import AdminPage from './pages/AdminPage'
 import FinancePage from './pages/FinancePage'
 import DreamerPage from './pages/DreamerPage'
 import SpaceSelectorPage from './pages/SpaceSelectorPage'
+import LoginWelcome from './components/LoginWelcome'
 
 function App() {
   const [user, setUser] =
     useState(null)
+
+  const [showLoginWelcome, setShowLoginWelcome] = useState(false)
 
   const [
     currentPage,
@@ -83,6 +86,14 @@ function App() {
   ) {
     setUser(loggedUser)
     setCurrentPage('select')
+    setShowLoginWelcome(true)
+
+    window.setTimeout(
+      () => {
+        setShowLoginWelcome(false)
+      },
+      1550
+    )
   }
 
   function hasPermission(
@@ -116,6 +127,17 @@ function App() {
     return (
       <LoginPage
         onLogin={handleLogin}
+      />
+    )
+  }
+
+  if (
+    showLoginWelcome &&
+    user
+  ) {
+    return (
+      <LoginWelcome
+        user={user}
       />
     )
   }
@@ -182,7 +204,7 @@ function App() {
       <FinancePage
         user={user}
         onBack={() =>
-          setCurrentPage('spaces')
+          setCurrentPage('select')
         }
         onLogout={handleLogout}
       />

@@ -42,7 +42,7 @@ function AppHeader({
             </p>
 
             <h1>
-              Oi, {user.name}! 👋
+              Oi, {String(user.name || '').trim().split(/\s+/)[0]}! 👋
             </h1>
 
             <span className="project-badge">

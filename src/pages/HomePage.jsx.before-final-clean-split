@@ -1,0 +1,1323 @@
+import { useCallback, useEffect, useState } from 'react'
+
+import AppHeader from '../components/AppHeader'
+import EventCard from '../components/EventCard'
+import ActivityCard from '../components/ActivityCard'
+import CommitmentCard from '../components/CommitmentCard'
+import MissionCard from '../components/MissionCard'
+import AnnouncementCard from '../components/AnnouncementCard'
+import PastEventCard from '../components/PastEventCard'
+import PhotoDeliveryPanel from '../components/PhotoDeliveryPanel'
+import EventRegistrationPanel from '../components/EventRegistrationPanel'
+import VolunteerChecklistPanel from '../components/VolunteerChecklistPanel'
+import VolunteerAreaSelector from '../components/VolunteerAreaSelector'
+
+import '../styles/home.css'
+import CommunityHome from '../components/home/CommunityHome'
+import MyTeamHome from '../components/home/MyTeamHome'
+
+function HomePage({
+  user,
+  onLogout,
+  onOpenAdmin,
+}) {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+
+  const [
+    selectedArea,
+    setSelectedArea,
+  ] = useState('general')
+
+  const loadHome = useCallback(async () => {
+    try {
+      const response = await fetch(
+        '/api/volunteer?action=home'
+      )
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível carregar a Central.'
+        )
+      }
+
+      setData(result)
+    } catch (loadError) {
+      setError(loadError.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    fetch('/api/volunteer?action=home')
+      .then(async (response) => {
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(
+            result.error ||
+            'Não foi possível carregar a Central.'
+          )
+        }
+
+        if (active) {
+          setData(result)
+        }
+      })
+      .catch((loadError) => {
+        if (active) {
+          setError(loadError.message)
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoading(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (isLoading) {
+    return (
+      <main className="screen-center">
+        <div className="loading-card">
+          <p>
+            Abrindo a Central... ✨
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="screen-center">
+        <div className="error-card">
+          <h1>Central do Sonhar</h1>
+
+          <p>{error}</p>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={loadHome}
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  const currentUser =
+    data?.currentUser || user
+
+  const projectCode =
+    String(currentUser?.project || '').toUpperCase()
+
+  const projectWelcome = {
+    PPF: {
+      title: 'Seja bem-vindo à Central!',
+      subtitle: 'Somos Preparando Para o Futuro.',
+    },
+    APS: {
+      title: 'Seja bem-vindo à Central!',
+      subtitle: 'Somos Amigos Para Sempre.',
+    },
+    SJ: {
+      title: 'Seja bem-vindo à Central!',
+      subtitle: 'Somos Sonhando Juntos.',
+    },
+  }
+
+  const welcomeMessage =
+    projectWelcome[projectCode] || {
+      title: 'Seja bem-vindo à Central!',
+      subtitle: 'Somos Sonhar Acordado.',
+    }
+
+  const volunteerAccess =
+    data?.volunteerAccess
+
+  // =====================================================
+  // HOME VIEWS
+  // =====================================================
+  //
+  // general:
+  // - página principal da Central;
+  // - todos os próximos eventos;
+  // - atividades de Mídias;
+  // - conteúdo geral da ONG;
+  //
+  // team:
+  // - apenas o projeto do voluntário;
+  // - apenas sua equipe principal;
+  // - inscrição do evento;
+  // - checklists, combinados e tarefas pessoais.
+  // =====================================================
+
+  const activeView =
+    selectedArea === 'team'
+      ? 'team'
+      : 'general'
+
+  const isGeneralView =
+    activeView === 'general'
+
+  const isTeamView =
+    activeView === 'team'
+
+  const currentProjectId =
+    Number(
+      volunteerAccess?.project?.id
+    )
+
+  const primaryTeam =
+    volunteerAccess?.primaryTeam ||
+    volunteerAccess
+      ?.availableTeams
+      ?.find(
+        (team) =>
+          team.code !== 'media'
+      ) ||
+    null
+
+  const primaryTeamCode =
+    primaryTeam?.code || null
+
+  // =====================================================
+  // GENERAL CONTENT
+  // =====================================================
+  // Conteúdo geral inclui:
+  // - Mídias;
+  // - conteúdo realmente global.
+  // =====================================================
+
+  function matchesGeneralContent(item) {
+    const teamCode =
+      item?.team_code || null
+
+    const projectId =
+      item?.project_id === null ||
+      item?.project_id === undefined
+        ? null
+        : Number(item.project_id)
+
+    if (teamCode === 'media') {
+      return true
+    }
+
+    return (
+      teamCode === null &&
+      projectId === null
+    )
+  }
+
+  // =====================================================
+  // TEAM CONTENT
+  // =====================================================
+  // Conteúdo da equipe precisa:
+  // - pertencer ao projeto do voluntário;
+  // - pertencer à equipe principal dele.
+  //
+  // Conteúdo de projeto sem equipe também pode aparecer.
+  // =====================================================
+
+  function matchesTeamContent(item) {
+    const teamCode =
+      item?.team_code || null
+
+    const projectId =
+      item?.project_id === null ||
+      item?.project_id === undefined
+        ? null
+        : Number(item.project_id)
+
+    if (
+      projectId !== currentProjectId
+    ) {
+      return false
+    }
+
+    if (!teamCode) {
+      return true
+    }
+
+    return (
+      primaryTeamCode &&
+      teamCode === primaryTeamCode
+    )
+  }
+
+  // =====================================================
+  // EVENTS
+  // =====================================================
+
+  const visibleEvents =
+    isGeneralView
+      ? data.nextEvents.map(
+          (event) => ({
+            ...event,
+
+            // Na página geral mostramos somente
+            // atividades de Mídias.
+            activities:
+              event.activities.filter(
+                (activity) =>
+                  activity.team_code ===
+                  'media'
+              ),
+          })
+        )
+      : data.nextEvents
+          .filter(
+            (event) =>
+              Number(
+                event.project_id
+              ) === currentProjectId
+          )
+          .map(
+            (event) => ({
+              ...event,
+
+              // Na página da equipe mostramos somente
+              // atividades da equipe principal.
+              activities:
+                event.activities.filter(
+                  (activity) =>
+                    activity.team_code ===
+                    primaryTeamCode
+                ),
+            })
+          )
+
+  // =====================================================
+  // MISSIONS / ANNOUNCEMENTS
+  // =====================================================
+
+  const visibleTasks =
+    data.tasks.filter(
+      isGeneralView
+        ? matchesGeneralContent
+        : matchesTeamContent
+    )
+
+  const visibleAnnouncements =
+    data.announcements.filter(
+      isGeneralView
+        ? matchesGeneralContent
+        : matchesTeamContent
+    )
+
+  const sameDay =
+    visibleEvents.length === 2 &&
+    String(
+      visibleEvents[0].event_date
+    ).slice(0, 10) ===
+      String(
+        visibleEvents[1].event_date
+      ).slice(0, 10)
+
+  const communityNow = new Date()
+
+  const currentMonthLabel =
+    new Intl.DateTimeFormat(
+      'pt-BR',
+      {
+        month: 'long',
+        year: 'numeric',
+      }
+    )
+      .format(communityNow)
+      .replace(
+        /^./,
+        (letter) => letter.toUpperCase()
+      )
+
+  const getLocalDate = (value) => {
+    if (!value) return null
+
+    // Evita alteração de dia causada por UTC em datas YYYY-MM-DD.
+    if (
+      typeof value === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ) {
+      const [year, month, day] =
+        value.split('-').map(Number)
+
+      return new Date(
+        year,
+        month - 1,
+        day
+      )
+    }
+
+    const parsed = new Date(value)
+
+    return Number.isNaN(parsed.getTime())
+      ? null
+      : parsed
+  }
+
+  const universalEvents =
+    data?.upcomingEvents ||
+    data?.events ||
+    []
+
+  const currentMonthEvents =
+    universalEvents.filter((event) => {
+      const date = getLocalDate(
+        event?.date ||
+        event?.event_date ||
+        event?.starts_at
+      )
+
+      if (!date) return false
+
+      return (
+        date.getMonth() ===
+          communityNow.getMonth() &&
+        date.getFullYear() ===
+          communityNow.getFullYear()
+      )
+    })
+
+  const universalMediaActivities =
+    (
+      data?.mediaActivities ||
+      data?.activities ||
+      []
+    ).filter((activity) => {
+      const team = String(
+        activity?.team ||
+        activity?.team_name ||
+        activity?.department ||
+        ''
+      ).toLowerCase()
+
+      return (
+        activity?.is_universal === true ||
+        activity?.universal === true ||
+        team.includes('midia') ||
+        team.includes('mídia') ||
+        team.includes('media')
+      )
+    })
+
+  const monthlyBirthdays =
+    data?.monthlyBirthdays ||
+    data?.birthdays ||
+    []
+
+  const isBirthdayToday = (person) => {
+    const date = getLocalDate(
+      person?.birth_date ||
+      person?.birthDate ||
+      person?.birthday
+    )
+
+    if (!date) return false
+
+    return (
+      date.getDate() ===
+        communityNow.getDate() &&
+      date.getMonth() ===
+        communityNow.getMonth()
+    )
+  }
+
+  return (
+    <>
+      <AppHeader
+        user={currentUser}
+        onLogout={onLogout}
+        onOpenAdmin={onOpenAdmin}
+      />
+
+      <div className="home-layout">
+        <aside className="home-sidebar">
+          <div className="home-sidebar-card">
+            <nav className="sidebar-nav">
+              <a href="#inicio">🏠 Início</a>
+
+              <a href="#eventos">
+                📅 Encontros
+              </a>
+
+              {isTeamView && (
+            <MyTeamHome
+              project={currentUser?.project}
+            >
+                <>
+                  <a href="#combinados">
+                    🤝 Combinados
+                  </a>
+
+                  <a href="#minhas-missoes">
+                    🚀 Minhas missões
+                  </a>
+                </>
+              
+            </MyTeamHome>
+          )}
+
+              <a href="#missoes">
+                💡 Missões
+              </a>
+
+              <a href="#mural">
+                📢 Mural
+              </a>
+
+              {isGeneralView && (
+                <a href="#memorias">
+                  📸 Memórias
+                </a>
+              )}
+            </nav>
+          </div>
+        </aside>
+
+        <main
+          className={`app-shell home-main project-theme-${String(
+            currentUser?.project || ''
+          ).toLowerCase()}`}
+          id="inicio"
+        >
+          <VolunteerAreaSelector
+            access={volunteerAccess}
+            selectedArea={activeView}
+            onSelect={setSelectedArea}
+          />
+
+          {isTeamView && (
+            <VolunteerChecklistPanel
+              onUpdated={loadHome}
+            />
+          )}
+
+          <section className="editorial-hero">
+            <div className="editorial-hero-content">
+              <div className="editorial-intro">
+                <div className="editorial-label">
+                  <span className="editorial-label-line" />
+                  <span>Central do Sonhar</span>
+                </div>
+
+                <h1>
+                  {welcomeMessage.title}
+                </h1>
+
+                <p className="editorial-manifesto">
+                  {welcomeMessage.subtitle}
+                </p>
+              </div>
+
+              <div
+                className="editorial-art"
+                aria-hidden="true"
+              >
+                <div className="editorial-orbit orbit-a" />
+                <div className="editorial-orbit orbit-b" />
+
+                <div className="editorial-symbol symbol-red">
+                  ♥
+                </div>
+
+                <div className="editorial-symbol symbol-orange">
+                  ♥
+                </div>
+
+                <div className="editorial-symbol symbol-blue">
+                  ♥
+                </div>
+
+                <div className="editorial-center">
+                  <span className="editorial-center-dot" />
+                </div>
+              </div>
+
+              <div className="editorial-foot">
+                <div className="editorial-live">
+                  <span />
+                  Central ativa
+                </div>
+
+                <p>
+                  encontros · missões · memórias
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {isGeneralView && (
+            <CommunityHome>
+<section className="universal-community">
+            <header className="universal-community-hero">
+              <div className="universal-community-copy">
+                <div className="universal-community-kicker">
+                  <span />
+                  Comunidade Sonhar Acordado
+                </div>
+
+                <h2>
+                  Central do
+                  <em> Voluntário Sonhador.</em>
+                </h2>
+
+                <p>
+                  Uma comunidade feita por todos os projetos.
+                  APS, PPF e SJ se encontram por aqui.
+                </p>
+
+                <nav
+                  className="universal-community-nav"
+                  aria-label="Áreas da comunidade"
+                >
+                  <a href="#community-events">
+                    Eventos
+                  </a>
+
+                  <a href="#community-photos">
+                    Fotos
+                  </a>
+
+                  <a href="#community-birthdays">
+                    Aniversariantes
+                  </a>
+                </nav>
+              </div>
+
+              <div
+                className="universal-community-art"
+                aria-hidden="true"
+              >
+                <span className="community-heart community-heart-red">
+                  ♥
+                </span>
+
+                <span className="community-heart community-heart-orange">
+                  ♥
+                </span>
+
+                <span className="community-heart community-heart-blue">
+                  ♥
+                </span>
+
+                <div className="community-orbit community-orbit-a" />
+                <div className="community-orbit community-orbit-b" />
+
+                <div className="community-core">
+                  SONHAR
+                </div>
+              </div>
+            </header>
+
+            <div className="community-bento">
+
+              {/* CRONOGRAMA DO MÊS */}
+              <article
+                id="community-events"
+                className="community-panel community-calendar"
+              >
+                <div className="community-panel-head">
+                  <div>
+                    <span className="community-eyebrow">
+                      Cronograma
+                    </span>
+
+                    <h3>
+                      {currentMonthLabel}
+                    </h3>
+                  </div>
+
+                  <span className="community-count">
+                    {currentMonthEvents.length}
+                    {' '}
+                    {currentMonthEvents.length === 1
+                      ? 'evento'
+                      : 'eventos'}
+                  </span>
+                </div>
+
+                <div className="community-timeline">
+                  {currentMonthEvents.length > 0 ? (
+                    currentMonthEvents.map(
+                      (event, index) => {
+                        const date =
+                          getLocalDate(
+                            event?.date ||
+                            event?.event_date ||
+                            event?.starts_at
+                          )
+
+                        return (
+                          <div
+                            className="community-event-row"
+                            key={
+                              event?.id ||
+                              `${event?.name}-${index}`
+                            }
+                          >
+                            <div className="community-event-date">
+                              <strong>
+                                {date
+                                  ? String(
+                                      date.getDate()
+                                    ).padStart(
+                                      2,
+                                      '0'
+                                    )
+                                  : '--'}
+                              </strong>
+
+                              <span>
+                                {date
+                                  ? date
+                                      .toLocaleDateString(
+                                        'pt-BR',
+                                        {
+                                          weekday:
+                                            'short',
+                                        }
+                                      )
+                                      .replace(
+                                        '.',
+                                        ''
+                                      )
+                                  : ''}
+                              </span>
+                            </div>
+
+                            <div className="community-event-info">
+                              <strong>
+                                {event?.name ||
+                                  event?.title ||
+                                  'Evento Sonhar'}
+                              </strong>
+
+                              <span>
+                                {event?.project ||
+                                  event?.location ||
+                                  'Todos os projetos'}
+                              </span>
+                            </div>
+
+                            <span className="community-event-dot" />
+                          </div>
+                        )
+                      }
+                    )
+                  ) : (
+                    <div className="community-empty">
+                      Nenhum evento cadastrado
+                      neste mês ainda.
+                    </div>
+                  )}
+                </div>
+              </article>
+
+              {/* PALAVRA DO MÊS */}
+              <article className="community-panel community-word">
+                <span className="community-eyebrow">
+                  Palavra do mês
+                </span>
+
+                <div className="community-word-art">
+                  <span>Bondade</span>
+                </div>
+
+                <p>
+                  Pequenos gestos também transformam
+                  grandes histórias.
+                </p>
+
+                <div className="community-word-signature">
+                  Agosto · Sonhar Acordado
+                </div>
+              </article>
+
+              {/* ATIVIDADES UNIVERSAIS DE MÍDIAS */}
+              <article className="community-panel community-media">
+                <div className="community-panel-head">
+                  <div>
+                    <span className="community-eyebrow">
+                      Equipe de Mídias
+                    </span>
+
+                    <h3>
+                      Ajude de qualquer projeto.
+                    </h3>
+                  </div>
+
+                  <span className="community-open-badge">
+                    Aberto
+                  </span>
+                </div>
+
+                <p className="community-media-intro">
+                  Aqui você pode colaborar com Mídias
+                  mesmo sem estar inscrito no evento.
+                </p>
+
+                <div className="community-media-list">
+                  {universalMediaActivities.length > 0 ? (
+                    universalMediaActivities
+                      .slice(0, 4)
+                      .map(
+                        (activity, index) => (
+                          <div
+                            className="community-media-task"
+                            key={
+                              activity?.id ||
+                              `${activity?.title}-${index}`
+                            }
+                          >
+                            <div className="community-media-number">
+                              {String(
+                                index + 1
+                              ).padStart(
+                                2,
+                                '0'
+                              )}
+                            </div>
+
+                            <div>
+                              <strong>
+                                {activity?.title ||
+                                  activity?.name ||
+                                  'Atividade de Mídias'}
+                              </strong>
+
+                              <span>
+                                {activity?.description ||
+                                  activity?.role ||
+                                  'Colaboração aberta'}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      )
+                  ) : (
+                    <div className="community-empty">
+                      Novas atividades abertas
+                      de Mídias aparecerão aqui.
+                    </div>
+                  )}
+                </div>
+              </article>
+
+              {/* FOTOS */}
+              <article
+                id="community-photos"
+                className="community-panel community-photos"
+              >
+                <span className="community-eyebrow">
+                  Memórias
+                </span>
+
+                <h3>
+                  Fotos que contam o Sonhar.
+                </h3>
+
+                <p>
+                  Registros dos encontros de todos
+                  os projetos reunidos em um só lugar.
+                </p>
+
+                <div className="community-photo-collage">
+                  <div />
+                  <div />
+                  <div />
+                </div>
+
+                <button
+                  className="community-ghost-button"
+                  type="button"
+                >
+                  Ver fotos
+                  <span>↗</span>
+                </button>
+              </article>
+
+              {/* ANIVERSARIANTES */}
+              <article
+                id="community-birthdays"
+                className="community-panel community-birthdays"
+              >
+                <div className="community-panel-head">
+                  <div>
+                    <span className="community-eyebrow">
+                      Aniversariantes
+                    </span>
+
+                    <h3>
+                      Quem faz o Sonhar acontecer.
+                    </h3>
+                  </div>
+
+                  <span className="community-month-mini">
+                    {currentMonthLabel.split(' ')[0]}
+                  </span>
+                </div>
+
+                <div className="community-birthday-grid">
+                  {monthlyBirthdays.length > 0 ? (
+                    monthlyBirthdays.map(
+                      (person, index) => {
+                        const today =
+                          isBirthdayToday(person)
+
+                        return (
+                          <div
+                            className={
+                              today
+                                ? 'community-birthday-person is-today'
+                                : 'community-birthday-person'
+                            }
+                            key={
+                              person?.id ||
+                              `${person?.name}-${index}`
+                            }
+                          >
+                            <div className="community-birthday-avatar">
+                              {person?.avatar_url ||
+                              person?.avatarUrl ? (
+                                <img
+                                  src={
+                                    person?.avatar_url ||
+                                    person?.avatarUrl
+                                  }
+                                  alt=""
+                                />
+                              ) : (
+                                <span>
+                                  {String(
+                                    person?.name ||
+                                    '?'
+                                  )
+                                    .trim()
+                                    .charAt(0)
+                                    .toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+
+                            <div>
+                              <strong>
+                                {person?.name ||
+                                  'Voluntário Sonhador'}
+                              </strong>
+
+                              <span>
+                                {today
+                                  ? '🎂 É hoje!'
+                                  : person?.project ||
+                                    'Sonhar Acordado'}
+                              </span>
+                            </div>
+
+                            {today && (
+                              <div className="birthday-celebration">
+                                ✦
+                              </div>
+                            )}
+                          </div>
+                        )
+                      }
+                    )
+                  ) : (
+                    <div className="community-empty">
+                      Os aniversariantes do mês
+                      aparecerão aqui.
+                    </div>
+                  )}
+                </div>
+              </article>
+
+            </div>
+          </section>
+            </CommunityHome>
+          )}
+
+
+          <section
+            className="section-block"
+            id="eventos"
+          >
+            <div className="section-heading">
+              <p className="eyebrow">
+                PRÓXIMOS ENCONTROS
+              </p>
+
+              <h2>
+                Tem coisa boa chegando ✨
+              </h2>
+            </div>
+
+            {sameDay && (
+              <div className="same-day-banner">
+                ✨ Dois encontros acontecendo no mesmo dia!
+              </div>
+            )}
+
+            {visibleEvents.length > 0 ? (
+              <div className="upcoming-events-grid">
+                {visibleEvents.map((event) => (
+                  <div
+                    className="upcoming-event-group"
+                    key={event.id}
+                  >
+                    <EventCard event={event} />
+
+                    {isTeamView && (
+                      <EventRegistrationPanel
+                        event={event}
+                        currentUser={currentUser}
+                        onUpdated={loadHome}
+                      />
+                    )}
+
+                    <div className="event-activities-block">
+                      <div className="event-activities-heading">
+                        <span>🙋</span>
+
+                        <strong>
+                          Atividades deste encontro
+                        </strong>
+                      </div>
+
+                      {event.activities.length > 0 ? (
+                        <div className="cards-grid">
+                          {event.activities.map(
+                            (activity) => (
+                              <ActivityCard
+                                key={activity.id}
+                                activity={activity}
+                                onUpdated={loadHome}
+                              />
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <div className="empty-state">
+                          <p>
+                            Nenhuma atividade aberta
+                            para este encontro.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>
+                  Nenhum encontro programado agora.
+                </p>
+              </div>
+            )}
+          </section>
+
+          {isGeneralView &&
+            data.myConfirmations
+              .filter((confirmation) => {
+                // Entregas ficam na área geral / Mídias.
+                const requiresDelivery =
+                  Number(
+                    confirmation.requires_delivery
+                  ) === 1
+
+                const eventDate =
+                  String(
+                    confirmation.event_date
+                  ).slice(0, 10)
+
+                const eventAlreadyHappened =
+                  eventDate &&
+                  new Date(
+                    `${eventDate}T23:59:59`
+                  ) < new Date()
+
+              
+  // =======================================================
+  // UNIVERSAL COMMUNITY DATA
+  // =======================================================
+
+
+  return (
+                  requiresDelivery &&
+                  eventAlreadyHappened
+                )
+              })
+              .map((confirmation) => (
+                <PhotoDeliveryPanel
+                  key={
+                    `photos-${confirmation.id}`
+                  }
+                  event={{
+                    id:
+                      confirmation.event_id,
+
+                    name:
+                      confirmation.event_name,
+                  }}
+                  photographerName={
+                    data.currentUser.name
+                  }
+                  confirmationId={
+                    confirmation.id
+                  }
+                  photoSubmittedAt={
+                    confirmation.photo_submitted_at
+                  }
+                />
+              ))}
+
+          {isTeamView && (
+          <section
+            className="section-block"
+            id="combinados"
+          >
+            <div className="section-heading">
+              <p className="eyebrow eyebrow-red">
+                MEUS COMBINADOS
+              </p>
+
+              <h2>
+                Onde você já disse “conta comigo” 🤝
+              </h2>
+            </div>
+
+            {data.myConfirmations.length > 0 ? (
+              <div className="cards-grid">
+                {data.myConfirmations.map(
+                  (confirmation) => (
+                    <CommitmentCard
+                      key={confirmation.id}
+                      confirmation={confirmation}
+                      onUpdated={loadHome}
+                    />
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>
+                  Você ainda não confirmou nenhuma atividade.
+                </p>
+              </div>
+            )}
+          </section>
+          )}
+
+          {isTeamView && (
+          <section
+            className="section-block"
+            id="minhas-missoes"
+          >
+            <div className="section-heading">
+              <p className="eyebrow eyebrow-blue">
+                MINHAS MISSÕES
+              </p>
+
+              <h2>
+                Tudo que você topou ajudar a tirar do papel 🚀
+              </h2>
+            </div>
+
+            {data.myTasks.length > 0 ? (
+              <div className="cards-stack">
+                {data.myTasks.map((mission) => (
+                  <MissionCard
+                    key={mission.participation_id}
+                    mission={mission}
+                    mine
+                    onUpdated={loadHome}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>
+                  Você ainda não pegou nenhuma missão.
+                </p>
+              </div>
+            )}
+          </section>
+          )}
+
+          <section
+            className="section-block"
+            id="missoes"
+          >
+            <div className="section-heading">
+              <p className="eyebrow eyebrow-blue">
+                MISSÕES DISPONÍVEIS
+              </p>
+
+              <h2>
+                Tem algo aqui que combina com você? ✨
+              </h2>
+            </div>
+
+            {visibleTasks.length > 0 ? (
+              <div className="cards-grid">
+                {visibleTasks.map((mission) => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    onUpdated={loadHome}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>
+                  Nenhuma missão disponível agora.
+                </p>
+              </div>
+            )}
+          </section>
+
+          <section
+            className="section-block"
+            id="mural"
+          >
+            <div className="section-heading">
+              <p className="eyebrow eyebrow-orange">
+                MURAL DO SONHAR
+              </p>
+
+              <h2>
+                Recados importantes para ninguém ficar de fora 📢
+              </h2>
+            </div>
+
+            {visibleAnnouncements.length > 0 ? (
+              <div className="cards-stack">
+                {visibleAnnouncements.map(
+                  (announcement) => (
+                    <AnnouncementCard
+                      key={announcement.id}
+                      announcement={announcement}
+                    />
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>
+                  O mural está tranquilo por enquanto.
+                </p>
+              </div>
+            )}
+          </section>
+
+          {isGeneralView && (
+          <section
+            className="section-block"
+            id="memorias"
+          >
+            <div className="section-heading">
+              <p className="eyebrow eyebrow-orange">
+                MEMÓRIAS
+              </p>
+
+              <h2>
+                Reviva um pouquinho do que aconteceu por aqui 📸
+              </h2>
+            </div>
+
+            {data.pastEvents.length > 0 ? (
+              <div className="memories-grid">
+                {data.pastEvents.map((event) => (
+                  <PastEventCard
+                    key={event.id}
+                    event={event}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <span className="empty-icon">
+                  📷
+                </span>
+
+                <p>
+                  Assim que as fotos forem disponibilizadas,
+                  elas aparecem aqui.
+                </p>
+              </div>
+            )}
+          </section>
+          )}
+
+        </main>
+      </div>
+
+      <nav className="mobile-bottom-nav">
+        <a href="#inicio">
+          <span>🏠</span>
+          <small>Início</small>
+        </a>
+
+        <a href="#eventos">
+          <span>📅</span>
+          <small>Eventos</small>
+        </a>
+
+        {isGeneralView && (
+          <>
+            <a href="#missoes">
+              <span>🚀</span>
+              <small>Missões</small>
+            </a>
+
+            <a href="#mural">
+              <span>📢</span>
+              <small>Mural</small>
+            </a>
+
+            <a href="#memorias">
+              <span>📸</span>
+              <small>Memórias</small>
+            </a>
+          </>
+        )}
+
+        {isTeamView && (
+          <>
+            <a href="#combinados">
+              <span>🤝</span>
+              <small>Combinados</small>
+            </a>
+
+            <a href="#minhas-missoes">
+              <span>🚀</span>
+              <small>Minhas</small>
+            </a>
+
+            <a href="#mural">
+              <span>📢</span>
+              <small>Mural</small>
+            </a>
+          </>
+        )}
+      </nav>
+    </>
+  )
+}
+
+export default HomePage

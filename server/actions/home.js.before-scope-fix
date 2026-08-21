@@ -28,41 +28,6 @@ export default async function handler(request, response) {
     const currentProjectId =
       Number(currentUser.project_id)
 
-
-    const userTeamIds = new Set(
-      (currentUser.teams || [])
-        .map((team) =>
-          Number(
-            typeof team === 'object'
-              ? team.id
-              : team
-          )
-        )
-        .filter(Number.isFinite)
-    )
-
-    const canSeeScopedContent = (item) => {
-      const projectId =
-        item?.project_id == null
-          ? null
-          : Number(item.project_id)
-
-      const teamId =
-        item?.team_id == null
-          ? null
-          : Number(item.team_id)
-
-      const projectAllowed =
-        projectId === null ||
-        projectId === currentProjectId
-
-      const teamAllowed =
-        teamId === null ||
-        userTeamIds.has(teamId)
-
-      return projectAllowed && teamAllowed
-    }
-
     // =====================================================
     // ALL CONFIRMED VOLUNTEERS
     // =====================================================
@@ -100,7 +65,6 @@ export default async function handler(request, response) {
         confirmations.completed_at,
         event_roles.requires_delivery,
         event_roles.delivery_deadline,
-        event_roles.community_visible,
         events.id AS event_id,
         events.event_date,
         roles.name AS role,
@@ -243,34 +207,6 @@ export default async function handler(request, response) {
     // da confirmação da atividade.
     // =====================================================
 
-    const monthlyBirthdays = await sql`
-      SELECT
-        users.id,
-        users.name,
-        users.birth_date,
-        users.avatar_path,
-        projects.name AS project
-
-      FROM users
-
-      LEFT JOIN projects
-        ON users.project_id = projects.id
-
-      WHERE users.active = 1
-        AND users.birth_date IS NOT NULL
-        AND EXTRACT(
-          MONTH FROM users.birth_date
-        ) = EXTRACT(
-          MONTH FROM CURRENT_DATE
-        )
-
-      ORDER BY
-        EXTRACT(
-          DAY FROM users.birth_date
-        ) ASC,
-        users.name ASC
-    `
-
     const communityActivities = await sql`
       SELECT
         event_roles.id,
@@ -378,7 +314,7 @@ export default async function handler(request, response) {
     // =====================================================
     // AVAILABLE TASKS
     // =====================================================
-    const allTasks = await sql`
+    const tasks = await sql`
       SELECT
         tasks.id,
         tasks.title,
@@ -436,9 +372,6 @@ export default async function handler(request, response) {
     // =====================================================
     // CURRENT USER TASKS
     // =====================================================
-    const tasks =
-      allTasks.filter(canSeeScopedContent)
-
     const myTasks = await sql`
       SELECT
         task_users.id AS participation_id,
@@ -464,7 +397,7 @@ export default async function handler(request, response) {
     // =====================================================
     // ANNOUNCEMENTS
     // =====================================================
-    const allAnnouncements = await sql`
+    const announcements = await sql`
       SELECT
         announcements.id,
         announcements.title,
@@ -490,28 +423,6 @@ export default async function handler(request, response) {
         END,
         announcements.created_at DESC
     `
-
-    const announcements =
-      allAnnouncements.filter(canSeeScopedContent)
-
-    const monthlyCommunityRows = await sql`
-      SELECT
-        word,
-        message,
-        month,
-        year
-      FROM community_monthly_settings
-      WHERE year = EXTRACT(
-        YEAR FROM CURRENT_DATE
-      )
-        AND month = EXTRACT(
-          MONTH FROM CURRENT_DATE
-        )
-      LIMIT 1
-    `
-
-    const monthlyCommunity =
-      monthlyCommunityRows[0] || null
 
     const volunteerAccess = {
       project: {
@@ -544,8 +455,6 @@ export default async function handler(request, response) {
       myConfirmations,
       nextEvents,
       communityActivities,
-      monthlyBirthdays,
-      monthlyCommunity,
       pastEvents,
       tasks,
       myTasks,

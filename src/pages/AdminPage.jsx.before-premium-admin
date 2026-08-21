@@ -16,9 +16,7 @@ import AdminExpensesPanel from '../components/AdminExpensesPanel'
 import AdminPostEventPanel from '../components/AdminPostEventPanel'
 import AdminPostEventTeamReports from '../components/AdminPostEventTeamReports'
 import '../styles/admin.css'
-import '../styles/admin-premium.css'
 import AdminFinanceRequestsPanel from '../components/AdminFinanceRequestsPanel'
-import AdminPeopleImport from '../components/AdminPeopleImport.jsx'
 
 function AdminPage({
   user,
@@ -28,10 +26,6 @@ function AdminPage({
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [userSearch, setUserSearch] = useState('')
-  const [userProject, setUserProject] = useState('all')
-  const [userTeam, setUserTeam] = useState('all')
-  const [userStatus, setUserStatus] = useState('all')
 
   async function reloadAdmin() {
     const response = await fetch('/api/admin?action=data')
@@ -118,97 +112,6 @@ function AdminPage({
   // limpa e adequada à função de cada Admin.
   // =====================================================
 
-  const normalizedUserSearch =
-    userSearch
-      .trim()
-      .toLowerCase()
-
-  const availableUserTeams =
-    Array.from(
-      new Set(
-        (data?.users || [])
-          .filter((person) =>
-            userProject === 'all'
-              ? true
-              : person.project === userProject
-          )
-          .flatMap((person) =>
-            Array.isArray(person.team_names)
-              ? person.team_names
-              : person.team_names
-                ? [person.team_names]
-                : []
-          )
-          .filter(Boolean)
-      )
-    )
-      .sort((a, b) =>
-        String(a).localeCompare(
-          String(b),
-          'pt-BR'
-        )
-      )
-
-  const filteredUsers =
-    (data?.users || []).filter((person) => {
-      const searchableText = [
-        person.full_name,
-        person.name,
-        person.username,
-        person.email,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-
-      const matchesSearch =
-        !normalizedUserSearch ||
-        searchableText.includes(
-          normalizedUserSearch.replace(/^@/, '')
-        ) ||
-        searchableText.includes(
-          normalizedUserSearch
-        )
-
-      const matchesProject =
-        userProject === 'all' ||
-        person.project === userProject
-
-      const personTeams =
-        Array.isArray(person.team_names)
-          ? person.team_names
-          : person.team_names
-            ? [person.team_names]
-            : []
-
-      const matchesTeam =
-        userTeam === 'all' ||
-        personTeams.includes(userTeam)
-
-      const matchesStatus =
-        userStatus === 'all' ||
-        (
-          userStatus === 'active'
-            ? Boolean(person.active)
-            : !person.active
-        )
-
-      return (
-        matchesSearch &&
-        matchesProject &&
-        matchesTeam &&
-        matchesStatus
-      )
-    })
-
-  const hasUserFilters =
-    Boolean(
-      userSearch.trim() ||
-      userProject !== 'all' ||
-      userTeam !== 'all' ||
-      userStatus !== 'all'
-    )
-
   const adminScope =
     data.adminAccess?.scope || null
 
@@ -239,9 +142,6 @@ function AdminPage({
     adminTeamCodes.includes(
       'media'
     )
-
-  const canEditMonthlyCommunity =
-    isGlobalAdmin || isMediaAdmin
 
   const isManagementAdmin =
     isGlobalAdmin ||
@@ -292,7 +192,7 @@ function AdminPage({
             </h1>
 
             <p>
-              Oi, {String(user.name || '').trim().split(/\s+/)[0]}! 👋
+              Oi, {user.name}! 👋
             </p>
           </div>
 
@@ -372,9 +272,7 @@ function AdminPage({
           </a>
         )}
 
-                
-
-{canSeeAnnouncements && (
+        {canSeeAnnouncements && (
           <a href="#comunicados">
             📢 Comunicados
           </a>
@@ -382,137 +280,6 @@ function AdminPage({
       </nav>
 
       <main className="admin-shell">
-
-        {canEditMonthlyCommunity && (
-          <section className="admin-section admin-monthly-section">
-            <details
-              className="admin-collapsible"
-              open
-            >
-              <summary className="admin-collapsible-summary">
-                <div className="admin-collapsible-title">
-                  <div className="admin-collapsible-icon">
-                    ✨
-                  </div>
-
-                  <div>
-                    <h2>
-                      Identidade do mês
-                    </h2>
-
-                    <small>
-                      Palavra e mensagem da Comunidade
-                    </small>
-                  </div>
-                </div>
-
-                <span className="admin-collapsible-count">
-                  mês atual
-                </span>
-              </summary>
-
-              <div className="admin-collapsible-body">
-                <form
-                  className="admin-monthly-form"
-                  onSubmit={async (event) => {
-                    event.preventDefault()
-
-                    const form =
-                      new FormData(
-                        event.currentTarget
-                      )
-
-                    const response =
-                      await fetch(
-                        '/api/admin?action=update',
-                        {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type':
-                              'application/json',
-                          },
-                          body: JSON.stringify({
-                            action:
-                              'update-monthly-community',
-                            word:
-                              form.get('word'),
-                            message:
-                              form.get('message'),
-                          }),
-                        }
-                      )
-
-                    const result =
-                      await response.json()
-
-                    if (!response.ok) {
-                      window.alert(
-                        result.error ||
-                        'Não foi possível atualizar.'
-                      )
-                      return
-                    }
-
-                    window.alert(
-                      result.message ||
-                      'Identidade atualizada! ✨'
-                    )
-
-                    window.location.reload()
-                  }}
-                >
-                  <div className="admin-monthly-grid">
-                    <label>
-                      <span>
-                        Palavra do mês
-                      </span>
-
-                      <input
-                        name="word"
-                        type="text"
-                        maxLength="120"
-                        defaultValue={
-                          data
-                            ?.monthlyCommunity
-                            ?.word ||
-                          'Bondade'
-                        }
-                        required
-                      />
-                    </label>
-
-                    <label>
-                      <span>
-                        Mensagem
-                      </span>
-
-                      <textarea
-                        name="message"
-                        rows="4"
-                        defaultValue={
-                          data
-                            ?.monthlyCommunity
-                            ?.message ||
-                          'Pequenos gestos também transformam grandes histórias.'
-                        }
-                      />
-                    </label>
-                  </div>
-
-                  <div className="admin-monthly-actions">
-                    <button
-                      type="submit"
-                      className="primary-button"
-                    >
-                      Salvar identidade
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </details>
-          </section>
-        )}
-
         {isProjectAdmin && (
           <AdminFinanceRequestsPanel />
         )}
@@ -581,15 +348,6 @@ function AdminPage({
           id="usuarios"
           className="admin-section admin-section-collapsible"
         >
-
-          {(
-            isGlobalAdmin ||
-            isProjectAdmin ||
-            isVolunteerAdmin
-          ) && (
-            <AdminPeopleImport />
-          )}
-
           <details className="admin-collapsible">
             <summary className="admin-collapsible-summary">
               <div className="admin-collapsible-title">
@@ -609,143 +367,13 @@ function AdminPage({
               </div>
 
               <span className="admin-collapsible-count">
-                {hasUserFilters
-                  ? `${filteredUsers.length}/${data.users.length}`
-                  : data.users.length}
+                {data.users.length}
               </span>
             </summary>
 
             <div className="admin-collapsible-body">
-              <div className="admin-user-filters">
-                <div className="admin-user-search-wrap">
-                  <span aria-hidden="true">
-                    ⌕
-                  </span>
-
-                  <input
-                    type="search"
-                    value={userSearch}
-                    onChange={(event) =>
-                      setUserSearch(
-                        event.target.value
-                      )
-                    }
-                    placeholder="Buscar por nome ou @usuário"
-                  />
-                </div>
-
-                <div className="admin-user-project-tabs">
-                  {['all', 'APS', 'PPF', 'SJ'].map(
-                    (project) => (
-                      <button
-                        key={project}
-                        type="button"
-                        className={
-                          userProject === project
-                            ? 'is-active'
-                            : ''
-                        }
-                        onClick={() => {
-                          setUserProject(project)
-                          setUserTeam('all')
-                        }}
-                      >
-                        {project === 'all'
-                          ? 'Todos'
-                          : project}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                <div className="admin-user-filter-selects">
-                  <label>
-                    <span>
-                      Equipe
-                    </span>
-
-                    <select
-                      value={userTeam}
-                      onChange={(event) =>
-                        setUserTeam(
-                          event.target.value
-                        )
-                      }
-                    >
-                      <option value="all">
-                        Todas as equipes
-                      </option>
-
-                      {availableUserTeams.map(
-                        (team) => (
-                          <option
-                            key={team}
-                            value={team}
-                          >
-                            {team}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </label>
-
-                  <label>
-                    <span>
-                      Status
-                    </span>
-
-                    <select
-                      value={userStatus}
-                      onChange={(event) =>
-                        setUserStatus(
-                          event.target.value
-                        )
-                      }
-                    >
-                      <option value="all">
-                        Todos
-                      </option>
-
-                      <option value="active">
-                        Ativos
-                      </option>
-
-                      <option value="inactive">
-                        Inativos
-                      </option>
-                    </select>
-                  </label>
-                </div>
-
-                <div className="admin-user-filter-footer">
-                  <span>
-                    {filteredUsers.length}
-                    {' '}
-                    de
-                    {' '}
-                    {data.users.length}
-                    {' '}
-                    usuários
-                  </span>
-
-                  {hasUserFilters && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserSearch('')
-                        setUserProject('all')
-                        setUserTeam('all')
-                        setUserStatus('all')
-                      }}
-                    >
-                      Limpar filtros
-                    </button>
-                  )}
-                </div>
-              </div>
-
               <div className="admin-grid">
-            {filteredUsers.map((person) => (
+            {data.users.map((person) => (
               <article
                 className="admin-card"
                 key={person.id}
@@ -754,9 +382,7 @@ function AdminPage({
                   {person.avatar_path ? (
                     <img
                       src={person.avatar_path}
-                      alt={`Avatar de ${person.username
-  ? `@${person.username}`
-  : person.name}`}
+                      alt={`Avatar de ${person.name}`}
                       className="admin-avatar"
                     />
                   ) : (
@@ -769,15 +395,11 @@ function AdminPage({
 
                   <div>
                     <h3>
-                      {person.full_name || person.name}
+                      {person.name}
                     </h3>
 
-                    <span className="admin-user-identity">
-                      {person.username
-                        ? `@${person.username}`
-                        : 'Sem usuário'}
-                      {' · '}
-                      {person.project || 'Sem projeto'}
+                    <span className="admin-tag">
+                      {person.project}
                     </span>
                   </div>
                 </div>
@@ -798,11 +420,7 @@ function AdminPage({
                         'volunteer'
                       )
                       ? '🫶 Voluntário'
-                      : person.permissions?.includes(
-                          'dreamer'
-                        )
-                        ? '❤️ Sócio Sonhador'
-                        : '— Sem acesso definido'}
+                      : '❤️ Sócio Sonhador'}
                 </p>
 
                 {person.team_names?.length > 0 && (

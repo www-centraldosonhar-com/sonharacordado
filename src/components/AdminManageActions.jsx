@@ -155,13 +155,36 @@ function AdminManageActions({
     if (type === 'user') {
       return (
         <>
-          <label>Usuário</label>
+          <label>Nome completo</label>
 
           <input
-            name="name"
-            defaultValue={item.name}
+            name="fullName"
+            defaultValue={
+              item.full_name ||
+              item.name ||
+              ''
+            }
             required
           />
+
+          <label>Usuário</label>
+
+          <div className="admin-username-field">
+            <span aria-hidden="true">
+              @
+            </span>
+
+            <input
+              name="username"
+              defaultValue={
+                item.username || ''
+              }
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
+              required
+            />
+          </div>
 
           <label>E-mail</label>
 
@@ -173,7 +196,30 @@ function AdminManageActions({
             }
           />
 
-          <label>Projeto</label>
+                    <label>Data de nascimento</label>
+
+          <input
+            type="date"
+            name="birthDate"
+            defaultValue={
+              item.birth_date
+                ? String(item.birth_date).slice(0, 10)
+                : ''
+            }
+          />
+
+          <label>
+            Alergias / restrições alimentares
+          </label>
+
+          <textarea
+            name="allergies"
+            rows="3"
+            defaultValue={item.allergies || ''}
+            placeholder="Ex.: amendoim, lactose..."
+          />
+
+<label>Projeto</label>
 
           <select
             name="projectId"
@@ -442,6 +488,57 @@ function AdminManageActions({
               </option>
             ))}
           </select>
+
+          {(() => {
+            const selectedTeam = teams.find(
+              (team) =>
+                Number(team.id) ===
+                Number(item.team_id)
+            )
+
+            const teamCode = String(
+              selectedTeam?.code ||
+              selectedTeam?.name ||
+              ''
+            )
+              .trim()
+              .toLowerCase()
+
+            const isMediaTeam =
+              teamCode.includes('media') ||
+              teamCode.includes('midia') ||
+              teamCode.includes('mídia')
+
+            if (!isMediaTeam) {
+              return null
+            }
+
+            return (
+              <label className="admin-community-option">
+                <input
+                  type="checkbox"
+                  name="communityVisible"
+                  value="1"
+                  defaultChecked={
+                    item.community_visible === true ||
+                    item.community_visible === 1
+                  }
+                />
+
+                <span>
+                  <strong>
+                    Disponibilizar na Comunidade
+                  </strong>
+
+                  <small>
+                    Voluntários de qualquer projeto,
+                    inscritos neste evento, poderão
+                    escolher esta atividade.
+                  </small>
+                </span>
+              </label>
+            )
+          })()}
 
           <label>Descrição</label>
 

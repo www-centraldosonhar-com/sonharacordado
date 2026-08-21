@@ -20,11 +20,12 @@ function EventRegistrationPanel({
   event,
   currentUser,
   onUpdated,
+  compact = false,
 }) {
   const [email, setEmail] =
     useState(
       event.registration?.email ||
-      currentUser.email ||
+      currentUser?.email ||
       ''
     )
 
@@ -45,6 +46,10 @@ function EventRegistrationPanel({
 
   const [isLoading, setIsLoading] =
     useState(false)
+
+  const [expanded, setExpanded] =
+    useState(false)
+
 
   const registration =
     event.registration
@@ -323,8 +328,43 @@ function EventRegistrationPanel({
     )
   }
 
+  if (compact && !expanded) {
+    return (
+      <button
+        type="button"
+        className="registration-compact-trigger"
+        onClick={() => setExpanded(true)}
+      >
+        <span>
+          🎟️ Quero participar
+        </span>
+
+        <span aria-hidden="true">
+          →
+        </span>
+      </button>
+    )
+  }
+
   return (
-    <section className="registration-panel">
+    <section
+      className={
+        compact
+          ? 'registration-panel registration-panel-compact'
+          : 'registration-panel'
+      }
+    >
+      {compact && (
+        <button
+          type="button"
+          className="registration-compact-close"
+          onClick={() => setExpanded(false)}
+          aria-label="Fechar inscrição"
+        >
+          ×
+        </button>
+      )}
+
       <div className="registration-panel-heading">
         <div>
           <p className="eyebrow">
