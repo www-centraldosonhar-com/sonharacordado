@@ -31,3 +31,6 @@ dist-ssr
 
 # Local authentication backups
 .local-backups/
+
+# Local development backups
+*.before-*
