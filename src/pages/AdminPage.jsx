@@ -32,6 +32,7 @@ function AdminPage({
   const [userProject, setUserProject] = useState('all')
   const [userTeam, setUserTeam] = useState('all')
   const [userStatus, setUserStatus] = useState('all')
+  const [userPinStatus, setUserPinStatus] = useState('all')
 
   async function reloadAdmin() {
     const response = await fetch('/api/admin?action=data')
@@ -193,11 +194,25 @@ function AdminPage({
             : !person.active
         )
 
+      const hasPin =
+        Boolean(
+          person.has_pin
+        )
+
+      const matchesPin =
+        userPinStatus === 'all' ||
+        (
+          userPinStatus === 'configured'
+            ? hasPin
+            : !hasPin
+        )
+
       return (
         matchesSearch &&
         matchesProject &&
         matchesTeam &&
-        matchesStatus
+        matchesStatus &&
+        matchesPin
       )
     })
 
@@ -206,7 +221,8 @@ function AdminPage({
       userSearch.trim() ||
       userProject !== 'all' ||
       userTeam !== 'all' ||
-      userStatus !== 'all'
+      userStatus !== 'all' ||
+      userPinStatus !== 'all'
     )
 
   const adminScope =
@@ -715,6 +731,34 @@ function AdminPage({
                       </option>
                     </select>
                   </label>
+
+                  <label>
+                    <span>
+                      Acesso
+                    </span>
+
+                    <select
+                      value={userPinStatus}
+                      onChange={(event) =>
+                        setUserPinStatus(
+                          event.target.value
+                        )
+                      }
+                    >
+                      <option value="all">
+                        Todos
+                      </option>
+
+                      <option value="configured">
+                        PIN configurado
+                      </option>
+
+                      <option value="pending">
+                        Primeiro acesso pendente
+                      </option>
+                    </select>
+                  </label>
+
                 </div>
 
                 <div className="admin-user-filter-footer">
@@ -736,6 +780,7 @@ function AdminPage({
                         setUserProject('all')
                         setUserTeam('all')
                         setUserStatus('all')
+                        setUserPinStatus('all')
                       }}
                     >
                       Limpar filtros

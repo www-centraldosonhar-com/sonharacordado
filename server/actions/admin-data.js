@@ -97,6 +97,7 @@ export default async function handler(request, response) {
         u.profile_review_message,
         u.birth_date,
         u.allergies,
+        (u.password_hash IS NOT NULL) AS has_pin,
         p.name AS project,
 
         COALESCE(
