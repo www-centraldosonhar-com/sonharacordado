@@ -9,11 +9,9 @@ import {
 } from './_admin.js'
 
 import {
-  createCentralName,
   createUsernameBase,
   normalizeEmail,
   normalizeFullName,
-  normalizeProject,
 } from './_people-import.js'
 
 
@@ -987,31 +985,14 @@ export default async function handler(
   // FILTRA QUEM JÁ ESTÁ NA CENTRAL
   // ========================================================
 
-  const projects = await sql`
-    SELECT
-      id,
-      name
-    FROM projects
-  `
-
-  const projectMap =
-    new Map(
-      projects.map(
-        (project) => [
-          normalizeProject(
-            project.name
-          ),
-          project.id,
-        ]
-      )
-    )
-
-
   const existingUsers = await sql`
     SELECT
       name,
+      full_name,
       username,
       email,
+      phone,
+      birth_date,
       project_id
     FROM users
   `
@@ -1024,19 +1005,19 @@ export default async function handler(
           row.email
         )
 
-      const projectCode =
-        normalizeProject(
-          row.project
-        )
-
-      const projectId =
-        projectMap.get(
-          projectCode
-        )
-
-      const centralName =
-        createCentralName(
+      const rowName =
+        normalizeIdentityText(
           row.full_name
+        )
+
+      const rowBirthDate =
+        normalizeIdentityBirthDate(
+          row.birth_date
+        )
+
+      const rowPhone =
+        normalizeIdentityPhone(
+          row.phone
         )
 
       const usernameBase =
@@ -1048,42 +1029,155 @@ export default async function handler(
       const alreadyExists =
         existingUsers.some(
           (user) => {
-            const sameEmail =
-              email &&
+            const userName =
+              normalizeIdentityText(
+                user.full_name ||
+                user.name
+              )
+
+            const userBirthDate =
+              normalizeIdentityBirthDate(
+                user.birth_date
+              )
+
+            const userPhone =
+              normalizeIdentityPhone(
+                user.phone
+              )
+
+            const userEmail =
               normalizeEmail(
                 user.email
-              ) === email
+              )
 
+
+            /*
+             * REGRA 1
+             * Username exato.
+             *
+             * Bom sinal técnico, mas não depende
+             * de e-mail nem de projeto.
+             */
             const sameUsername =
-              usernameBase &&
-              String(
-                user.username || ''
+              Boolean(
+                usernameBase &&
+                user.username &&
+                String(
+                  user.username
+                )
+                  .trim()
+                  .toLowerCase() ===
+                usernameBase
+                  .trim()
+                  .toLowerCase()
               )
-                .trim()
-                .toLowerCase() ===
-              usernameBase
-                .trim()
-                .toLowerCase()
 
-            const sameIdentity =
-              projectId &&
-              Number(
-                user.project_id
-              ) ===
-                Number(projectId) &&
-              String(
-                user.name || ''
+
+            /*
+             * REGRA 2
+             * Nome completo + nascimento.
+             *
+             * Esse é o principal fallback quando
+             * o telefone não existe ou o e-mail mudou.
+             */
+            const sameNameAndBirth =
+              Boolean(
+                rowName &&
+                userName &&
+                rowBirthDate &&
+                userBirthDate &&
+                rowName ===
+                  userName &&
+                rowBirthDate ===
+                  userBirthDate
               )
-                .trim()
-                .toLowerCase() ===
-              centralName
-                .trim()
-                .toLowerCase()
+
+
+            /*
+             * REGRA EXTRA
+             *
+             * Cadastro antigo pode possuir nome abreviado:
+             *
+             * Amanda Leo
+             * Amanda Léo Vieira da Silva Pinto
+             *
+             * Se o nascimento for exatamente o mesmo
+             * e pelo menos 2 partes do nome coincidirem,
+             * consideramos a mesma pessoa.
+             */
+            const rowNameParts =
+              new Set(
+                rowName
+                  .split(' ')
+                  .filter(
+                    (part) =>
+                      part.length >= 2
+                  )
+              )
+
+            const userNameParts =
+              userName
+                .split(' ')
+                .filter(
+                  (part) =>
+                    part.length >= 2
+                )
+
+            const matchingNameParts =
+              userNameParts.filter(
+                (part) =>
+                  rowNameParts.has(part)
+              ).length
+
+            const sameAbbreviatedNameAndBirth =
+              Boolean(
+                rowBirthDate &&
+                userBirthDate &&
+                rowBirthDate ===
+                  userBirthDate &&
+                matchingNameParts >= 2
+              )
+
+
+            /*
+             * REGRA 3
+             * Nome completo + telefone.
+             */
+            const sameNameAndPhone =
+              Boolean(
+                rowName &&
+                userName &&
+                rowPhone &&
+                userPhone &&
+                rowName ===
+                  userName &&
+                rowPhone ===
+                  userPhone
+              )
+
+
+            /*
+             * REGRA 4
+             * E-mail igual.
+             *
+             * Continua sendo um sinal válido,
+             * mas não é a única identidade.
+             */
+            const sameEmail =
+              Boolean(
+                email &&
+                userEmail &&
+                email ===
+                  userEmail
+              )
+
 
             return (
-              sameEmail ||
               sameUsername ||
-              sameIdentity
+              sameNameAndBirth ||
+              sameAbbreviatedNameAndBirth ||
+              sameNameAndPhone ||
+              sameEmail
             )
           }
         )
