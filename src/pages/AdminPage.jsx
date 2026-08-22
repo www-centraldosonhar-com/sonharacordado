@@ -1621,17 +1621,45 @@ function AdminPage({
                         >
                           <div className="admin-user-participation-date">
                             <strong>
-                              {participation.event_date
-                                ? new Date(
-                                    `${participation.event_date}T12:00:00`
-                                  ).toLocaleDateString(
+                              {(() => {
+                                if (!participation.event_date) {
+                                  return '—'
+                                }
+
+                                const rawDate =
+                                  String(
+                                    participation.event_date
+                                  )
+
+                                const dateOnly =
+                                  rawDate.match(
+                                    /^\d{4}-\d{2}-\d{2}/
+                                  )?.[0]
+
+                                const parsedDate =
+                                  dateOnly
+                                    ? new Date(
+                                        `${dateOnly}T12:00:00`
+                                      )
+                                    : new Date(rawDate)
+
+                                if (
+                                  Number.isNaN(
+                                    parsedDate.getTime()
+                                  )
+                                ) {
+                                  return '—'
+                                }
+
+                                return parsedDate
+                                  .toLocaleDateString(
                                     'pt-BR',
                                     {
                                       day: '2-digit',
                                       month: 'short',
                                     }
                                   )
-                                : '—'}
+                              })()}
                             </strong>
                           </div>
 
