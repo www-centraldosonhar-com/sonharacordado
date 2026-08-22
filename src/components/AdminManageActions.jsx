@@ -4,7 +4,6 @@ function AdminManageActions({
   type,
   item,
   projects = [],
-  events = [],
   teams = [],
   onUpdated,
 }) {
@@ -611,147 +610,6 @@ function AdminManageActions({
       )
     }
 
-    if (type === 'task') {
-      return (
-        <>
-          <label>Título</label>
-
-          <input
-            name="title"
-            defaultValue={
-              item.title
-            }
-            required
-          />
-
-          <label>Descrição</label>
-
-          <textarea
-            name="description"
-            defaultValue={
-              item.description || ''
-            }
-          />
-
-          <label>Projeto</label>
-
-          <select
-            name="projectId"
-            defaultValue={
-              item.project_id || ''
-            }
-          >
-            <option value="">
-              Geral / definido pelo evento
-            </option>
-
-            {projects.map((project) => (
-              <option
-                key={project.id}
-                value={project.id}
-              >
-                {project.name}
-              </option>
-            ))}
-          </select>
-
-          <label>Equipe</label>
-
-          <select
-            name="teamId"
-            defaultValue={
-              item.team_id || ''
-            }
-          >
-            <option value="">
-              Todas as equipes
-            </option>
-
-            {teams.map((team) => (
-              <option
-                key={team.id}
-                value={team.id}
-              >
-                {team.name}
-              </option>
-            ))}
-          </select>
-
-          <label>Evento</label>
-
-          <select
-            name="eventId"
-            defaultValue={
-              item.event_id || ''
-            }
-          >
-            <option value="">
-              Independente
-            </option>
-
-            {events.map((event) => (
-              <option
-                key={event.id}
-                value={event.id}
-              >
-                {event.name}
-              </option>
-            ))}
-          </select>
-
-          <label>Prazo</label>
-
-          <input
-            type="datetime-local"
-            name="deadline"
-            defaultValue={
-              item.deadline
-                ? String(
-                    item.deadline
-                  ).slice(0, 16)
-                : ''
-            }
-            required
-          />
-
-          <label>Prioridade</label>
-
-          <select
-            name="priority"
-            defaultValue={
-              item.priority
-            }
-          >
-            <option value="normal">
-              Normal
-            </option>
-
-            <option value="important">
-              Importante
-            </option>
-
-            <option value="urgent">
-              Urgente
-            </option>
-          </select>
-
-          <label>
-            Limite de pessoas
-          </label>
-
-          <input
-            type="number"
-            name="volunteerLimit"
-            min="1"
-            defaultValue={
-              item.volunteer_limit
-            }
-            required
-          />
-        </>
-      )
-    }
-
     if (type === 'announcement') {
       return (
         <>
@@ -866,14 +724,9 @@ function AdminManageActions({
             disabled={isLoading}
             onClick={handleToggle}
           >
-            {type === 'task'
-              ? item.status ===
-                'completed'
-                ? '🚀 Reabrir'
-                : '✅ Concluir'
-              : Number(item.active) === 1
-                ? '⚪ Desativar'
-                : '🟢 Ativar'}
+            {Number(item.active) === 1
+              ? '⚪ Desativar'
+              : '🟢 Ativar'}
           </button>
 
           {type === 'user' && (

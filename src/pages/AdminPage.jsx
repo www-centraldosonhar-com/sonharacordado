@@ -3,7 +3,6 @@ import {
   formatDateBr,
   formatTimeBr,
 } from '../utils/formatters'
-import AdminCreatePanel from '../components/AdminCreatePanel'
 import AdminManageActions from '../components/AdminManageActions'
 import AdminImageUpload from '../components/AdminImageUpload'
 import AdminChecklistPanel from '../components/AdminChecklistPanel'
@@ -33,6 +32,7 @@ function AdminPage({
   const [userPinStatus, setUserPinStatus] = useState('all')
   const [selectedUser, setSelectedUser] = useState(null)
   const [userProfileTab, setUserProfileTab] = useState('overview')
+  const [announcementComposerOpen, setAnnouncementComposerOpen] = useState(false)
   const [userParticipation, setUserParticipation] = useState([])
   const [userParticipationLoading, setUserParticipationLoading] = useState(false)
   const [userParticipationError, setUserParticipationError] = useState('')
@@ -268,6 +268,103 @@ function AdminPage({
   }
 
 
+  async function handleCreateAnnouncement(event) {
+    event.preventDefault()
+
+    const form =
+      new FormData(event.currentTarget)
+
+    const payload = {
+      action:
+        'announcement',
+
+      title:
+        String(
+          form.get('title') || ''
+        ).trim(),
+
+      message:
+        String(
+          form.get('message') || ''
+        ).trim(),
+
+      priority:
+        String(
+          form.get('priority') ||
+          'normal'
+        ),
+
+      projectId:
+        form.get('projectId')
+          ? Number(
+              form.get('projectId')
+            )
+          : null,
+
+      teamId:
+        form.get('teamId')
+          ? Number(
+              form.get('teamId')
+            )
+          : null,
+    }
+
+    if (
+      !payload.title ||
+      !payload.message
+    ) {
+      window.alert(
+        'Informe título e mensagem.'
+      )
+
+      return
+    }
+
+    try {
+      const response = await fetch(
+        '/api/admin?action=create',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body:
+            JSON.stringify(payload),
+        }
+      )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível publicar o comunicado.'
+        )
+      }
+
+      event.currentTarget.reset()
+
+      await reloadAdmin()
+
+      setAnnouncementComposerOpen(false)
+
+      window.alert(
+        result.message ||
+        'Comunicado publicado! 📢'
+      )
+    } catch (error) {
+      window.alert(
+        error?.message ||
+        'Não foi possível publicar o comunicado.'
+      )
+    }
+  }
+
+
   const adminScope =
     data.adminAccess?.scope || null
 
@@ -434,11 +531,121 @@ function AdminPage({
 
       <main className="admin-shell">
 
+        <section
+          className="admin-operational-overview"
+          aria-label="Resumo da Central"
+        >
+          <div className="admin-operational-overview-heading">
+            <div>
+              <small>
+                VISÃO GERAL
+              </small>
+
+              <strong>
+                Central em números
+              </strong>
+            </div>
+
+            <span>
+              Atualizado agora
+            </span>
+          </div>
+
+          <div className="admin-operational-overview-grid">
+            <article className="is-primary">
+              <span>
+                Voluntários
+              </span>
+
+              <strong>
+                {(data.users || []).filter(
+                  (person) =>
+                    person.user_type === 'volunteer' &&
+                    Number(person.active) !== 0
+                ).length}
+              </strong>
+
+              <small>
+                ativos na Central
+              </small>
+            </article>
+
+            <article>
+              <span>
+                Admins
+              </span>
+
+              <strong>
+                {(data.users || []).filter(
+                  (person) =>
+                    person.permissions?.includes(
+                      'admin'
+                    ) &&
+                    Number(person.active) !== 0
+                ).length}
+              </strong>
+
+              <small>
+                com acesso administrativo
+              </small>
+            </article>
+
+            <article>
+              <span>
+                Eventos
+              </span>
+
+              <strong>
+                {(data.events || []).length}
+              </strong>
+
+              <small>
+                cadastrados
+              </small>
+            </article>
+
+            <article>
+              <span>
+                Atividades
+              </span>
+
+              <strong>
+                {(data.eventRoles || []).length}
+              </strong>
+
+              <small>
+                configuradas
+              </small>
+            </article>
+
+            <article className="is-attention">
+              <span>
+                Primeiro acesso
+              </span>
+
+              <strong>
+                {(data.users || []).filter(
+                  (person) =>
+                    person.user_type === 'volunteer' &&
+                    !person.has_pin &&
+                    Number(person.active) !== 0
+                ).length}
+              </strong>
+
+              <small>
+                ainda sem PIN
+              </small>
+            </article>
+
+          </div>
+        </section>
+
         {canEditMonthlyCommunity && (
-          <section className="admin-section admin-monthly-section">
+          <section
+            className="admin-section admin-monthly-section"
+          >
             <details
               className="admin-collapsible"
-              open
             >
               <summary className="admin-collapsible-summary">
                 <div className="admin-collapsible-title">
@@ -568,55 +775,6 @@ function AdminPage({
           <AdminFinanceRequestsPanel />
         )}
 
-        {(isManagementAdmin ||
-          isVolunteerAdmin ||
-          isMediaAdmin) && (
-          <AdminCreatePanel
-            projects={data.projects}
-            events={data.events}
-            roles={data.roles}
-            teams={data.teams || []}
-            access={data.adminAccess}
-            onCreated={reloadAdmin}
-          />
-        )}
-        {isManagementAdmin && (
-        <section
-          id="resumo"
-          className="admin-dashboard"
-        >
-          <article>
-            <strong>
-              {data.users.length}
-            </strong>
-
-            <span>
-              usuários
-            </span>
-          </article>
-
-          <article>
-            <strong>
-              {data.events.length}
-            </strong>
-
-            <span>
-              eventos
-            </span>
-          </article>
-
-          <article>
-            <strong>
-              {data.eventRoles.length}
-            </strong>
-
-            <span>
-              atividades
-            </span>
-          </article>
-
-        </section>
-        )}
 
         {canSeeUsers && (
         <section
@@ -1048,78 +1206,262 @@ function AdminPage({
         )}
 
         {isManagementAdmin && (
-          <AdminPostEventPanel
-            events={
-              data.events || []
-            }
-            onUpdated={
-              reloadAdmin
-            }
-          />
+          <section
+            id="pos-evento"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    🌙
+                  </span>
+
+                  <div>
+                    <small>
+                      DEPOIS DO EVENTO
+                    </small>
+
+                    <strong>
+                      Pós-Evento
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  {(data.events || []).length}
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminPostEventPanel
+                  events={
+                    data.events || []
+                  }
+                  onUpdated={
+                    reloadAdmin
+                  }
+                />
+              </div>
+            </details>
+          </section>
         )}
 
         {(isManagementAdmin ||
           isTeamAdmin) && (
-          <AdminPostEventTeamReports
-            events={
-              data.events || []
-            }
-            access={
-              data.adminAccess
-            }
-          />
+          <section
+            id="relatorios-equipe"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    📊
+                  </span>
+
+                  <div>
+                    <small>
+                      LEITURA OPERACIONAL
+                    </small>
+
+                    <strong>
+                      Relatórios de equipe
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  {(data.events || []).length}
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminPostEventTeamReports
+                  events={
+                    data.events || []
+                  }
+                  access={
+                    data.adminAccess
+                  }
+                />
+              </div>
+            </details>
+          </section>
         )}
 
         {data.adminAccess
           ?.canManageRegistrations && (
-          <AdminRegistrationsPanel
-            registrations={
-              data.registrations || []
-            }
-            coupons={
-              data.registrationCoupons || []
-            }
-            canManageCoupons={
-              data.adminAccess
-                ?.canManageCoupons ||
-              false
-            }
-            onUpdated={reloadAdmin}
-          />
+          <section
+            id="inscricoes"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    📝
+                  </span>
+
+                  <div>
+                    <small>
+                      INSCRIÇÕES E PRESENÇAS
+                    </small>
+
+                    <strong>
+                      Inscrições
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  {(data.registrations || []).length}
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminRegistrationsPanel
+                  registrations={
+                    data.registrations || []
+                  }
+                  coupons={
+                    data.registrationCoupons || []
+                  }
+                  canManageCoupons={
+                    data.adminAccess
+                      ?.canManageCoupons ||
+                    false
+                  }
+                  onUpdated={reloadAdmin}
+                />
+              </div>
+            </details>
+          </section>
         )}
 
         {data.adminAccess
           ?.canManageRegistrations && (
-          <AdminVolunteerOverview
-            events={
-              data.volunteerEventStats || []
-            }
-          />
+          <section
+            id="visao-voluntarios"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    👥
+                  </span>
+
+                  <div>
+                    <small>
+                      INDICADORES DE PESSOAS
+                    </small>
+
+                    <strong>
+                      Visão de voluntários
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  {(data.volunteerEventStats || []).length}
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminVolunteerOverview
+                  events={
+                    data.volunteerEventStats || []
+                  }
+                />
+              </div>
+            </details>
+          </section>
         )}
 
         {data.adminAccess
           ?.canViewActivitiesOverview && (
-          <AdminActivitiesOverview
-            events={
-              data.activitiesEventStats || []
-            }
-          />
+          <section
+            id="visao-atividades"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    📈
+                  </span>
+
+                  <div>
+                    <small>
+                      INDICADORES DE OPERAÇÃO
+                    </small>
+
+                    <strong>
+                      Visão de atividades
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  {(data.activitiesEventStats || []).length}
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminActivitiesOverview
+                  events={
+                    data.activitiesEventStats || []
+                  }
+                />
+              </div>
+            </details>
+          </section>
         )}
 
         {canSeeExpenses && (
-          <div id="gastos">
-            <AdminExpensesPanel
-              events={
-                data.events || []
-              }
-              teams={
-                data.teams || []
-              }
-              access={
-                data.adminAccess
-              }
-            />
-          </div>
+          <section
+            id="gastos"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    💳
+                  </span>
+
+                  <div>
+                    <small>
+                      CONTROLE FINANCEIRO
+                    </small>
+
+                    <strong>
+                      Gastos
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  {(data.events || []).length}
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminExpensesPanel
+                  events={
+                    data.events || []
+                  }
+                  teams={
+                    data.teams || []
+                  }
+                  access={
+                    data.adminAccess
+                  }
+                />
+              </div>
+            </details>
+          </section>
         )}
         {canSeeActivities && (
         <section
@@ -1313,12 +1655,202 @@ function AdminPage({
             </summary>
 
             <div className="admin-collapsible-body">
-              <div className="admin-grid">
+              <div className="admin-announcement-toolbar">
+                <div>
+                  <small>
+                    MURAL DO SONHAR
+                  </small>
+
+                  <strong>
+                    Comunicados publicados
+                  </strong>
+                </div>
+
+                <button
+                  type="button"
+                  className="admin-announcement-new-button"
+                  onClick={() =>
+                    setAnnouncementComposerOpen(
+                      (current) => !current
+                    )
+                  }
+                  aria-expanded={
+                    announcementComposerOpen
+                  }
+                >
+                  <span aria-hidden="true">
+                    +
+                  </span>
+
+                  Novo comunicado
+                </button>
+              </div>
+
+              {announcementComposerOpen && (
+                <div className="admin-announcement-create">
+                  <div className="admin-announcement-create-heading">
+                    <div>
+                      <small>
+                        NOVO COMUNICADO
+                      </small>
+
+                      <strong>
+                        Compartilhar uma atualização
+                      </strong>
+                    </div>
+
+                    <span>
+                      📢
+                    </span>
+                  </div>
+
+<form
+            className="admin-announcement-form"
+            onSubmit={
+              handleCreateAnnouncement
+            }
+          >
+            <div className="admin-announcement-form-grid">
+              <label className="admin-announcement-field">
+                <span>
+                  Título
+                </span>
+
+                <input
+                  name="title"
+                  placeholder="Ex.: Reunião geral de sábado"
+                  required
+                />
+              </label>
+
+              <label className="admin-announcement-field">
+                <span>
+                  Projeto de destino
+                </span>
+
+                <select
+                  name="projectId"
+                  defaultValue=""
+                >
+                  <option value="">
+                    🌎 Toda a ONG / transversal
+                  </option>
+
+                  {(data.projects || []).map((project) => (
+                    <option
+                      key={project.id}
+                      value={project.id}
+                    >
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="admin-announcement-field is-wide">
+                <span>
+                  Mensagem
+                </span>
+
+                <textarea
+                  name="message"
+                  rows="5"
+                  placeholder="Escreva o comunicado de forma clara e objetiva..."
+                  required
+                />
+              </label>
+
+              <label className="admin-announcement-field">
+                <span>
+                  Equipe de destino
+                </span>
+
+                <select
+                  name="teamId"
+                  defaultValue=""
+                >
+                  <option value="">
+                    Todas as equipes
+                  </option>
+
+                  {(data.teams || []).map((team) => (
+                    <option
+                      key={team.id}
+                      value={team.id}
+                    >
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="admin-announcement-field">
+                <span>
+                  Prioridade
+                </span>
+
+                <select
+                  name="priority"
+                  defaultValue="normal"
+                >
+                  <option value="normal">
+                    Normal
+                  </option>
+
+                  <option value="important">
+                    Importante
+                  </option>
+
+                  <option value="urgent">
+                    Urgente
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <div className="admin-announcement-form-footer">
+              <small>
+                O comunicado será exibido conforme o destino selecionado.
+              </small>
+
+              <button
+                className="admin-announcement-submit"
+                disabled={isLoading}
+                type="submit"
+              >
+                <span>
+                  Publicar comunicado
+                </span>
+
+                <span aria-hidden="true">
+                  →
+                </span>
+              </button>
+            </div>
+          </form>
+              </div>
+              )}
+
+              <div className="admin-announcement-list-heading">
+                <span>
+                  PUBLICADOS
+                </span>
+
+                <small>
+                  {data.announcements.length}
+                  {' '}
+                  comunicados
+                </small>
+              </div>
+
+              <div className="admin-announcement-feed">
                 {data.announcements.map(
                   (announcement) => (
                     <article
-                      className="admin-card"
-                      key={announcement.id}
+                      className={`admin-announcement-card is-${
+                        announcement.priority ||
+                        'normal'
+                      }`}
                     >
                       <h3>
                         {announcement.title}
