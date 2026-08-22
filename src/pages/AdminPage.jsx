@@ -1603,6 +1603,79 @@ function AdminPage({
                   </div>
                 ) : userParticipation.length ? (
                   <div className="admin-user-participation-list">
+                    <div className="admin-user-participation-stats">
+                      <div>
+                        <strong>
+                          {userParticipation.length}
+                        </strong>
+
+                        <span>
+                          Eventos
+                        </span>
+                      </div>
+
+                      <div>
+                        <strong>
+                          {(() => {
+                            const latest =
+                              userParticipation[0]
+
+                            if (!latest?.event_date) {
+                              return '—'
+                            }
+
+                            const rawDate =
+                              String(
+                                latest.event_date
+                              )
+
+                            const dateOnly =
+                              rawDate.match(
+                                /^\d{4}-\d{2}-\d{2}/
+                              )?.[0]
+
+                            const parsed =
+                              dateOnly
+                                ? new Date(
+                                    `${dateOnly}T12:00:00`
+                                  )
+                                : new Date(rawDate)
+
+                            if (
+                              Number.isNaN(
+                                parsed.getTime()
+                              )
+                            ) {
+                              return '—'
+                            }
+
+                            return parsed.toLocaleDateString(
+                              'pt-BR',
+                              {
+                                day: '2-digit',
+                                month: 'short',
+                              }
+                            )
+                          })()}
+                        </strong>
+
+                        <span>
+                          Última participação
+                        </span>
+                      </div>
+
+                      <div>
+                        <strong>
+                          {userParticipation[0]?.role_name ||
+                            '—'}
+                        </strong>
+
+                        <span>
+                          Última função
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="admin-user-participation-summary">
                       <strong>
                         {userParticipation.length}
