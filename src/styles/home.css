@@ -10123,3 +10123,309 @@ padding: 22px;
     animation: none;
   }
 }
+
+/* =========================================================
+   MY TEAM — CLEAN COLLAPSIBLE SECTIONS
+   ========================================================= */
+
+.team-clean-section {
+  margin-top: 12px;
+}
+
+.team-clean-details {
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(43, 58, 76, .055);
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.90),
+      rgba(247,249,252,.74)
+    );
+
+  box-shadow:
+    0 9px 26px
+    rgba(27,41,58,.035),
+    inset 0 1px 0
+    rgba(255,255,255,.9);
+}
+
+.team-clean-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  min-height: 68px;
+
+  padding:
+    13px 15px;
+
+  list-style: none;
+
+  cursor: pointer;
+}
+
+.team-clean-summary::-webkit-details-marker {
+  display: none;
+}
+
+.team-clean-summary > div {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.team-clean-summary
+> div
+> span:first-child {
+  display: grid;
+  place-items: center;
+
+  width: 34px;
+  height: 34px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(65, 96, 132, .055);
+
+  font-size: .76rem;
+}
+
+.team-clean-summary
+> div
+> div {
+  display: grid;
+  gap: 3px;
+}
+
+.team-clean-summary small {
+  color:
+    rgba(43,58,76,.32);
+
+  font-size: .44rem;
+  font-weight: 800;
+
+  letter-spacing: .11em;
+}
+
+.team-clean-summary strong {
+  color: #2e3e4e;
+
+  font-size: .68rem;
+  font-weight: 740;
+}
+
+.team-clean-count {
+  display: grid;
+  place-items: center;
+
+  min-width: 26px;
+  height: 26px;
+
+  padding: 0 7px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(59,89,123,.06);
+
+  color:
+    rgba(48,72,100,.60);
+
+  font-size: .49rem;
+  font-weight: 760;
+}
+
+.team-clean-details[open]
+.team-clean-summary {
+  border-bottom:
+    1px solid
+    rgba(43,58,76,.045);
+}
+
+.team-clean-body {
+  padding: 11px;
+
+  animation:
+    teamCleanReveal
+    .18s
+    ease-out;
+}
+
+
+/* =========================================================
+   COMBINADOS
+   ========================================================= */
+
+.team-commitments-list {
+  display: grid;
+  gap: 8px;
+}
+
+.team-commitment-card {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 14px;
+
+  padding:
+    12px 13px;
+
+  border:
+    1px solid
+    rgba(43,58,76,.05);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255,255,255,.78);
+}
+
+.team-commitment-main {
+  display: grid;
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.team-commitment-main small {
+  color:
+    rgba(43,58,76,.30);
+
+  font-size: .43rem;
+  font-weight: 800;
+
+  letter-spacing: .09em;
+}
+
+.team-commitment-main strong {
+  overflow: hidden;
+
+  color: #2e3e4e;
+
+  font-size: .61rem;
+  font-weight: 730;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-commitment-main span {
+  color:
+    rgba(43,58,76,.40);
+
+  font-size: .48rem;
+}
+
+.team-commitment-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+}
+
+.team-commitment-status,
+.team-commitment-capability {
+  padding:
+    4px 7px;
+
+  border-radius: 999px;
+
+  font-size: .44rem;
+  font-weight: 710;
+}
+
+.team-commitment-status {
+  background:
+    rgba(56,119,91,.07);
+
+  color:
+    rgba(48,104,78,.74);
+}
+
+.team-commitment-capability {
+  background:
+    rgba(231,138,61,.07);
+
+  color:
+    rgba(139,86,38,.70);
+}
+
+.team-clean-empty {
+  display: grid;
+  gap: 4px;
+
+  padding:
+    16px 13px;
+
+  text-align: center;
+}
+
+.team-clean-empty strong {
+  color:
+    rgba(43,58,76,.58);
+
+  font-size: .58rem;
+}
+
+.team-clean-empty span {
+  color:
+    rgba(43,58,76,.34);
+
+  font-size: .48rem;
+}
+
+
+@keyframes teamCleanReveal {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+
+@media (max-width: 680px) {
+  .team-commitment-card {
+    grid-template-columns: 1fr;
+  }
+
+  .team-commitment-actions {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .team-commitment-actions
+  .team-event-activity-action {
+    width: 100%;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .team-clean-body {
+    animation: none;
+  }
+}
