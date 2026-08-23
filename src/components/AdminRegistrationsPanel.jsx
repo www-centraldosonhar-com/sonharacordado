@@ -427,11 +427,11 @@ function AdminRegistrationsPanel({
                 ).length
 
               return (
-                <section
+                <details
                   key={group.eventId}
-                  className="registration-event-card"
+                  className="registration-event-card registration-event-collapsible"
                 >
-                  <header className="registration-event-header">
+                  <summary className="registration-event-header registration-event-summary">
                     <div>
                       <h3>
                         {group.eventName}
@@ -456,7 +456,7 @@ function AdminRegistrationsPanel({
                         ✅ {confirmed}
                       </span>
                     </div>
-                  </header>
+                  </summary>
 
 
                   <div className="registration-compact-list">
@@ -624,7 +624,7 @@ function AdminRegistrationsPanel({
                       }
                     )}
                   </div>
-                </section>
+                </details>
               )
             }
           )}

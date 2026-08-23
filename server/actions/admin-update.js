@@ -1,4 +1,5 @@
 import {
+  adminCanAccessEvent,
   adminCanUseContentScope,
   adminCanAccessUser,
   adminCanAccessProject,
@@ -489,6 +490,40 @@ export default async function handler(
     }
 
     if (action === 'toggle-event') {
+      // -------------------------------------------------
+      // EVENT ACCESS
+      // -------------------------------------------------
+      // Valida o evento com as permissões administrativas
+      // atuais antes de permitir ativar/desativar.
+      const event = await sql`
+        SELECT
+          id,
+          project_id,
+          active
+        FROM events
+        WHERE id = ${recordId}
+        LIMIT 1
+      `
+
+      if (!event[0]) {
+        return response.status(404).json({
+          error: 'Evento não encontrado.',
+        })
+      }
+
+      const canAccess =
+        await adminCanAccessEvent(
+          admin,
+          recordId
+        )
+
+      if (!canAccess) {
+        return forbidden(response)
+      }
+
+      // -------------------------------------------------
+      // TOGGLE
+      // -------------------------------------------------
       const updated = await sql`
         UPDATE events
         SET active =
@@ -499,12 +534,6 @@ export default async function handler(
         WHERE id = ${recordId}
         RETURNING active
       `
-
-      if (!updated[0]) {
-        return response.status(404).json({
-          error: 'Evento não encontrado.',
-        })
-      }
 
       return response.status(200).json({
         success: true,

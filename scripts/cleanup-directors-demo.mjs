@@ -179,9 +179,29 @@ if (
 }
 
 
-await deleteEventRows(
-  'confirmations'
-)
+if (
+  await exists(
+    'confirmations'
+  )
+) {
+  await sql.query(
+    `
+      DELETE FROM confirmations
+      WHERE event_role_id IN (
+        SELECT id
+        FROM event_roles
+        WHERE event_id IN (
+          ${placeholders}
+        )
+      )
+    `,
+    ids
+  )
+
+  console.log(
+    '✅ confirmations limpo'
+  )
+}
 
 await deleteEventRows(
   'event_registrations'

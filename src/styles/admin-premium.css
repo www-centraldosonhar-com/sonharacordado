@@ -7155,3 +7155,406 @@ button:disabled {
     width: 100%;
   }
 }
+
+/* =========================================================
+   EXPENSES — EVENT COLLAPSIBLE
+   ========================================================= */
+
+.expense-event-collapsible {
+  overflow: hidden;
+}
+
+.expense-event-summary {
+  cursor: pointer;
+
+  list-style: none;
+
+  transition:
+    background .18s ease,
+    transform .18s ease;
+}
+
+.expense-event-summary::-webkit-details-marker {
+  display: none;
+}
+
+.expense-event-summary::after {
+  content: "⌄";
+
+  flex: 0 0 auto;
+
+  margin-left: 10px;
+
+  color:
+    rgba(45, 61, 80, .36);
+
+  font-size: .78rem;
+
+  transition:
+    transform .2s ease,
+    color .2s ease;
+}
+
+.expense-event-collapsible[open]
+.expense-event-summary::after {
+  transform:
+    rotate(180deg);
+
+  color:
+    rgba(45, 61, 80, .62);
+}
+
+.expense-event-summary:hover {
+  background:
+    rgba(247, 249, 252, .72);
+}
+
+.expense-event-collapsible[open]
+.expense-event-summary {
+  border-bottom:
+    1px solid
+    rgba(42, 57, 74, .045);
+}
+
+.expense-event-collapsible
+.expense-list {
+  animation:
+    expenseEventReveal
+    .2s
+    ease-out;
+}
+
+@keyframes expenseEventReveal {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expense-event-collapsible
+  .expense-list {
+    animation: none;
+  }
+}
+
+
+/* =========================================================
+   ADMIN ACTIVITIES — GROUPED BY EVENT
+   ========================================================= */
+
+.admin-activity-event-group {
+  margin-bottom: 11px;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(43, 59, 78, .055);
+
+  border-radius: 19px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.90),
+      rgba(247,249,252,.76)
+    );
+
+  box-shadow:
+    0 9px 26px
+    rgba(27, 41, 58, .035),
+    inset 0 1px 0
+    rgba(255,255,255,.90);
+}
+
+
+.admin-activity-event-summary {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  min-height: 76px;
+
+  padding:
+    14px 17px;
+
+  list-style: none;
+
+  cursor: pointer;
+
+  transition:
+    background .18s ease;
+}
+
+
+.admin-activity-event-summary::-webkit-details-marker {
+  display: none;
+}
+
+
+.admin-activity-event-summary:hover {
+  background:
+    rgba(247,249,252,.72);
+}
+
+
+.admin-activity-event-summary > div:first-child {
+  display: grid;
+
+  gap: 3px;
+}
+
+
+.admin-activity-event-summary small {
+  color:
+    rgba(47, 64, 83, .31);
+
+  font-size: .46rem;
+  font-weight: 800;
+
+  letter-spacing: .13em;
+}
+
+
+.admin-activity-event-summary strong {
+  color: #2d3d4d;
+
+  font-size: .72rem;
+  font-weight: 740;
+
+  letter-spacing: -.012em;
+}
+
+
+.admin-activity-event-summary
+> div:first-child
+> span {
+  color:
+    rgba(43,57,74,.38);
+
+  font-size: .49rem;
+}
+
+
+.admin-activity-event-summary-meta {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  flex: 0 0 auto;
+}
+
+
+.admin-activity-event-summary-meta > span {
+  padding:
+    5px 8px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(59, 89, 123, .055);
+
+  color:
+    rgba(48, 72, 100, .58);
+
+  font-size: .47rem;
+  font-weight: 700;
+}
+
+
+.admin-activity-event-summary-meta i {
+  margin-left: 4px;
+
+  color:
+    rgba(43, 58, 76, .36);
+
+  font-size: .76rem;
+  font-style: normal;
+
+  transition:
+    transform .20s ease;
+}
+
+
+.admin-activity-event-group[open]
+.admin-activity-event-summary-meta i {
+  transform:
+    rotate(180deg);
+}
+
+
+.admin-activity-event-group[open]
+.admin-activity-event-summary {
+  border-bottom:
+    1px solid
+    rgba(42, 57, 74, .045);
+}
+
+
+.admin-activity-event-content {
+  display: grid;
+
+  gap: 11px;
+
+  padding:
+    14px;
+
+  animation:
+    adminActivityEventReveal
+    .20s
+    ease-out;
+}
+
+
+@keyframes adminActivityEventReveal {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+
+@media (max-width: 680px) {
+  .admin-activity-event-summary {
+    align-items: flex-start;
+
+    padding:
+      13px 14px;
+  }
+
+  .admin-activity-event-summary-meta {
+    flex-wrap: wrap;
+
+    justify-content: flex-end;
+  }
+
+  .admin-activity-event-summary-meta
+  > span:nth-child(2) {
+    display: none;
+  }
+
+  .admin-activity-event-content {
+    padding: 11px;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-activity-event-content {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   REGISTRATIONS — EVENT COLLAPSIBLE
+   ========================================================= */
+
+.registration-event-collapsible {
+  overflow: hidden;
+}
+
+.registration-event-summary {
+  cursor: pointer;
+
+  list-style: none;
+
+  transition:
+    background .18s ease;
+}
+
+.registration-event-summary::-webkit-details-marker {
+  display: none;
+}
+
+.registration-event-summary::after {
+  content: "⌄";
+
+  flex: 0 0 auto;
+
+  margin-left: 10px;
+
+  color:
+    rgba(45, 61, 80, .36);
+
+  font-size: .78rem;
+
+  transition:
+    transform .2s ease,
+    color .2s ease;
+}
+
+.registration-event-collapsible[open]
+.registration-event-summary::after {
+  transform:
+    rotate(180deg);
+
+  color:
+    rgba(45, 61, 80, .62);
+}
+
+.registration-event-summary:hover {
+  background:
+    rgba(247, 249, 252, .72);
+}
+
+.registration-event-collapsible[open]
+.registration-event-summary {
+  border-bottom:
+    1px solid
+    rgba(42, 57, 74, .045);
+}
+
+.registration-event-collapsible
+.registration-compact-list {
+  animation:
+    registrationEventReveal
+    .20s
+    ease-out;
+}
+
+@keyframes registrationEventReveal {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .registration-event-collapsible
+  .registration-compact-list {
+    animation: none;
+  }
+}

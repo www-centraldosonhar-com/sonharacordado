@@ -1073,13 +1073,13 @@ function AdminExpensesPanel({
                 )
 
               return (
-                <article
+                <details
                   key={
                     group.eventId
                   }
-                  className="expense-event-card"
+                  className="expense-event-card expense-event-collapsible"
                 >
-                  <header className="expense-event-header">
+                  <summary className="expense-event-header expense-event-summary">
                     <div>
                       <strong>
                         {
@@ -1104,7 +1104,7 @@ function AdminExpensesPanel({
                         eventTotal
                       )}
                     </span>
-                  </header>
+                  </summary>
 
 
                   <div className="expense-list">
@@ -1230,7 +1230,7 @@ function AdminExpensesPanel({
                       )
                     )}
                   </div>
-                </article>
+                </details>
               )
             }
           )

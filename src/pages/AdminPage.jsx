@@ -1493,7 +1493,126 @@ function AdminPage({
 
             <div className="admin-collapsible-body">
               <div className="admin-grid">
-            {data.eventRoles.map((activity) => {
+            {Array.from(
+              (data.eventRoles || [])
+                .reduce(
+                  (groups, activity) => {
+                    const eventId =
+                      Number(
+                        activity.event_id
+                      )
+
+                    if (
+                      !groups.has(eventId)
+                    ) {
+                      groups.set(
+                        eventId,
+                        {
+                          eventId,
+                          eventName:
+                            activity.event_name ||
+                            'Evento',
+                          eventDate:
+                            activity.event_date,
+                          activities: [],
+                        }
+                      )
+                    }
+
+                    groups
+                      .get(eventId)
+                      .activities
+                      .push(activity)
+
+                    return groups
+                  },
+                  new Map()
+                )
+                .values()
+            ).map((group) => {
+              const totalConfirmed =
+                group.activities.reduce(
+                  (total, activity) =>
+                    total +
+                    Number(
+                      activity.confirmed_count ||
+                      0
+                    ),
+                  0
+                )
+
+              return (
+                <details
+                  key={group.eventId}
+                  className="admin-activity-event-group"
+                >
+                  <summary className="admin-activity-event-summary">
+                    <div>
+                      <small>
+                        EVENTO
+                      </small>
+
+                      <strong>
+                        {group.eventName}
+                      </strong>
+
+                      {group.eventDate && (
+                        <span>
+                          {(() => {
+                            const raw =
+                              String(
+                                group.eventDate
+                              )
+
+                            const dateOnly =
+                              raw.match(
+                                /^\\d{4}-\\d{2}-\\d{2}/
+                              )?.[0]
+
+                            const parsed =
+                              dateOnly
+                                ? new Date(
+                                    `${dateOnly}T12:00:00`
+                                  )
+                                : new Date(raw)
+
+                            return Number.isNaN(
+                              parsed.getTime()
+                            )
+                              ? ''
+                              : parsed.toLocaleDateString(
+                                  'pt-BR'
+                                )
+                          })()}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="admin-activity-event-summary-meta">
+                      <span>
+                        {group.activities.length}
+                        {' '}
+                        {group.activities.length === 1
+                          ? 'atividade'
+                          : 'atividades'}
+                      </span>
+
+                      <span>
+                        {totalConfirmed}
+                        {' '}
+                        {totalConfirmed === 1
+                          ? 'confirmação'
+                          : 'confirmações'}
+                      </span>
+
+                      <i aria-hidden="true">
+                        ⌄
+                      </i>
+                    </div>
+                  </summary>
+
+                  <div className="admin-activity-event-content">
+                    {group.activities.map((activity) => {
               const remaining =
                 Number(activity.vacancy_limit) -
                 Number(activity.confirmed_count)
@@ -1618,6 +1737,10 @@ function AdminPage({
                     </div>
                   )}
                 </article>
+              )
+            })}
+                  </div>
+                </details>
               )
             })}
               </div>
