@@ -167,6 +167,77 @@ const projectWelcome = {
                     </p>
                   </div>
 
+                  {Array.isArray(event?.activities) &&
+                    event.activities.length > 0 && (
+                      <div className="team-event-activities">
+                        <div className="team-event-activities-head">
+                          <span>
+                            ATIVIDADES DA EQUIPE
+                          </span>
+
+                          <small>
+                            {event.activities.length}
+                            {' '}
+                            {event.activities.length === 1
+                              ? 'atividade'
+                              : 'atividades'}
+                          </small>
+                        </div>
+
+                        <div className="team-event-activities-list">
+                          {event.activities.map((activity) => (
+                            <article
+                              key={activity.id}
+                              className="team-event-activity-card"
+                            >
+                              <div>
+                                <strong>
+                                  {activity.role_name ||
+                                    activity.name ||
+                                    'Atividade'}
+                                </strong>
+
+                                <span>
+                                  {activity.team_name ||
+                                    'Equipe'}
+                                </span>
+                              </div>
+
+                              <div className="team-event-activity-meta">
+                                {activity.vacancy_limit ? (
+                                  <span>
+                                    {Number(
+                                      activity.confirmed_count ||
+                                      0
+                                    )}
+                                    /
+                                    {activity.vacancy_limit}
+                                    {' '}
+                                    confirmados
+                                  </span>
+                                ) : (
+                                  <span>
+                                    {Number(
+                                      activity.confirmed_count ||
+                                      0
+                                    )}
+                                    {' '}
+                                    confirmados
+                                  </span>
+                                )}
+
+                                {activity.requires_delivery && (
+                                  <span className="is-delivery">
+                                    entrega
+                                  </span>
+                                )}
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                   <div className="team-event-registration">
                     <EventRegistrationPanel
                       event={event}
