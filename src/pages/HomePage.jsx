@@ -431,8 +431,6 @@ function HomePage({
             />
           )}
 
-          
-
           {isTeamView && (
             <MyTeamHome
               project={currentUser?.project}
@@ -463,6 +461,9 @@ function HomePage({
               }
               visibleAnnouncements={
                 visibleAnnouncements
+              }
+              myConfirmations={
+                data?.myConfirmations || []
               }
               communityCommitments={
                 (data?.myConfirmations || []).filter(
@@ -515,21 +516,11 @@ function HomePage({
           )}
 
 
-          
 
 
 
 
 
-
-
-          
-
-          
-
-          
-
-          
 
         </main>
       </div>

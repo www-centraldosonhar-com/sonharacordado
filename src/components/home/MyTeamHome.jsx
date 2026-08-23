@@ -8,10 +8,32 @@ function MyTeamHome({
   currentUser,
   projectEvents = [],
   visibleAnnouncements,
+  myConfirmations = [],
   communityCommitments = [],
   photoDeliveries = [],
   loadHome,
 }) {
+  const getActivityConfirmation = (
+    activityId
+  ) =>
+    myConfirmations.find(
+      (confirmation) =>
+        Number(
+          confirmation.event_role_id
+        ) === Number(activityId) &&
+        confirmation.status ===
+          'confirmed'
+    ) || null
+
+  const isActivityJoined = (
+    activityId
+  ) =>
+    Boolean(
+      getActivityConfirmation(
+        activityId
+      )
+    )
+
   const projectCode =
     String(project || '').toUpperCase()
 
@@ -168,75 +190,292 @@ const projectWelcome = {
                   </div>
 
                   {Array.isArray(event?.activities) &&
-                    event.activities.length > 0 && (
-                      <div className="team-event-activities">
-                        <div className="team-event-activities-head">
-                          <span>
-                            ATIVIDADES DA EQUIPE
-                          </span>
+                    event.activities.length > 0 && (() => {
+                      const availableActivities =
+                        event.activities.filter(
+                          (activity) =>
+                            !isActivityJoined(
+                              activity.id
+                            )
+                        )
 
-                          <small>
-                            {event.activities.length}
-                            {' '}
-                            {event.activities.length === 1
-                              ? 'atividade'
-                              : 'atividades'}
-                          </small>
-                        </div>
+                      const joinedActivities =
+                        event.activities.filter(
+                          (activity) =>
+                            isActivityJoined(
+                              activity.id
+                            )
+                        )
 
-                        <div className="team-event-activities-list">
-                          {event.activities.map((activity) => (
-                            <article
-                              key={activity.id}
-                              className="team-event-activity-card"
-                            >
-                              <div>
-                                <strong>
-                                  {activity.role_name ||
-                                    activity.name ||
-                                    'Atividade'}
-                                </strong>
+                      async function handleJoinActivity(
+                        activity
+                      ) {
+                        try {
+                          const response =
+                            await fetch(
+                              '/api/volunteer?action=confirm-activity',
+                              {
+                                method: 'POST',
 
-                                <span>
-                                  {activity.team_name ||
-                                    'Equipe'}
-                                </span>
-                              </div>
+                                headers: {
+                                  'Content-Type':
+                                    'application/json',
+                                },
 
-                              <div className="team-event-activity-meta">
-                                {activity.vacancy_limit ? (
+                                body:
+                                  JSON.stringify({
+                                    eventRoleId:
+                                      activity.id,
+                                  }),
+                              }
+                            )
+
+                          const result =
+                            await response.json()
+
+                          if (!response.ok) {
+                            throw new Error(
+                              result.error ||
+                              'Não foi possível participar da atividade.'
+                            )
+                          }
+
+                          await loadHome()
+                        } catch (error) {
+                          window.alert(
+                            error?.message ||
+                            'Não foi possível participar da atividade.'
+                          )
+                        }
+                      }
+
+                      async function handleLeaveActivity(
+                        activity
+                      ) {
+                        const confirmation =
+                          getActivityConfirmation(
+                            activity.id
+                          )
+
+                        if (!confirmation) {
+                          return
+                        }
+
+                        const reason =
+                          window.prompt(
+                            'Conte rapidamente por que você está saindo da atividade:'
+                          )
+
+                        if (reason === null) {
+                          return
+                        }
+
+                        try {
+                          const response =
+                            await fetch(
+                              '/api/volunteer?action=cancel-confirmation',
+                              {
+                                method: 'POST',
+
+                                headers: {
+                                  'Content-Type':
+                                    'application/json',
+                                },
+
+                                body:
+                                  JSON.stringify({
+                                    confirmationId:
+                                      confirmation.id ||
+                                      confirmation.confirmation_id,
+
+                                    reason:
+                                      String(
+                                        reason || ''
+                                      ).trim(),
+                                  }),
+                              }
+                            )
+
+                          const result =
+                            await response.json()
+
+                          if (!response.ok) {
+                            throw new Error(
+                              result.error ||
+                              'Não foi possível sair da atividade.'
+                            )
+                          }
+
+                          await loadHome()
+                        } catch (error) {
+                          window.alert(
+                            error?.message ||
+                            'Não foi possível sair da atividade.'
+                          )
+                        }
+                      }
+
+                      return (
+                        <div className="team-event-activities">
+                          {availableActivities.length > 0 && (
+                            <details className="team-event-activity-group">
+                              <summary className="team-event-activity-group-summary">
+                                <div>
                                   <span>
-                                    {Number(
-                                      activity.confirmed_count ||
-                                      0
-                                    )}
-                                    /
-                                    {activity.vacancy_limit}
-                                    {' '}
-                                    confirmados
+                                    ATIVIDADES DISPONÍVEIS
                                   </span>
-                                ) : (
-                                  <span>
-                                    {Number(
-                                      activity.confirmed_count ||
-                                      0
-                                    )}
-                                    {' '}
-                                    confirmados
-                                  </span>
-                                )}
 
-                                {activity.requires_delivery && (
-                                  <span className="is-delivery">
-                                    entrega
-                                  </span>
+                                  <strong>
+                                    Veja onde você pode ajudar
+                                  </strong>
+                                </div>
+
+                                <small>
+                                  {availableActivities.length}
+                                </small>
+                              </summary>
+
+                              <div className="team-event-activities-list">
+                                {availableActivities.map(
+                                  (activity) => (
+                                    <article
+                                      key={activity.id}
+                                      className="team-event-activity-card"
+                                    >
+                                      <div>
+                                        <strong>
+                                          {activity.role_name ||
+                                            activity.name ||
+                                            'Atividade'}
+                                        </strong>
+
+                                        <span>
+                                          {activity.team_name ||
+                                            'Equipe'}
+                                        </span>
+                                      </div>
+
+                                      <div className="team-event-activity-meta">
+                                        <span>
+                                          {Number(
+                                            activity.confirmed_count ||
+                                            0
+                                          )}
+                                          {activity.vacancy_limit
+                                            ? `/${activity.vacancy_limit}`
+                                            : ''}
+                                          {' '}
+                                          confirmados
+                                        </span>
+
+                                        {activity.requires_delivery && (
+                                          <span className="is-delivery">
+                                            entrega
+                                          </span>
+                                        )}
+
+                                        {Number(
+                                          activity.allows_checklist ||
+                                          0
+                                        ) === 1 && (
+                                          <span className="is-checklist">
+                                            checklist
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <button
+                                        type="button"
+                                        className="team-event-activity-action"
+                                        onClick={() =>
+                                          handleJoinActivity(
+                                            activity
+                                          )
+                                        }
+                                      >
+                                        Participar
+                                      </button>
+                                    </article>
+                                  )
                                 )}
                               </div>
-                            </article>
-                          ))}
+                            </details>
+                          )}
+
+                          {joinedActivities.length > 0 && (
+                            <details className="team-event-activity-group">
+                              <summary className="team-event-activity-group-summary">
+                                <div>
+                                  <span>
+                                    MINHAS ATIVIDADES
+                                  </span>
+
+                                  <strong>
+                                    O que você topou fazer
+                                  </strong>
+                                </div>
+
+                                <small>
+                                  {joinedActivities.length}
+                                </small>
+                              </summary>
+
+                              <div className="team-event-activities-list">
+                                {joinedActivities.map(
+                                  (activity) => (
+                                    <article
+                                      key={activity.id}
+                                      className="team-event-activity-card is-joined"
+                                    >
+                                      <div>
+                                        <strong>
+                                          {activity.role_name ||
+                                            activity.name ||
+                                            'Atividade'}
+                                        </strong>
+
+                                        <span>
+                                          ✓ Você está nesta atividade
+                                        </span>
+                                      </div>
+
+                                      <div className="team-event-activity-meta">
+                                        {activity.requires_delivery && (
+                                          <span className="is-delivery">
+                                            entrega
+                                          </span>
+                                        )}
+
+                                        {Number(
+                                          activity.allows_checklist ||
+                                          0
+                                        ) === 1 && (
+                                          <span className="is-checklist">
+                                            checklist
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <button
+                                        type="button"
+                                        className="team-event-activity-action is-secondary"
+                                        onClick={() =>
+                                          handleLeaveActivity(
+                                            activity
+                                          )
+                                        }
+                                      >
+                                        Sair
+                                      </button>
+                                    </article>
+                                  )
+                                )}
+                              </div>
+                            </details>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      )
+                    })()}
 
                   <div className="team-event-registration">
                     <EventRegistrationPanel

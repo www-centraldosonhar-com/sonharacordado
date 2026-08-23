@@ -9901,3 +9901,225 @@ padding: 22px;
 
   text-transform: uppercase;
 }
+
+/* =========================================================
+   MY TEAM — FUNCTIONAL ACTIVITIES
+   ========================================================= */
+
+.team-event-activity-group {
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(43, 58, 76, .05);
+
+  border-radius: 15px;
+
+  background:
+    rgba(255,255,255,.74);
+}
+
+.team-event-activity-group + .team-event-activity-group {
+  margin-top: 8px;
+}
+
+.team-event-activity-group-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  min-height: 58px;
+
+  padding:
+    11px 13px;
+
+  list-style: none;
+
+  cursor: pointer;
+}
+
+.team-event-activity-group-summary::-webkit-details-marker {
+  display: none;
+}
+
+.team-event-activity-group-summary > div {
+  display: grid;
+  gap: 3px;
+}
+
+.team-event-activity-group-summary span {
+  color:
+    rgba(43, 58, 76, .34);
+
+  font-size: .45rem;
+  font-weight: 800;
+
+  letter-spacing: .10em;
+}
+
+.team-event-activity-group-summary strong {
+  color: #2f4051;
+
+  font-size: .60rem;
+  font-weight: 720;
+}
+
+.team-event-activity-group-summary > small {
+  display: grid;
+  place-items: center;
+
+  min-width: 24px;
+  height: 24px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(59, 89, 123, .055);
+
+  color:
+    rgba(48, 72, 100, .58);
+
+  font-size: .47rem;
+  font-weight: 760;
+}
+
+.team-event-activity-group[open]
+.team-event-activity-group-summary {
+  border-bottom:
+    1px solid
+    rgba(43, 58, 76, .045);
+}
+
+.team-event-activity-group
+.team-event-activities-list {
+  padding: 10px;
+
+  animation:
+    teamActivityReveal
+    .18s
+    ease-out;
+}
+
+.team-event-activity-card {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    auto;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+.team-event-activity-card.is-joined {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(247,251,248,.96),
+      rgba(255,255,255,.88)
+    );
+}
+
+.team-event-activity-card
+.team-event-activity-meta
+.is-checklist {
+  background:
+    rgba(73, 107, 151, .07);
+
+  color:
+    rgba(54, 82, 117, .72);
+}
+
+.team-event-activity-action {
+  min-height: 34px;
+
+  padding:
+    7px 11px;
+
+  border:
+    1px solid
+    rgba(46, 70, 99, .08);
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #426181,
+      #344e69
+    );
+
+  color: #fff;
+
+  font-family: inherit;
+  font-size: .50rem;
+  font-weight: 730;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 7px 18px
+    rgba(39, 63, 91, .13);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.team-event-activity-action:hover {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 10px 23px
+    rgba(39, 63, 91, .18);
+}
+
+.team-event-activity-action.is-secondary {
+  background:
+    rgba(255,255,255,.9);
+
+  color:
+    rgba(49, 68, 90, .68);
+
+  box-shadow: none;
+}
+
+@keyframes teamActivityReveal {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@media (max-width: 680px) {
+  .team-event-activity-card {
+    grid-template-columns: 1fr;
+
+    align-items: stretch;
+  }
+
+  .team-event-activity-action {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-event-activity-group
+  .team-event-activities-list {
+    animation: none;
+  }
+}
