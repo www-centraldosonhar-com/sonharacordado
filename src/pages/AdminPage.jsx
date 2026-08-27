@@ -2381,10 +2381,6 @@ function AdminPage({
 
                       <AdminAssistedEventOverview
                         activity={activity}
-                        activities={
-                          data.activities ||
-                          []
-                        }
                       />
                     </>
                   )}

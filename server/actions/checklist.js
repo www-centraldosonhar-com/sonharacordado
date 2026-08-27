@@ -234,6 +234,9 @@ export default async function handler(
     operation,
     checklistId,
     eventRoleId,
+    eventId,
+    activityName,
+    lookupActivityName,
     title,
     assignedUserId,
     itemId,
@@ -246,6 +249,289 @@ export default async function handler(
 
   try {
     // =====================================================
+    // ASSISTED EVENT OVERVIEW — ADMIN
+    // =====================================================
+    //
+    // Panorama operacional consolidado dos Assistidos.
+    //
+    // Recebe apenas o eventRoleId da atividade atual de
+    // Check-in e resolve todo o estado diretamente pelo
+    // evento:
+    //
+    // - Assistidos ativos do projeto;
+    // - Check-in realizado;
+    // - Check-out realizado;
+    // - Assistidos ainda dentro do evento.
+    //
+    // Não depende de descobrir checklist irmã no frontend.
+    // =====================================================
+
+    if (
+      operation ===
+      'assisted-overview'
+    ) {
+      const numericEventRoleId =
+        Number(eventRoleId)
+
+      if (
+        !Number.isInteger(
+          numericEventRoleId
+        ) ||
+        numericEventRoleId <= 0
+      ) {
+        return response.status(400).json({
+          error:
+            'Atividade inválida.',
+        })
+      }
+
+      const admin =
+        await requireAdmin(request)
+
+      if (!admin) {
+        return response.status(403).json({
+          error:
+            'Acesso não autorizado.',
+        })
+      }
+
+      const allowed =
+        await adminCanAccessActivity(
+          admin,
+          numericEventRoleId
+        )
+
+      if (!allowed) {
+        return response.status(403).json({
+          error:
+            'Você não pode administrar esta atividade.',
+        })
+      }
+
+      // Confirma que o eventRoleId pertence realmente
+      // ao Check-in de Assistidos e obtém o evento/projeto.
+      const contextRows =
+        await sql`
+          SELECT
+            er.event_id,
+            event.project_id,
+            event.event_status,
+            role.name
+              AS activity_name
+
+          FROM event_roles er
+
+          JOIN events event
+            ON event.id =
+              er.event_id
+
+          JOIN roles role
+            ON role.id =
+              er.role_id
+
+          WHERE
+            er.id =
+              ${numericEventRoleId}
+
+            AND er.active = 1
+
+          LIMIT 1
+        `
+
+      const context =
+        contextRows[0]
+
+      if (!context) {
+        return response.status(404).json({
+          error:
+            'Atividade não encontrada.',
+        })
+      }
+
+      if (
+        context.activity_name !==
+        'Recepção / Check-in de Assistidos'
+      ) {
+        return response.status(400).json({
+          error:
+            'O panorama deve ser aberto a partir do Check-in de Assistidos.',
+        })
+      }
+
+      if (!context.project_id) {
+        return response.status(400).json({
+          error:
+            'Este evento não possui projeto definido para Assistidos.',
+        })
+      }
+
+      // ===================================================
+      // PEOPLE + CHECK-IN + CHECK-OUT
+      // ===================================================
+      //
+      // EXISTS evita depender de IDs específicos de
+      // checklist ou event_role do Check-out.
+      //
+      // O vínculo é sempre:
+      // evento + nome oficial da atividade +
+      // assisted_person_id.
+      // ===================================================
+
+      const people =
+        await sql`
+          SELECT
+            assisted.id
+              AS assisted_person_id,
+
+            assisted.full_name
+              AS user_name,
+
+            assisted.guardian_name,
+            assisted.guardian_phone,
+            assisted.departure_method,
+
+            CASE
+              WHEN EXISTS (
+                SELECT 1
+
+                FROM activity_checklists checklist
+
+                JOIN event_roles checklist_role
+                  ON checklist_role.id =
+                    checklist.event_role_id
+
+                JOIN roles activity
+                  ON activity.id =
+                    checklist_role.role_id
+
+                JOIN activity_checklist_items item
+                  ON item.checklist_id =
+                    checklist.id
+
+                WHERE
+                  checklist_role.event_id =
+                    ${context.event_id}
+
+                  AND checklist.active = 1
+
+                  AND checklist.source_type =
+                    'assisted_people'
+
+                  AND activity.name =
+                    'Recepção / Check-in de Assistidos'
+
+                  AND item.assisted_person_id =
+                    assisted.id
+
+                  AND item.checked = 1
+              )
+              THEN 1
+              ELSE 0
+            END::int
+              AS checked_in,
+
+            CASE
+              WHEN EXISTS (
+                SELECT 1
+
+                FROM activity_checklists checklist
+
+                JOIN event_roles checklist_role
+                  ON checklist_role.id =
+                    checklist.event_role_id
+
+                JOIN roles activity
+                  ON activity.id =
+                    checklist_role.role_id
+
+                JOIN activity_checklist_items item
+                  ON item.checklist_id =
+                    checklist.id
+
+                WHERE
+                  checklist_role.event_id =
+                    ${context.event_id}
+
+                  AND checklist.active = 1
+
+                  AND checklist.source_type =
+                    'assisted_people'
+
+                  AND activity.name =
+                    'Despedida / Check-out de Assistidos'
+
+                  AND item.assisted_person_id =
+                    assisted.id
+
+                  AND item.checked = 1
+              )
+              THEN 1
+              ELSE 0
+            END::int
+              AS checked_out
+
+          FROM assisted_people assisted
+
+          WHERE
+            assisted.project_id =
+              ${context.project_id}
+
+            AND assisted.active = 1
+
+          ORDER BY
+            assisted.full_name
+        `
+
+      const total =
+        people.length
+
+      const checkedIn =
+        people.filter(
+          person =>
+            Number(
+              person.checked_in
+            ) === 1
+        ).length
+
+      const checkedOut =
+        people.filter(
+          person =>
+            Number(
+              person.checked_out
+            ) === 1
+        ).length
+
+      const inside =
+        people.filter(
+          person =>
+            Number(
+              person.checked_in
+            ) === 1 &&
+            Number(
+              person.checked_out
+            ) !== 1
+        ).length
+
+      return response.status(200).json({
+        eventId:
+          context.event_id,
+
+        eventStatus:
+          context.event_status,
+
+        totals: {
+          total,
+          checkedIn,
+          checkedOut,
+          inside,
+        },
+
+        people,
+      })
+    }
+
+
+    // =====================================================
     // LIST CHECKLISTS OF AN ACTIVITY — ADMIN
     // =====================================================
 
@@ -253,21 +539,126 @@ export default async function handler(
       operation ===
       'list-activity'
     ) {
-      const numericEventRoleId =
+      let numericEventRoleId =
         Number(eventRoleId)
+
+      const numericEventId =
+        Number(eventId)
+
+      const normalizedActivityName =
+        String(
+          activityName || ''
+        ).trim()
 
       const admin =
         await requireAdmin(request)
 
+      if (!admin) {
+        return response.status(403).json({
+          error:
+            'Acesso não autorizado.',
+        })
+      }
+
+      const normalizedLookupActivityName =
+        String(
+          lookupActivityName || ''
+        ).trim()
+
+      // Quando recebemos um eventRoleId atual + nome de
+      // outra atividade, usamos o próprio eventRoleId para
+      // descobrir o evento e localizar a atividade irmã.
+      //
+      // Exemplo:
+      // Check-in Assistidos -> Check-out Assistidos.
       if (
-        !admin ||
+        Number.isInteger(
+          numericEventRoleId
+        ) &&
+        normalizedLookupActivityName
+      ) {
+        const siblingRows =
+          await sql`
+            SELECT
+              target_er.id
+
+            FROM event_roles source_er
+
+            JOIN event_roles target_er
+              ON target_er.event_id =
+                source_er.event_id
+
+            JOIN roles target_role
+              ON target_role.id =
+                target_er.role_id
+
+            WHERE
+              source_er.id =
+                ${numericEventRoleId}
+
+              AND target_role.name =
+                ${normalizedLookupActivityName}
+
+              AND target_er.active = 1
+
+            LIMIT 1
+          `
+
+        numericEventRoleId =
+          Number(
+            siblingRows[0]?.id
+          )
+      }
+
+      // O uso antigo continua funcionando com eventRoleId.
+      // Para painéis administrativos, também permitimos
+      // localizar a atividade pelo evento + nome oficial.
+      if (
+        !Number.isInteger(
+          numericEventRoleId
+        ) &&
+        Number.isInteger(
+          numericEventId
+        ) &&
+        normalizedActivityName
+      ) {
+        const eventRoleRows =
+          await sql`
+            SELECT
+              er.id
+
+            FROM event_roles er
+
+            JOIN roles r
+              ON r.id =
+                er.role_id
+
+            WHERE
+              er.event_id =
+                ${numericEventId}
+
+              AND r.name =
+                ${normalizedActivityName}
+
+              AND er.active = 1
+
+            LIMIT 1
+          `
+
+        numericEventRoleId =
+          Number(
+            eventRoleRows[0]?.id
+          )
+      }
+
+      if (
         !Number.isInteger(
           numericEventRoleId
         )
       ) {
-        return response.status(403).json({
+        return response.status(400).json({
           error:
-            'Acesso não autorizado.',
+            'Atividade não encontrada.',
         })
       }
 

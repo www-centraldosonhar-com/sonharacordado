@@ -8,11 +8,8 @@ import {
 const CHECK_IN_NAME =
   'Recepção / Check-in de Assistidos'
 
-const CHECK_OUT_NAME =
-  'Despedida / Check-out de Assistidos'
 
-
-function activityName(
+function getActivityName(
   activity
 ) {
   return String(
@@ -24,115 +21,25 @@ function activityName(
 }
 
 
-function activityEventId(
-  activity
-) {
-  return Number(
-    activity?.event_id ||
-    activity?.eventId ||
-    0
-  )
-}
-
-
-async function loadActivityChecklist(
-  activity
-) {
-  if (!activity?.id) {
-    return null
-  }
-
-  const listParams =
-    new URLSearchParams({
-      operation:
-        'list-activity',
-
-      eventRoleId:
-        String(
-          activity.id
-        ),
-    })
-
-  const listResponse =
-    await fetch(
-      `/api/checklist?${listParams}`
-    )
-
-  const listResult =
-    await listResponse.json()
-
-  if (!listResponse.ok) {
-    throw new Error(
-      listResult.error ||
-      'Não foi possível carregar a checklist.'
-    )
-  }
-
-  const checklist =
-    (
-      listResult.checklists ||
-      []
-    )[0]
-
-  if (!checklist?.id) {
-    return {
-      checklist: null,
-      items: [],
-    }
-  }
-
-  const getParams =
-    new URLSearchParams({
-      operation:
-        'get',
-
-      checklistId:
-        String(
-          checklist.id
-        ),
-    })
-
-  const getResponse =
-    await fetch(
-      `/api/checklist?${getParams}`
-    )
-
-  const getResult =
-    await getResponse.json()
-
-  if (!getResponse.ok) {
-    throw new Error(
-      getResult.error ||
-      'Não foi possível carregar os Assistidos.'
-    )
-  }
-
-  return {
-    checklist:
-      getResult.checklist ||
-      checklist,
-
-    items:
-      getResult.items || [],
-  }
-}
-
-
 export default function AdminAssistedEventOverview({
   activity,
-  activities = [],
 }) {
   const [
-    checkInItems,
-    setCheckInItems,
+    people,
+    setPeople,
   ] =
     useState([])
 
   const [
-    checkOutItems,
-    setCheckOutItems,
+    totals,
+    setTotals,
   ] =
-    useState([])
+    useState({
+      total: 0,
+      checkedIn: 0,
+      checkedOut: 0,
+      inside: 0,
+    })
 
   const [
     filter,
@@ -153,98 +60,93 @@ export default function AdminAssistedEventOverview({
     useState('')
 
 
-  const currentName =
-    activityName(
-      activity
-    )
-
-  const eventId =
-    activityEventId(
-      activity
-    )
-
-
-  // Renderizamos o painel uma única vez,
-  // abaixo da atividade de Check-in.
   const shouldRender =
-    currentName ===
-      CHECK_IN_NAME
-
-
-  // O panorama é renderizado dentro da própria
-  // atividade de Check-in, então ela já é nossa
-  // fonte principal. Não precisamos encontrá-la
-  // novamente na coleção de atividades.
-  const checkInActivity =
-    shouldRender
-      ? activity
-      : null
-
-
-  const checkOutActivity =
-    useMemo(
-      () =>
-        activities.find(
-          candidate =>
-            activityEventId(
-              candidate
-            ) === eventId &&
-            activityName(
-              candidate
-            ) === CHECK_OUT_NAME
-        ) || null,
-      [
-        activities,
-        eventId,
-      ]
-    )
+    getActivityName(
+      activity
+    ) === CHECK_IN_NAME
 
 
   useEffect(
     () => {
       if (
         !shouldRender ||
-        !checkInActivity
+        !activity?.id
       ) {
         return
       }
 
       let cancelled = false
 
-      async function load() {
+
+      async function loadOverview(
+        silent = false
+      ) {
         try {
-          setLoading(true)
-          setError('')
+          if (!silent) {
+            setLoading(true)
+          }
 
-          const [
-            checkIn,
-            checkOut,
-          ] =
-            await Promise.all([
-              loadActivityChecklist(
-                checkInActivity
-              ),
+          const params =
+            new URLSearchParams({
+              operation:
+                'assisted-overview',
 
-              checkOutActivity
-                ? loadActivityChecklist(
-                    checkOutActivity
-                  )
-                : Promise.resolve(
-                    null
-                  ),
-            ])
+              eventRoleId:
+                String(
+                  activity.id
+                ),
+            })
+
+          const response =
+            await fetch(
+              `/api/checklist?${params}`
+            )
+
+          const result =
+            await response.json()
+
+          if (!response.ok) {
+            throw new Error(
+              result.error ||
+              'Não foi possível carregar o panorama dos Assistidos.'
+            )
+          }
 
           if (cancelled) {
             return
           }
 
-          setCheckInItems(
-            checkIn?.items || []
+          setPeople(
+            result.people || []
           )
 
-          setCheckOutItems(
-            checkOut?.items || []
-          )
+          setTotals({
+            total:
+              Number(
+                result.totals
+                  ?.total || 0
+              ),
+
+            checkedIn:
+              Number(
+                result.totals
+                  ?.checkedIn || 0
+              ),
+
+            checkedOut:
+              Number(
+                result.totals
+                  ?.checkedOut || 0
+              ),
+
+            inside:
+              Number(
+                result.totals
+                  ?.inside || 0
+              ),
+          })
+
+          setError('')
         } catch (
           loadError
         ) {
@@ -254,119 +156,84 @@ export default function AdminAssistedEventOverview({
             )
           }
         } finally {
-          if (!cancelled) {
+          if (
+            !cancelled &&
+            !silent
+          ) {
             setLoading(false)
           }
         }
       }
 
-      load()
+
+      loadOverview()
+
+
+      // Atualização quase em tempo real.
+      const interval =
+        window.setInterval(
+          () => {
+            loadOverview(true)
+          },
+          5000
+        )
+
 
       return () => {
         cancelled = true
+
+        window.clearInterval(
+          interval
+        )
       }
     },
     [
       shouldRender,
-      checkInActivity,
-      checkOutActivity,
+      activity?.id,
     ]
   )
 
 
-  const overview =
+  const normalizedPeople =
     useMemo(
-      () => {
-        const checkOutMap =
-          new Map(
-            checkOutItems.map(
-              item => [
-                Number(
-                  item.assisted_person_id
-                ),
-                item,
-              ]
-            )
-          )
+      () =>
+        people.map(
+          person => {
+            const checkedIn =
+              Number(
+                person.checked_in
+              ) === 1
 
-        const people =
-          checkInItems.map(
-            item => {
-              const assistedId =
-                Number(
-                  item.assisted_person_id
-                )
+            const checkedOut =
+              Number(
+                person.checked_out
+              ) === 1
 
-              const checkout =
-                checkOutMap.get(
-                  assistedId
-                )
+            let state =
+              'not-arrived'
 
-              const checkedIn =
-                Number(
-                  item.checked
-                ) === 1
-
-              const checkedOut =
-                Number(
-                  checkout?.checked
-                ) === 1
-
-              let state =
-                'not-arrived'
-
-              if (
-                checkedIn &&
-                checkedOut
-              ) {
-                state =
-                  'left'
-              } else if (
-                checkedIn
-              ) {
-                state =
-                  'inside'
-              }
-
-              return {
-                ...item,
-                state,
-                checkedIn,
-                checkedOut,
-              }
+            if (
+              checkedIn &&
+              checkedOut
+            ) {
+              state =
+                'left'
+            } else if (
+              checkedIn
+            ) {
+              state =
+                'inside'
             }
-          )
 
-        return {
-          people,
-
-          total:
-            people.length,
-
-          checkedIn:
-            people.filter(
-              person =>
-                person.checkedIn
-            ).length,
-
-          checkedOut:
-            people.filter(
-              person =>
-                person.checkedOut
-            ).length,
-
-          inside:
-            people.filter(
-              person =>
-                person.state ===
-                  'inside'
-            ).length,
-        }
-      },
-      [
-        checkInItems,
-        checkOutItems,
-      ]
+            return {
+              ...person,
+              checkedIn,
+              checkedOut,
+              state,
+            }
+          }
+        ),
+      [people]
     )
 
 
@@ -376,17 +243,17 @@ export default function AdminAssistedEventOverview({
         if (
           filter === 'all'
         ) {
-          return overview.people
+          return normalizedPeople
         }
 
-        return overview.people.filter(
+        return normalizedPeople.filter(
           person =>
             person.state ===
               filter
         )
       },
       [
-        overview,
+        normalizedPeople,
         filter,
       ]
     )
@@ -415,27 +282,6 @@ export default function AdminAssistedEventOverview({
   }
 
 
-  if (
-    !checkInItems.length
-  ) {
-    return (
-      <div className="assisted-event-overview">
-        <div className="assisted-event-empty">
-          <strong>
-            Panorama de Assistidos
-          </strong>
-
-          <span>
-            Defina o responsável do
-            Check-in para preparar a
-            lista operacional.
-          </span>
-        </div>
-      </div>
-    )
-  }
-
-
   return (
     <section className="assisted-event-overview">
       <div className="assisted-event-overview-head">
@@ -450,7 +296,7 @@ export default function AdminAssistedEventOverview({
         </div>
 
         <span>
-          Atualizado pela checklist
+          Atualização automática
         </span>
       </div>
 
@@ -462,7 +308,7 @@ export default function AdminAssistedEventOverview({
           </span>
 
           <strong>
-            {overview.total}
+            {totals.total}
           </strong>
 
           <small>
@@ -470,13 +316,14 @@ export default function AdminAssistedEventOverview({
           </small>
         </div>
 
+
         <div>
           <span>
             ✅
           </span>
 
           <strong>
-            {overview.checkedIn}
+            {totals.checkedIn}
           </strong>
 
           <small>
@@ -484,13 +331,14 @@ export default function AdminAssistedEventOverview({
           </small>
         </div>
 
+
         <div>
           <span>
             🧡
           </span>
 
           <strong>
-            {overview.inside}
+            {totals.inside}
           </strong>
 
           <small>
@@ -498,13 +346,14 @@ export default function AdminAssistedEventOverview({
           </small>
         </div>
 
+
         <div>
           <span>
             🚪
           </span>
 
           <strong>
-            {overview.checkedOut}
+            {totals.checkedOut}
           </strong>
 
           <small>
@@ -520,14 +369,17 @@ export default function AdminAssistedEventOverview({
             'all',
             'Todos',
           ],
+
           [
             'not-arrived',
             'Não chegaram',
           ],
+
           [
             'inside',
             'No evento',
           ],
+
           [
             'left',
             'Já saíram',
@@ -562,7 +414,7 @@ export default function AdminAssistedEventOverview({
 
 
       <div className="assisted-event-people">
-        {visiblePeople.length === 0 ? (
+        {!visiblePeople.length ? (
           <div className="assisted-event-no-results">
             Nenhum Assistido neste grupo.
           </div>
@@ -571,8 +423,7 @@ export default function AdminAssistedEventOverview({
             person => (
               <article
                 key={
-                  person.assisted_person_id ||
-                  person.id
+                  person.assisted_person_id
                 }
                 className={
                   `assisted-event-person state-${person.state}`
@@ -580,11 +431,7 @@ export default function AdminAssistedEventOverview({
               >
                 <div className="assisted-event-person-main">
                   <strong>
-                    {
-                      person.full_name ||
-                      person.name ||
-                      'Assistido'
-                    }
+                    {person.user_name}
                   </strong>
 
                   <span>
@@ -601,6 +448,7 @@ export default function AdminAssistedEventOverview({
                       'Já realizou check-out'}
                   </span>
                 </div>
+
 
                 <div className="assisted-event-person-contact">
                   <span>
@@ -620,6 +468,7 @@ export default function AdminAssistedEventOverview({
                     }
                   </span>
                 </div>
+
 
                 {person.departure_method && (
                   <div className="assisted-event-person-departure">
