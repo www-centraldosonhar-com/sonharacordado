@@ -7,10 +7,28 @@ import {
 
 export default function AdminFoodRestrictionsPanel() {
   const [
-    restrictions,
-    setRestrictions,
+    assisted,
+    setAssisted,
   ] =
     useState([])
+
+  const [
+    volunteers,
+    setVolunteers,
+  ] =
+    useState([])
+
+  const [
+    group,
+    setGroup,
+  ] =
+    useState('assisted')
+
+  const [
+    answerFilter,
+    setAnswerFilter,
+  ] =
+    useState('all')
 
   const [
     search,
@@ -48,13 +66,17 @@ export default function AdminFoodRestrictionsPanel() {
           if (!response.ok) {
             throw new Error(
               result.error ||
-              'Não foi possível carregar as restrições alimentares.'
+              'Não foi possível carregar as informações de Alimentação.'
             )
           }
 
           if (!cancelled) {
-            setRestrictions(
-              result.restrictions || []
+            setAssisted(
+              result.assisted || []
+            )
+
+            setVolunteers(
+              result.volunteers || []
             )
           }
         } catch (loadError) {
@@ -80,6 +102,12 @@ export default function AdminFoodRestrictionsPanel() {
   )
 
 
+  const currentRows =
+    group === 'assisted'
+      ? assisted
+      : volunteers
+
+
   const visible =
     useMemo(
       () => {
@@ -88,13 +116,35 @@ export default function AdminFoodRestrictionsPanel() {
             .trim()
             .toLowerCase()
 
-        if (!term) {
-          return restrictions
-        }
+        return currentRows.filter(
+          person => {
+            const allergies =
+              String(
+                person.allergies || ''
+              ).toLowerCase()
 
-        return restrictions.filter(
-          person =>
-            [
+            if (
+              answerFilter === 'yes' &&
+              !allergies.includes('sim')
+            ) {
+              return false
+            }
+
+            if (
+              answerFilter === 'no' &&
+              !(
+                allergies.includes('não') ||
+                allergies.includes('nao')
+              )
+            ) {
+              return false
+            }
+
+            if (!term) {
+              return true
+            }
+
+            return [
               person.full_name,
               person.allergies,
               person.project_name,
@@ -103,11 +153,13 @@ export default function AdminFoodRestrictionsPanel() {
               .join(' ')
               .toLowerCase()
               .includes(term)
+          }
         )
       },
       [
-        restrictions,
+        currentRows,
         search,
+        answerFilter,
       ]
     )
 
@@ -143,25 +195,83 @@ export default function AdminFoodRestrictionsPanel() {
           </h3>
 
           <p>
-            Consulta dos Assistidos ativos que
-            possuem alguma informação alimentar
-            relevante.
+            Consulta rápida de informações
+            registradas para Assistidos e
+            Voluntários.
           </p>
         </div>
+      </div>
 
-        <div className="food-restrictions-count">
-          <strong>
-            {restrictions.length}
-          </strong>
 
+      <div className="food-group-tabs">
+        <button
+          type="button"
+          className={
+            group === 'assisted'
+              ? 'is-active'
+              : ''
+          }
+          onClick={
+            () =>
+              setGroup(
+                'assisted'
+              )
+          }
+        >
+          Assistidos
           <span>
-            atenção{
-              restrictions.length === 1
-                ? ''
-                : 'ões'
-            }
+            {assisted.length}
           </span>
-        </div>
+        </button>
+
+        <button
+          type="button"
+          className={
+            group === 'volunteers'
+              ? 'is-active'
+              : ''
+          }
+          onClick={
+            () =>
+              setGroup(
+                'volunteers'
+              )
+          }
+        >
+          Voluntários
+          <span>
+            {volunteers.length}
+          </span>
+        </button>
+      </div>
+
+
+      <div className="food-answer-filters">
+        {[
+          ['all', 'Todos'],
+          ['yes', 'Sim'],
+          ['no', 'Não'],
+        ].map(
+          ([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={
+                answerFilter === value
+                  ? 'is-active'
+                  : ''
+              }
+              onClick={
+                () =>
+                  setAnswerFilter(
+                    value
+                  )
+              }
+            >
+              {label}
+            </button>
+          )
+        )}
       </div>
 
 
@@ -184,15 +294,29 @@ export default function AdminFoodRestrictionsPanel() {
       </label>
 
 
+      <div className="food-visible-summary">
+        <strong>
+          {visible.length}
+        </strong>
+
+        <span>
+          registro{
+            visible.length === 1
+              ? ''
+              : 's'
+          } neste filtro
+        </span>
+      </div>
+
+
       {!visible.length ? (
         <div className="food-restrictions-empty">
           <strong>
-            Nenhuma restrição encontrada 🎉
+            Nenhum registro encontrado
           </strong>
 
           <span>
-            Não há Assistidos neste filtro com
-            alergias registradas.
+            Ajuste a busca ou o filtro.
           </span>
         </div>
       ) : (
@@ -200,7 +324,7 @@ export default function AdminFoodRestrictionsPanel() {
           {visible.map(
             person => (
               <article
-                key={person.id}
+                key={`${group}-${person.id}`}
                 className="food-restriction-card"
               >
                 <div className="food-restriction-avatar">
@@ -216,11 +340,15 @@ export default function AdminFoodRestrictionsPanel() {
                 <div className="food-restriction-main">
                   <div className="food-restriction-title">
                     <strong>
-                      {person.full_name}
+                      {
+                        person.full_name
+                      }
                     </strong>
 
                     <span>
-                      {person.project_name}
+                      {
+                        person.project_name
+                      }
                     </span>
                   </div>
 
@@ -230,7 +358,9 @@ export default function AdminFoodRestrictionsPanel() {
                     </small>
 
                     <p>
-                      {person.allergies}
+                      {
+                        person.allergies
+                      }
                     </p>
                   </div>
                 </div>

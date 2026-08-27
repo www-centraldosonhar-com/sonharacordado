@@ -74,14 +74,17 @@ export default async function handler(
   }
 
 
-  const rows =
+  // =======================================================
+  // ASSISTIDOS
+  // =======================================================
+
+  const assistedRows =
     await sql`
       SELECT
         assisted.id,
         assisted.full_name,
         assisted.allergies,
         assisted.notes,
-
         assisted.project_id,
 
         project.name
@@ -109,30 +112,78 @@ export default async function handler(
           ''
         ) IS NOT NULL
 
-        AND LOWER(
-          TRIM(
-            assisted.allergies
-          )
-        ) NOT IN (
-          'não',
-          'nao',
-          'nenhuma',
-          'nenhuma informada',
-          'nenhuma informado',
-          'não informado',
-          'nao informado'
-        )
-
       ORDER BY
         project.name,
         assisted.full_name
     `
 
 
-  return response.status(200).json({
-    restrictions: rows,
+  // =======================================================
+  // VOLUNTÁRIOS
+  // =======================================================
 
-    total:
-      rows.length,
+  const volunteerRows =
+    await sql`
+      SELECT
+        users.id,
+
+        COALESCE(
+          NULLIF(
+            TRIM(
+              users.full_name
+            ),
+            ''
+          ),
+          users.name
+        ) AS full_name,
+
+        users.allergies,
+        users.project_id,
+
+        project.name
+          AS project_name
+
+      FROM users
+
+      JOIN projects project
+        ON project.id =
+          users.project_id
+
+      WHERE
+        users.active = 1
+
+        AND (
+          ${isGlobalAdmin(admin)}
+          OR users.project_id =
+            ${admin.projectId}
+        )
+
+        AND NULLIF(
+          TRIM(
+            users.allergies
+          ),
+          ''
+        ) IS NOT NULL
+
+      ORDER BY
+        project.name,
+        full_name
+    `
+
+
+  return response.status(200).json({
+    assisted:
+      assistedRows,
+
+    volunteers:
+      volunteerRows,
+
+    totals: {
+      assisted:
+        assistedRows.length,
+
+      volunteers:
+        volunteerRows.length,
+    },
   })
 }
