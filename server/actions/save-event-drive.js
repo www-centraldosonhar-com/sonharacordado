@@ -85,6 +85,9 @@ export default async function saveEventDriveHandler(
       INNER JOIN roles
         ON event_roles.role_id =
           roles.id
+      INNER JOIN teams
+        ON event_roles.team_id =
+          teams.id
       WHERE confirmations.user_id =
           ${sessionUser.userId}
         AND event_roles.event_id =
@@ -92,6 +95,8 @@ export default async function saveEventDriveHandler(
         AND confirmations.status =
           'confirmed'
         AND event_roles.requires_delivery = 1
+        AND teams.code = 'media'
+        AND roles.name ILIKE '%fot%'
       LIMIT 1
     `
 

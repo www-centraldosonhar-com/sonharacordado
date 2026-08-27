@@ -4,8 +4,17 @@ import cancelConfirmationHandler from '../server/actions/cancel-confirmation.js'
 import saveEventDriveHandler from '../server/actions/save-event-drive.js'
 import completePhotoDeliveryHandler from '../server/actions/complete-photo-delivery.js'
 import registrationHandler from '../server/actions/registration.js'
+import mediaContentStoreHandler from '../server/actions/media-content-store.js'
 
 export default async function handler(request, response) {
+
+  if (request.query?.action === 'media-content-store') {
+    return mediaContentStoreHandler(
+      request,
+      response
+    )
+  }
+
   const action = request.query?.action
 
   if (action === 'home') {

@@ -2,6 +2,7 @@ import AnnouncementCard from '../AnnouncementCard'
 import PhotoDeliveryPanel from '../PhotoDeliveryPanel'
 import EventRegistrationPanel from '../EventRegistrationPanel'
 import VolunteerChecklistPanel from '../VolunteerChecklistPanel'
+import MediaContentStorePanel from '../MediaContentStorePanel'
 
 function MyTeamHome({
   project,
@@ -486,6 +487,11 @@ const projectWelcome = {
 
       
 
+
+      {(currentUser?.mediaSupport === true ||
+        currentUser?.adminScope === 'global') && (
+        <MediaContentStorePanel />
+      )}
 
       {photoDeliveries.length > 0 && (
         <section
