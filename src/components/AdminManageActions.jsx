@@ -433,15 +433,17 @@ function AdminManageActions({
           />
 
           <label>
-            Prazo de confirmação
+            Prazo de inscrição
           </label>
 
           <input
             type="datetime-local"
-            name="confirmationDeadline"
+            name="registrationDeadline"
             defaultValue={
+              item.registration_deadline ||
               item.confirmation_deadline
                 ? String(
+                    item.registration_deadline ||
                     item.confirmation_deadline
                   ).slice(0, 16)
                 : ''
@@ -449,7 +451,24 @@ function AdminManageActions({
             required
           />
 
-          <label>Fotos no Google Drive</label>
+          <label>
+            Valor da inscrição
+          </label>
+
+          <input
+            type="number"
+            name="registrationFee"
+            min="0"
+            step="0.01"
+            defaultValue={
+              item.registration_fee ??
+              0
+            }
+          />
+
+          <label>
+            Fotos no Google Drive
+          </label>
 
           <input
             type="url"

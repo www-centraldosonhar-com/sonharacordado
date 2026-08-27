@@ -1,7 +1,7 @@
 import AnnouncementCard from '../AnnouncementCard'
 import PhotoDeliveryPanel from '../PhotoDeliveryPanel'
-import CommitmentCard from '../CommitmentCard'
 import EventRegistrationPanel from '../EventRegistrationPanel'
+import VolunteerChecklistPanel from '../VolunteerChecklistPanel'
 
 function MyTeamHome({
   project,
@@ -9,7 +9,6 @@ function MyTeamHome({
   projectEvents = [],
   visibleAnnouncements,
   myConfirmations = [],
-  communityCommitments = [],
   photoDeliveries = [],
   loadHome,
 }) {
@@ -25,14 +24,117 @@ function MyTeamHome({
           'confirmed'
     ) || null
 
-  const isActivityJoined = (
-    activityId
-  ) =>
-    Boolean(
-      getActivityConfirmation(
-        activityId
+  async function handleJoinActivity(
+    activity
+  ) {
+    try {
+      const response =
+        await fetch(
+          '/api/volunteer?action=confirm-activity',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                eventRoleId:
+                  activity.id,
+                source:
+                  'team',
+              }),
+          }
+        )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível participar da atividade.'
+        )
+      }
+
+      await loadHome()
+    } catch (error) {
+      window.alert(
+        error?.message ||
+        'Não foi possível participar da atividade.'
       )
-    )
+    }
+  }
+
+
+  async function handleLeaveActivity(
+    activity
+  ) {
+    const confirmation =
+      getActivityConfirmation(
+        activity.id
+      )
+
+    if (!confirmation) {
+      return
+    }
+
+    const reason =
+      window.prompt(
+        'Conte rapidamente por que você está saindo da atividade:'
+      )
+
+    if (reason === null) {
+      return
+    }
+
+    try {
+      const response =
+        await fetch(
+          '/api/volunteer?action=cancel-confirmation',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                confirmationId:
+                  confirmation.id ||
+                  confirmation.confirmation_id,
+
+                reason:
+                  String(
+                    reason || ''
+                  ).trim(),
+              }),
+          }
+        )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível sair da atividade.'
+        )
+      }
+
+      await loadHome()
+    } catch (error) {
+      window.alert(
+        error?.message ||
+        'Não foi possível sair da atividade.'
+      )
+    }
+  }
+
 
   const projectCode =
     String(project || '').toUpperCase()
@@ -116,7 +218,10 @@ const projectWelcome = {
               </div>
             </div>
           </section>
-      <section className="team-project-events">
+      <section
+        id="team-events"
+        className="team-project-events"
+      >
         <div className="team-project-events-head">
           <div>
             <span className="team-event-eyebrow">
@@ -190,292 +295,153 @@ const projectWelcome = {
                   </div>
 
                   {Array.isArray(event?.activities) &&
-                    event.activities.length > 0 && (() => {
-                      const availableActivities =
-                        event.activities.filter(
-                          (activity) =>
-                            !isActivityJoined(
-                              activity.id
-                            )
-                        )
+                    event.activities.length > 0 &&
+                    event.registration?.status ===
+                      'confirmed' && (
+                      <details className="team-event-activity-group team-event-inline-activities">
+                        <summary className="team-event-activity-group-summary">
+                          <div>
+                            <span>
+                              ATIVIDADES DO EVENTO
+                            </span>
 
-                      const joinedActivities =
-                        event.activities.filter(
-                          (activity) =>
-                            isActivityJoined(
-                              activity.id
-                            )
-                        )
+                            <strong>
+                              Escolha onde você quer ajudar
+                            </strong>
+                          </div>
 
-                      async function handleJoinActivity(
-                        activity
-                      ) {
-                        try {
-                          const response =
-                            await fetch(
-                              '/api/volunteer?action=confirm-activity',
-                              {
-                                method: 'POST',
+                          <small>
+                            {event.activities.length}
+                          </small>
+                        </summary>
 
-                                headers: {
-                                  'Content-Type':
-                                    'application/json',
-                                },
+                        <div className="team-event-activities-list">
+                          {event.activities.map(
+                            (activity) => {
+                              const confirmation =
+                                myConfirmations.find(
+                                  (item) =>
+                                    Number(
+                                      item.event_role_id ||
+                                      item.eventRoleId ||
+                                      item.activity_id ||
+                                      0
+                                    ) ===
+                                    Number(activity.id)
+                                ) || null
 
-                                body:
-                                  JSON.stringify({
-                                    eventRoleId:
-                                      activity.id,
-                                  }),
-                              }
-                            )
+                              const joined =
+                                Boolean(
+                                  confirmation &&
+                                  confirmation.status ===
+                                    'confirmed'
+                                )
 
-                          const result =
-                            await response.json()
+                              return (
+                                <article
+                                  key={activity.id}
+                                  className={`team-event-activity-card ${
+                                    joined
+                                      ? 'is-joined'
+                                      : ''
+                                  }`}
+                                >
+                                  <div>
+                                    <strong>
+                                      {activity.role_name ||
+                                        activity.name ||
+                                        'Atividade'}
+                                    </strong>
 
-                          if (!response.ok) {
-                            throw new Error(
-                              result.error ||
-                              'Não foi possível participar da atividade.'
-                            )
-                          }
+                                    <span>
+                                      {activity.team_name ||
+                                        'Equipe'}
+                                    </span>
+                                  </div>
 
-                          await loadHome()
-                        } catch (error) {
-                          window.alert(
-                            error?.message ||
-                            'Não foi possível participar da atividade.'
-                          )
-                        }
-                      }
+                                  <div className="team-event-activity-meta">
+                                    <span>
+                                      {Number(
+                                        activity.confirmed_count ||
+                                        0
+                                      )}
+                                      {activity.vacancy_limit
+                                        ? `/${activity.vacancy_limit}`
+                                        : ''}
+                                      {' '}
+                                      participantes
+                                    </span>
 
-                      async function handleLeaveActivity(
-                        activity
-                      ) {
-                        const confirmation =
-                          getActivityConfirmation(
-                            activity.id
-                          )
+                                    {Number(
+                                      activity.allows_checklist ||
+                                      0
+                                    ) === 1 && (
+                                      <span className="is-checklist">
+                                        checklist
+                                      </span>
+                                    )}
 
-                        if (!confirmation) {
-                          return
-                        }
+                                    {(
+                                      activity.requires_delivery ===
+                                        true ||
+                                      Number(
+                                        activity.requires_delivery
+                                      ) === 1
+                                    ) && (
+                                      <span className="is-delivery">
+                                        entrega
+                                      </span>
+                                    )}
 
-                        const reason =
-                          window.prompt(
-                            'Conte rapidamente por que você está saindo da atividade:'
-                          )
+                                    {joined && (
+                                      <span className="is-participating">
+                                        ✓ Participando
+                                      </span>
+                                    )}
+                                  </div>
 
-                        if (reason === null) {
-                          return
-                        }
+                                  {joined ? (
+                                    <div className="team-activity-joined-actions">
+                                      <div className="team-activity-joined-label">
+                                        <span>✓</span>
 
-                        try {
-                          const response =
-                            await fetch(
-                              '/api/volunteer?action=cancel-confirmation',
-                              {
-                                method: 'POST',
-
-                                headers: {
-                                  'Content-Type':
-                                    'application/json',
-                                },
-
-                                body:
-                                  JSON.stringify({
-                                    confirmationId:
-                                      confirmation.id ||
-                                      confirmation.confirmation_id,
-
-                                    reason:
-                                      String(
-                                        reason || ''
-                                      ).trim(),
-                                  }),
-                              }
-                            )
-
-                          const result =
-                            await response.json()
-
-                          if (!response.ok) {
-                            throw new Error(
-                              result.error ||
-                              'Não foi possível sair da atividade.'
-                            )
-                          }
-
-                          await loadHome()
-                        } catch (error) {
-                          window.alert(
-                            error?.message ||
-                            'Não foi possível sair da atividade.'
-                          )
-                        }
-                      }
-
-                      return (
-                        <div className="team-event-activities">
-                          {availableActivities.length > 0 && (
-                            <details className="team-event-activity-group">
-                              <summary className="team-event-activity-group-summary">
-                                <div>
-                                  <span>
-                                    ATIVIDADES DISPONÍVEIS
-                                  </span>
-
-                                  <strong>
-                                    Veja onde você pode ajudar
-                                  </strong>
-                                </div>
-
-                                <small>
-                                  {availableActivities.length}
-                                </small>
-                              </summary>
-
-                              <div className="team-event-activities-list">
-                                {availableActivities.map(
-                                  (activity) => (
-                                    <article
-                                      key={activity.id}
-                                      className="team-event-activity-card"
-                                    >
-                                      <div>
                                         <strong>
-                                          {activity.role_name ||
-                                            activity.name ||
-                                            'Atividade'}
+                                          Já estou participando!
                                         </strong>
-
-                                        <span>
-                                          {activity.team_name ||
-                                            'Equipe'}
-                                        </span>
-                                      </div>
-
-                                      <div className="team-event-activity-meta">
-                                        <span>
-                                          {Number(
-                                            activity.confirmed_count ||
-                                            0
-                                          )}
-                                          {activity.vacancy_limit
-                                            ? `/${activity.vacancy_limit}`
-                                            : ''}
-                                          {' '}
-                                          confirmados
-                                        </span>
-
-                                        {activity.requires_delivery && (
-                                          <span className="is-delivery">
-                                            entrega
-                                          </span>
-                                        )}
-
-                                        {Number(
-                                          activity.allows_checklist ||
-                                          0
-                                        ) === 1 && (
-                                          <span className="is-checklist">
-                                            checklist
-                                          </span>
-                                        )}
                                       </div>
 
                                       <button
                                         type="button"
-                                        className="team-event-activity-action"
-                                        onClick={() =>
-                                          handleJoinActivity(
-                                            activity
-                                          )
-                                        }
-                                      >
-                                        Participar
-                                      </button>
-                                    </article>
-                                  )
-                                )}
-                              </div>
-                            </details>
-                          )}
-
-                          {joinedActivities.length > 0 && (
-                            <details className="team-event-activity-group">
-                              <summary className="team-event-activity-group-summary">
-                                <div>
-                                  <span>
-                                    MINHAS ATIVIDADES
-                                  </span>
-
-                                  <strong>
-                                    O que você topou fazer
-                                  </strong>
-                                </div>
-
-                                <small>
-                                  {joinedActivities.length}
-                                </small>
-                              </summary>
-
-                              <div className="team-event-activities-list">
-                                {joinedActivities.map(
-                                  (activity) => (
-                                    <article
-                                      key={activity.id}
-                                      className="team-event-activity-card is-joined"
-                                    >
-                                      <div>
-                                        <strong>
-                                          {activity.role_name ||
-                                            activity.name ||
-                                            'Atividade'}
-                                        </strong>
-
-                                        <span>
-                                          ✓ Você está nesta atividade
-                                        </span>
-                                      </div>
-
-                                      <div className="team-event-activity-meta">
-                                        {activity.requires_delivery && (
-                                          <span className="is-delivery">
-                                            entrega
-                                          </span>
-                                        )}
-
-                                        {Number(
-                                          activity.allows_checklist ||
-                                          0
-                                        ) === 1 && (
-                                          <span className="is-checklist">
-                                            checklist
-                                          </span>
-                                        )}
-                                      </div>
-
-                                      <button
-                                        type="button"
-                                        className="team-event-activity-action is-secondary"
+                                        className="team-activity-leave-button"
                                         onClick={() =>
                                           handleLeaveActivity(
                                             activity
                                           )
                                         }
                                       >
-                                        Sair
+                                        Sair da atividade
                                       </button>
-                                    </article>
-                                  )
-                                )}
-                              </div>
-                            </details>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="team-event-activity-action"
+                                      onClick={() =>
+                                        handleJoinActivity(
+                                          activity
+                                        )
+                                      }
+                                    >
+                                      Participar
+                                    </button>
+                                  )}
+                                </article>
+                              )
+                            }
                           )}
                         </div>
-                      )
-                    })()}
+                      </details>
+                    )}
 
                   <div className="team-event-registration">
                     <EventRegistrationPanel
@@ -507,61 +473,19 @@ const projectWelcome = {
         )}
       </section>
 
-      <nav className="team-section-nav">
-        <a href="#combinados">
-          🤝 Combinados
-        </a>
+      
+      <div className="team-inline-checklist">
+        <VolunteerChecklistPanel
+          onUpdated={loadHome}
+        />
+      </div>
 
-        
-      </nav>
+
 
       
 
       
 
-      {communityCommitments.length > 0 && (
-        <section
-          className="section-block community-commitments-section"
-          id="atividades-comunidade"
-        >
-          <div className="section-heading">
-            <p className="eyebrow eyebrow-blue">
-              ATIVIDADE DA COMUNIDADE
-            </p>
-
-            <h2>
-              O que você topou fazer com todo o Sonhar ✨
-            </h2>
-
-            <p>
-              Essas atividades foram abertas para voluntários
-              de todos os projetos e agora fazem parte da sua Sala.
-            </p>
-          </div>
-
-          <div className="cards-stack">
-            {communityCommitments.map((confirmation) => (
-              <div
-                className="community-commitment-wrapper"
-                key={
-                  confirmation.id ||
-                  confirmation.confirmation_id
-                }
-              >
-                <div className="community-origin-badge">
-                  <span>✦</span>
-                  Comunidade
-                </div>
-
-                <CommitmentCard
-                  confirmation={confirmation}
-                  onUpdated={loadHome}
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {photoDeliveries.length > 0 && (
         <section
@@ -618,6 +542,31 @@ const projectWelcome = {
                 deliveryDeadline={
                   delivery.delivery_deadline ||
                   delivery.deliveryDeadline ||
+                  null
+                }
+                reviewStatus={
+                  delivery.delivery_review_status ||
+                  delivery.deliveryReviewStatus ||
+                  ''
+                }
+                reviewNote={
+                  delivery.delivery_review_note ||
+                  delivery.deliveryReviewNote ||
+                  ''
+                }
+                deliveryLink={
+                  delivery.delivery_link ||
+                  delivery.deliveryLink ||
+                  ''
+                }
+                photoSubmittedAt={
+                  delivery.photo_submitted_at ||
+                  delivery.photoSubmittedAt ||
+                  null
+                }
+                completedAt={
+                  delivery.completed_at ||
+                  delivery.completedAt ||
                   null
                 }
                 onCompleted={loadHome}

@@ -192,7 +192,47 @@ async function canCreateExpense(
     return false
   }
 
-  // Mídias é transversal.
+  // =======================================================
+  // EVENTO GERAL
+  // =======================================================
+  // Em eventos gerais, o projeto é NULL.
+  //
+  // O Admin de Equipe só pode registrar gastos quando foi
+  // explicitamente escolhido como responsável pelo
+  // Pós-Evento daquela equipe + evento.
+  // =======================================================
+
+  if (
+    target.project_id === null
+  ) {
+    const assignmentRows =
+      await sql`
+        SELECT
+          responsible_user_id
+
+        FROM post_event_team_reports
+
+        WHERE
+          event_id =
+            ${Number(eventId)}
+
+          AND team_id =
+            ${Number(teamId)}
+
+        LIMIT 1
+      `
+
+    return (
+      Number(
+        assignmentRows[0]
+          ?.responsible_user_id
+      ) ===
+      Number(admin.id)
+    )
+  }
+
+  // Mídias continua sendo transversal nos eventos
+  // específicos dos projetos.
   if (
     target.team_code === 'media'
   ) {
@@ -214,13 +254,80 @@ async function canCreateExpense(
 // CAN READ EXPENSE
 // =========================================================
 
-function canReadExpense(
+async function canReadExpense(
   admin,
   expense
 ) {
   if (isGlobalAdmin(admin)) {
     return true
   }
+
+  // =======================================================
+  // EVENTO GERAL
+  // =======================================================
+  // Admin de Projeto pode consultar para supervisão.
+  //
+  // Admin de Equipe só pode consultar os gastos da equipe
+  // pela qual foi explicitamente escolhido como responsável
+  // naquele evento.
+  // =======================================================
+
+  if (
+    expense.project_id === null
+  ) {
+    if (isProjectAdmin(admin)) {
+      return true
+    }
+
+    if (!isTeamAdmin(admin)) {
+      return false
+    }
+
+    const teamIds =
+      getAdminTeamIds(admin)
+
+    if (
+      !teamIds.includes(
+        Number(
+          expense.team_id
+        )
+      )
+    ) {
+      return false
+    }
+
+    const assignmentRows =
+      await sql`
+        SELECT
+          1
+
+        FROM post_event_team_reports
+
+        WHERE
+          event_id =
+            ${Number(
+              expense.event_id
+            )}
+
+          AND team_id =
+            ${Number(
+              expense.team_id
+            )}
+
+          AND responsible_user_id =
+            ${Number(admin.id)}
+
+        LIMIT 1
+      `
+
+    return Boolean(
+      assignmentRows[0]
+    )
+  }
+
+  // =======================================================
+  // EVENTO DE PROJETO
+  // =======================================================
 
   if (
     isProjectAdmin(admin)
@@ -252,6 +359,7 @@ function canReadExpense(
     return false
   }
 
+  // Mídias continua transversal nos eventos específicos.
   if (
     expense.team_code ===
     'media'
@@ -393,14 +501,31 @@ export default async function handler(
           te.created_at DESC
       `
 
-      const expenses =
-        rows.filter(
-          (expense) =>
-            canReadExpense(
-              admin,
-              expense
-            )
+      const expenseVisibility =
+        await Promise.all(
+          rows.map(
+            async (expense) => ({
+              expense,
+
+              allowed:
+                await canReadExpense(
+                  admin,
+                  expense
+                ),
+            })
+          )
         )
+
+      const expenses =
+        expenseVisibility
+          .filter(
+            (item) =>
+              item.allowed
+          )
+          .map(
+            (item) =>
+              item.expense
+          )
 
       return response
         .status(200)
@@ -913,9 +1038,11 @@ export default async function handler(
 
       if (
         !expense ||
-        !canReadExpense(
-          admin,
-          expense
+        !(
+          await canReadExpense(
+            admin,
+            expense
+          )
         )
       ) {
         return response

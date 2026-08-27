@@ -100,6 +100,20 @@ function AdminRegistrationsPanel({
   canManageCoupons = false,
   onUpdated,
 }) {
+
+  const [searchTerm, setSearchTerm] =
+    useState('')
+
+  const [statusFilter, setStatusFilter] =
+    useState('all')
+
+
+  const [correctionRegistrationId, setCorrectionRegistrationId] =
+    useState(null)
+
+  const [correctionReason, setCorrectionReason] =
+    useState('')
+
   const [message, setMessage] =
     useState('')
 
@@ -352,15 +366,37 @@ function AdminRegistrationsPanel({
   }
 
 
+  function openCorrection(
+    registration
+  ) {
+    setCorrectionRegistrationId(
+      registration.id
+    )
+
+    setCorrectionReason(
+      registration.rejection_reason ||
+      ''
+    )
+  }
+
+
+  function cancelCorrection() {
+    setCorrectionRegistrationId(null)
+    setCorrectionReason('')
+  }
+
+
   async function reject(
     registration
   ) {
     const reason =
-      window.prompt(
-        `O que precisa ser corrigido por ${registration.user_name}?`
+      correctionReason.trim()
+
+    if (!reason) {
+      setMessage(
+        'Informe o que precisa ser corrigido.'
       )
 
-    if (!reason?.trim()) {
       return
     }
 
@@ -373,7 +409,105 @@ function AdminRegistrationsPanel({
         reason,
       }
     )
+
+    setCorrectionRegistrationId(null)
+    setCorrectionReason('')
   }
+
+
+
+  const allRegistrations =
+    useMemo(
+      () =>
+        eventGroups.flatMap(
+          (group) =>
+            group.registrations
+        ),
+      [eventGroups]
+    )
+
+
+  const normalizedSearch =
+    searchTerm
+      .trim()
+      .toLowerCase()
+
+
+  const filteredEventGroups =
+    useMemo(
+      () =>
+        eventGroups
+          .map((group) => ({
+            ...group,
+
+            registrations:
+              group.registrations.filter(
+                (registration) => {
+                  const matchesSearch =
+                    !normalizedSearch ||
+                    String(
+                      registration.user_name ||
+                      ''
+                    )
+                      .toLowerCase()
+                      .includes(
+                        normalizedSearch
+                      )
+
+                  const matchesStatus =
+                    statusFilter === 'all' ||
+                    registration.status ===
+                      statusFilter
+
+                  return (
+                    matchesSearch &&
+                    matchesStatus
+                  )
+                }
+              ),
+          }))
+          .filter(
+            (group) =>
+              group.registrations.length > 0
+          ),
+      [
+        eventGroups,
+        normalizedSearch,
+        statusFilter,
+      ]
+    )
+
+
+  const registrationSummary =
+    useMemo(
+      () => ({
+        total:
+          allRegistrations.length,
+
+        pending:
+          allRegistrations.filter(
+            (registration) =>
+              getStatusOrder(
+                registration.status
+              ) <= 2
+          ).length,
+
+        confirmed:
+          allRegistrations.filter(
+            (registration) =>
+              registration.status ===
+              'confirmed'
+          ).length,
+
+        cancelled:
+          allRegistrations.filter(
+            (registration) =>
+              registration.status ===
+              'cancelled'
+          ).length,
+      }),
+      [allRegistrations]
+    )
 
 
   return (
@@ -395,6 +529,91 @@ function AdminRegistrationsPanel({
       </p>
 
 
+      <div className="registration-admin-overview">
+        <div className="registration-admin-stats">
+          <div className="is-pending">
+            <strong>
+              {registrationSummary.pending}
+            </strong>
+
+            <span>
+              para analisar
+            </span>
+          </div>
+
+          <div className="is-confirmed">
+            <strong>
+              {registrationSummary.confirmed}
+            </strong>
+
+            <span>
+              confirmadas
+            </span>
+          </div>
+
+          <div>
+            <strong>
+              {registrationSummary.total}
+            </strong>
+
+            <span>
+              total
+            </span>
+          </div>
+        </div>
+
+        <div className="registration-admin-filters">
+          <label>
+            <span>
+              Buscar
+            </span>
+
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) =>
+                setSearchTerm(
+                  event.target.value
+                )
+              }
+              placeholder="Nome do voluntário"
+            />
+          </label>
+
+          <label>
+            <span>
+              Status
+            </span>
+
+            <select
+              value={statusFilter}
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value
+                )
+              }
+            >
+              <option value="all">
+                Todos
+              </option>
+
+              <option value="pending">
+                Pendentes
+              </option>
+
+              <option value="confirmed">
+                Confirmadas
+              </option>
+
+              <option value="cancelled">
+                Canceladas
+              </option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+
       {message && (
         <p className="admin-action-message">
           {message}
@@ -402,14 +621,14 @@ function AdminRegistrationsPanel({
       )}
 
 
-      {eventGroups.length === 0 ? (
+      {filteredEventGroups.length === 0 ? (
         <div className="empty-state">
           Nenhuma inscrição aguardando
           administração.
         </div>
       ) : (
         <div className="registration-event-list">
-          {eventGroups.map(
+          {filteredEventGroups.map(
             (group) => {
               const pending =
                 group.registrations.filter(
@@ -581,14 +800,14 @@ function AdminRegistrationsPanel({
                                       isLoading
                                     }
                                     onClick={() =>
-                                      reject(
+                                      openCorrection(
                                         registration
                                       )
                                     }
                                   >
-                                    ❌
+                                    ↩️
                                     <span>
-                                      Rejeitar
+                                      Solicitar correção
                                     </span>
                                   </button>
                                 </>
@@ -609,6 +828,64 @@ function AdminRegistrationsPanel({
                                 {status.label}
                               </strong>
                             </div>
+
+
+                            {correctionRegistrationId ===
+                              registration.id && (
+                              <div className="registration-correction-editor">
+                                <div className="registration-correction-editor-head">
+                                  <div>
+                                    <small>
+                                      SOLICITAR CORREÇÃO
+                                    </small>
+
+                                    <strong>
+                                      O que precisa ser corrigido?
+                                    </strong>
+                                  </div>
+                                </div>
+
+                                <textarea
+                                  value={correctionReason}
+                                  onChange={(event) =>
+                                    setCorrectionReason(
+                                      event.target.value
+                                    )
+                                  }
+                                  placeholder="Ex.: O comprovante está sem identificação ou não permite confirmar o pagamento."
+                                  rows={3}
+                                  autoFocus
+                                />
+
+                                <div className="registration-correction-editor-actions">
+                                  <button
+                                    type="button"
+                                    disabled={isLoading}
+                                    onClick={
+                                      cancelCorrection
+                                    }
+                                  >
+                                    Cancelar
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="is-primary"
+                                    disabled={
+                                      isLoading ||
+                                      !correctionReason.trim()
+                                    }
+                                    onClick={() =>
+                                      reject(
+                                        registration
+                                      )
+                                    }
+                                  >
+                                    Enviar correção
+                                  </button>
+                                </div>
+                              </div>
+                            )}
 
 
                             {registration.rejection_reason && (

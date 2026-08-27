@@ -240,6 +240,13 @@ function VolunteerChecklistPanel({
     items.length -
     checkedCount
 
+  const checklistLocked =
+    checklist?.can_edit === false ||
+    checklist?.event_status ===
+      'post_event' ||
+    checklist?.event_status ===
+      'closed'
+
 
   // =====================================================
   // TOGGLE PRESENCE
@@ -248,6 +255,13 @@ function VolunteerChecklistPanel({
   async function toggleItem(
     item
   ) {
+    if (checklistLocked) {
+      setMessage(
+        'Esta checklist já faz parte do histórico do evento.'
+      )
+      return
+    }
+
     const newChecked =
       Number(item.checked) === 1
         ? 0
@@ -562,6 +576,14 @@ function VolunteerChecklistPanel({
         </p>
       </div>
 
+      {checklistLocked && (
+        <div className="checklist-complete-message">
+          🔒 Evento encerrado operacionalmente —
+          esta checklist está disponível somente
+          para consulta do histórico.
+        </div>
+      )}
+
       <div className="checklist-live-summary">
         <div>
           <strong>
@@ -674,6 +696,9 @@ function VolunteerChecklistPanel({
                 <button
                   type="button"
                   key={item.id}
+                  disabled={
+                    checklistLocked
+                  }
                   className={
                     checked
                       ? 'checklist-person checked'
@@ -694,9 +719,33 @@ function VolunteerChecklistPanel({
                       {item.user_name}
                     </strong>
 
-                    <small>
-                      {item.project_name}
-                    </small>
+                    {!item.assisted_person_id && (
+                      <small>
+                        {item.project_name}
+                      </small>
+                    )}
+
+                    {item.assisted_person_id && (
+                      <span className="checklist-assisted-details">
+                        {item.guardian_name && (
+                          <small>
+                            Responsável: {item.guardian_name}
+                          </small>
+                        )}
+
+                        {item.guardian_phone && (
+                          <small>
+                            Telefone: {item.guardian_phone}
+                          </small>
+                        )}
+
+                        {item.departure_method && (
+                          <small>
+                            Forma de saída: {item.departure_method}
+                          </small>
+                        )}
+                      </span>
+                    )}
                   </span>
 
                   <span className="checklist-person-status">

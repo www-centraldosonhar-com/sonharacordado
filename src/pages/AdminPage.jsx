@@ -6,9 +6,10 @@ import {
 import AdminManageActions from '../components/AdminManageActions'
 import AdminImageUpload from '../components/AdminImageUpload'
 import AdminChecklistPanel from '../components/AdminChecklistPanel'
+import AdminAssistedEventOverview from '../components/AdminAssistedEventOverview'
 import AdminRegistrationsPanel from '../components/AdminRegistrationsPanel'
+import AdminAssistedPanel from '../components/AdminAssistedPanel'
 import AdminVolunteerOverview from '../components/AdminVolunteerOverview'
-import AdminActivitiesOverview from '../components/AdminActivitiesOverview'
 import AdminExpensesPanel from '../components/AdminExpensesPanel'
 import AdminPostEventPanel from '../components/AdminPostEventPanel'
 import AdminPostEventTeamReports from '../components/AdminPostEventTeamReports'
@@ -16,6 +17,7 @@ import '../styles/admin.css'
 import '../styles/admin-premium.css'
 import AdminFinanceRequestsPanel from '../components/AdminFinanceRequestsPanel'
 import AdminPeopleImport from '../components/AdminPeopleImport.jsx'
+import AdminEventComposer from '../components/AdminEventComposer.jsx'
 
 function AdminPage({
   user,
@@ -31,6 +33,7 @@ function AdminPage({
   const [userStatus, setUserStatus] = useState('all')
   const [userPinStatus, setUserPinStatus] = useState('all')
   const [selectedUser, setSelectedUser] = useState(null)
+  const [selectedMetric, setSelectedMetric] = useState(null)
   const [userProfileTab, setUserProfileTab] = useState('overview')
   const [announcementComposerOpen, setAnnouncementComposerOpen] = useState(false)
   const [userParticipation, setUserParticipation] = useState([])
@@ -396,33 +399,573 @@ function AdminPage({
       'media'
     )
 
-  const canEditMonthlyCommunity =
-    isGlobalAdmin || isMediaAdmin
-
   const isManagementAdmin =
     isGlobalAdmin ||
     isProjectAdmin
 
+  const capabilities =
+    data.adminAccess?.capabilities || {}
+
+  // Fallbacks preservam compatibilidade com respostas
+  // antigas da API durante deploys e desenvolvimento local.
+  const canEditMonthlyCommunity =
+    capabilities.canEditMonthlyCommunity ??
+    (isGlobalAdmin || isMediaAdmin)
+
   const canSeeUsers =
-    isManagementAdmin ||
-    isVolunteerAdmin
+    capabilities.canViewPeople ??
+    (isManagementAdmin || isVolunteerAdmin)
 
   const canSeeEvents =
+    capabilities.canViewEvents ??
     isManagementAdmin
 
+  const canManageEvents =
+    capabilities.canManageEvents ??
+    isManagementAdmin
+
+
   const canSeeActivities =
-    isManagementAdmin ||
-    isMediaAdmin ||
-    isVolunteerAdmin
+    capabilities.canViewActivities ??
+    (
+      isManagementAdmin ||
+      isMediaAdmin ||
+      isVolunteerAdmin
+    )
 
   const canSeeAnnouncements =
-    isManagementAdmin ||
-    isTeamAdmin
+    capabilities.canViewAnnouncements ??
+    (isManagementAdmin || isTeamAdmin)
 
   const canSeeExpenses =
+    capabilities.canViewExpenses ??
+    (
+      isGlobalAdmin ||
+      isProjectAdmin ||
+      isTeamAdmin
+    )
+
+  const activeAdminPeople =
+    (data.users || []).filter(
+      (person) => Number(person.active) !== 0
+    )
+
+  const activeVolunteers =
+    activeAdminPeople.filter(
+      (person) => person.user_type === 'volunteer'
+    )
+
+  const projectVolunteerCount =
+    activeVolunteers.length
+
+  const volunteerTeamCount =
+    activeVolunteers.filter(
+      (person) =>
+        (person.team_codes || []).includes('volunteers')
+    ).length
+
+  const mediaMemberCount =
+    activeAdminPeople.filter(
+      (person) =>
+        (person.team_codes || []).includes('media')
+    ).length
+
+  const representedProjectCount =
+    new Set(
+      activeAdminPeople
+        .map((person) => person.project_id)
+        .filter(Boolean)
+    ).size
+
+  const adminPeopleCount =
+    activeAdminPeople.filter(
+      (person) =>
+        person.permissions?.includes('admin')
+    ).length
+
+  const volunteerTeamAdminCount =
+    activeAdminPeople.filter(
+      (person) =>
+        person.permissions?.includes('admin') &&
+        (person.team_codes || []).includes('volunteers')
+    ).length
+
+  const pendingFirstAccessCount =
+    activeVolunteers.filter(
+      (person) => !person.has_pin
+    ).length
+
+  const eventCount =
+    (data.events || []).length
+
+  const activityCount =
+    (data.eventRoles || []).length
+
+  let contextualOverviewTitle =
+    'Sua equipe em números'
+
+  let contextualOverviewMetrics = [
+    {
+      label: 'Voluntários da equipe',
+      value: projectVolunteerCount,
+      description: 'ativos na sua equipe',
+      className: 'is-primary',
+    },
+    {
+      label: 'Eventos do projeto',
+      value: eventCount,
+      description: 'no seu contexto',
+    },
+    {
+      label: 'Atividades',
+      value: activityCount,
+      description: 'da sua equipe',
+    },
+    {
+      label: 'Primeiro acesso',
+      value: pendingFirstAccessCount,
+      description: 'ainda sem PIN',
+      className: 'is-attention',
+    },
+  ]
+
+  if (isGlobalAdmin) {
+    contextualOverviewTitle =
+      'Central em números'
+
+    contextualOverviewMetrics = [
+      {
+        label: 'Voluntários',
+        value: projectVolunteerCount,
+        description: 'ativos na Central',
+        className: 'is-primary',
+      },
+      {
+        label: 'Admins',
+        value: adminPeopleCount,
+        description: 'com acesso administrativo',
+      },
+      {
+        label: 'Eventos',
+        value: eventCount,
+        description: 'cadastrados',
+      },
+      {
+        label: 'Atividades',
+        value: activityCount,
+        description: 'configuradas',
+      },
+      {
+        label: 'Primeiro acesso',
+        value: pendingFirstAccessCount,
+        description: 'ainda sem PIN',
+        className: 'is-attention',
+      },
+    ]
+  } else if (isProjectAdmin) {
+    contextualOverviewTitle =
+      'Seu projeto em números'
+
+    contextualOverviewMetrics = [
+      {
+        label: 'Voluntários',
+        value: projectVolunteerCount,
+        description: 'ativos no projeto',
+        className: 'is-primary',
+      },
+      {
+        label: 'Admins',
+        value: adminPeopleCount,
+        description: 'no projeto',
+      },
+      {
+        label: 'Eventos',
+        value: eventCount,
+        description: 'do projeto',
+      },
+      {
+        label: 'Atividades',
+        value: activityCount,
+        description: 'configuradas',
+      },
+      {
+        label: 'Primeiro acesso',
+        value: pendingFirstAccessCount,
+        description: 'ainda sem PIN',
+        className: 'is-attention',
+      },
+    ]
+  } else if (isVolunteerAdmin) {
+    contextualOverviewTitle =
+      'Voluntários do projeto'
+
+    contextualOverviewMetrics = [
+      {
+        label: 'Voluntários do projeto',
+        value: projectVolunteerCount,
+        description:
+          `${volunteerTeamCount} ${
+            volunteerTeamCount === 1
+              ? 'é da equipe Voluntários'
+              : 'são da equipe Voluntários'
+          }`,
+        className: 'is-primary',
+      },
+      {
+        label: 'Admins',
+        value: adminPeopleCount,
+        description:
+          `${volunteerTeamAdminCount} ${
+            volunteerTeamAdminCount === 1
+              ? 'faz parte da equipe Voluntários'
+              : 'fazem parte da equipe Voluntários'
+          }`,
+      },
+      {
+        label: 'Eventos',
+        value: eventCount,
+        description: 'do projeto',
+      },
+      {
+        label: 'Atividades',
+        value: activityCount,
+        description: 'da equipe Voluntários',
+      },
+      {
+        label: 'Primeiro acesso',
+        value: pendingFirstAccessCount,
+        description: 'do projeto sem PIN',
+        className: 'is-attention',
+      },
+    ]
+  } else if (isMediaAdmin) {
+    contextualOverviewTitle =
+      'Mídias em números'
+
+    contextualOverviewMetrics = [
+      {
+        label: 'Membros de Mídias',
+        value: mediaMemberCount,
+        description: 'ativos na equipe',
+        className: 'is-primary',
+      },
+      {
+        label: 'Projetos representados',
+        value: representedProjectCount,
+        description: 'dentro de Mídias',
+      },
+      {
+        label: 'Eventos',
+        value: eventCount,
+        description: 'disponíveis para Mídias',
+      },
+      {
+        label: 'Atividades',
+        value: activityCount,
+        description: 'da equipe Mídias',
+      },
+      {
+        label: 'Primeiro acesso',
+        value: pendingFirstAccessCount,
+        description: 'em Mídias sem PIN',
+        className: 'is-attention',
+      },
+    ]
+  }
+
+
+  // =======================================================
+  // CENTRAL 3.0 — MÉTRICAS EXPLORÁVEIS
+  // =======================================================
+  // Usa exclusivamente dados que já vieram no admin-data.
+  // Nenhuma chamada adicional ao backend é feita ao abrir
+  // um card da Visão Geral.
+  // =======================================================
+
+  function getMetricDetail(metric) {
+    const label =
+      metric?.label || ''
+
+    if (
+      label === 'Voluntários' ||
+      label === 'Voluntários do projeto' ||
+      label === 'Voluntários da equipe' ||
+      label === 'Equipe Voluntários'
+    ) {
+      return {
+        type: 'people',
+        title: label,
+        items:
+          label === 'Equipe Voluntários'
+            ? activeVolunteers.filter(
+                (person) =>
+                  (person.team_codes || [])
+                    .includes('volunteers')
+              )
+            : activeVolunteers,
+      }
+    }
+
+    if (label === 'Admins') {
+      return {
+        type: 'people',
+        title: 'Admins',
+        items:
+          activeAdminPeople.filter(
+            (person) =>
+              person.permissions?.includes(
+                'admin'
+              )
+          ),
+      }
+    }
+
+    if (label === 'Membros de Mídias') {
+      return {
+        type: 'people',
+        title: 'Equipe Mídias',
+        items:
+          activeAdminPeople.filter(
+            (person) =>
+              (person.team_codes || [])
+                .includes('media')
+          ),
+      }
+    }
+
+    if (label === 'Primeiro acesso') {
+      return {
+        type: 'people',
+        title: 'Primeiro acesso pendente',
+        items:
+          activeVolunteers.filter(
+            (person) =>
+              !person.has_pin
+          ),
+      }
+    }
+
+    if (label === 'Eventos') {
+      return {
+        type: 'events',
+        title: 'Eventos',
+        items: data.events || [],
+      }
+    }
+
+    if (label === 'Atividades') {
+      return {
+        type: 'activities',
+        title: 'Atividades',
+        items: data.eventRoles || [],
+      }
+    }
+
+    return null
+  }
+
+
+  function getMetricItemTitle(
+    item,
+    type
+  ) {
+    if (type === 'people') {
+      return (
+        item.full_name ||
+        item.name ||
+        item.username ||
+        'Pessoa sem nome'
+      )
+    }
+
+    if (type === 'events') {
+      return (
+        item.name ||
+        item.title ||
+        item.event_name ||
+        'Evento'
+      )
+    }
+
+    return (
+      item.role_name ||
+      item.activity_name ||
+      item.name ||
+      item.title ||
+      'Atividade'
+    )
+  }
+
+
+  function getMetricItemDescription(
+    item,
+    type
+  ) {
+    if (type === 'people') {
+      const parts = []
+
+      if (item.username) {
+        parts.push(
+          `@${item.username}`
+        )
+      }
+
+      if (
+        Array.isArray(item.team_names) &&
+        item.team_names.length
+      ) {
+        parts.push(
+          item.team_names.join(' · ')
+        )
+      }
+
+      if (
+        item.project_code ||
+        item.project_name
+      ) {
+        parts.push(
+          item.project_code ||
+          item.project_name
+        )
+      }
+
+      return parts.join(' • ')
+    }
+
+    if (type === 'events') {
+      return (
+        item.project_code ||
+        item.project_name ||
+        item.location ||
+        ''
+      )
+    }
+
+    const parts = []
+
+    if (
+      item.event_name ||
+      item.event_title
+    ) {
+      parts.push(
+        item.event_name ||
+        item.event_title
+      )
+    }
+
+    if (
+      item.team_name ||
+      item.team_code
+    ) {
+      parts.push(
+        item.team_name ||
+        item.team_code
+      )
+    }
+
+    return parts.join(' • ')
+  }
+
+
+  function openMetricDetails(metric) {
+    const detail =
+      getMetricDetail(metric)
+
+    if (!detail) {
+      return
+    }
+
+    setSelectedMetric(detail)
+  }
+
+  // =======================================================
+  // CENTRAL 3.0 — NAVEGAÇÃO ADMINISTRATIVA CONTEXTUAL
+  // =======================================================
+  // A navegação nasce das mesmas capabilities utilizadas
+  // pelo restante do painel.
+  //
+  // O objetivo é evitar menus fixos e regras de visibilidade
+  // espalhadas pelo JSX.
+  // =======================================================
+
+  const canManageRegistrations =
+    capabilities.canManageRegistrations ??
+    data.adminAccess?.canManageRegistrations ??
+    false
+
+
+  // -------------------------------------------------------
+  // Nome contextual da área de pessoas
+  // -------------------------------------------------------
+
+  let peopleNavigationLabel =
+    'Equipe'
+
+  if (
     isGlobalAdmin ||
     isProjectAdmin ||
-    isTeamAdmin
+    isVolunteerAdmin
+  ) {
+    peopleNavigationLabel =
+      'Pessoas'
+  }
+
+
+  const adminNavigation = [
+    {
+      id: 'usuarios',
+      label: peopleNavigationLabel,
+      icon: '👥',
+      visible: canSeeUsers,
+    },
+
+    {
+      id: 'eventos',
+      label: 'Eventos',
+      icon: '📅',
+      visible: canSeeEvents,
+    },
+
+    {
+      id: 'relatorios-equipe',
+      label: 'Fechamento da Equipe',
+      icon: '📋',
+      visible:
+        isTeamAdmin &&
+        !isManagementAdmin,
+    },
+
+    {
+      id: 'inscricoes',
+      label: 'Inscrições',
+      icon: '📝',
+      visible: canManageRegistrations,
+    },
+
+    {
+      id: 'gastos',
+      label: 'Gastos',
+      icon: '💳',
+      visible: canSeeExpenses,
+    },
+
+    {
+      id: 'atividades',
+      label: 'Atividades',
+      icon: '🙋',
+      visible: canSeeActivities,
+    },
+
+    {
+      id: 'comunicados',
+      label: 'Comunicados',
+      icon: '📢',
+      visible: canSeeAnnouncements,
+    },
+  ].filter(
+    (item) =>
+      item.visible
+  )
 
   return (
     <div className="admin-page">
@@ -467,176 +1010,119 @@ function AdminPage({
       </header>
 
       <nav className="admin-nav">
-        {canSeeUsers && (
-          <a href="#usuarios">
-            👥 Voluntários
-          </a>
-        )}
+          {adminNavigation.map(
+            (item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="admin-quick-nav-link"
+              >
+                <span
+                  className="admin-quick-nav-icon"
+                  aria-hidden="true"
+                >
+                  {item.icon}
+                </span>
 
-        {canSeeEvents && (
-          <a href="#eventos">
-            📅 Eventos
-          </a>
-        )}
-
-        {data.adminAccess
-          ?.canManageRegistrations && (
-          <a href="#inscricoes">
-            🎟️ Inscrições
-          </a>
-        )}
-
-        {data.adminAccess
-          ?.canViewActivitiesOverview && (
-          <a href="#controle-atividades">
-            🎨 Atividades
-          </a>
-        )}
-
-        {canSeeActivities && (
-          <a href="#atividades">
-            🙋 Vagas
-          </a>
-        )}
-
-        {isManagementAdmin && (
-          <a href="#pos-evento">
-            🌙 Pós-Evento
-          </a>
-        )}
-
-        {(isManagementAdmin ||
-          isTeamAdmin) && (
-          <a href="#relatorios-equipes">
-            🤝 Relatórios
-          </a>
-        )}
-
-        {canSeeExpenses && (
-          <a href="#gastos">
-            🧾 Gastos
-          </a>
-        )}
-
-        
-
-                
-
-{canSeeAnnouncements && (
-          <a href="#comunicados">
-            📢 Comunicados
-          </a>
-        )}
-      </nav>
+                <span>
+                  {item.label}
+                </span>
+              </a>
+            )
+          )}
+        </nav>
 
       <main className="admin-shell">
 
         <section
           className="admin-operational-overview"
-          aria-label="Resumo da Central"
+          aria-label="Resumo administrativo"
         >
           <div className="admin-operational-overview-heading">
             <div>
-              <small>
-                VISÃO GERAL
-              </small>
-
-              <strong>
-                Central em números
-              </strong>
+              <small>VISÃO GERAL</small>
+              <strong>{contextualOverviewTitle}</strong>
             </div>
 
-            <span>
-              Atualizado agora
-            </span>
+            <span>Atualizado agora</span>
           </div>
 
           <div className="admin-operational-overview-grid">
-            <article className="is-primary">
-              <span>
-                Voluntários
-              </span>
+            {contextualOverviewMetrics.map((metric) => {
+              const detail =
+                getMetricDetail(metric)
 
-              <strong>
-                {(data.users || []).filter(
-                  (person) =>
-                    person.user_type === 'volunteer' &&
-                    Number(person.active) !== 0
-                ).length}
-              </strong>
+              return (
+                <article
+                  key={metric.label}
+                  className={[
+                    metric.className || '',
+                    detail
+                      ? 'is-explorable'
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  role={
+                    detail
+                      ? 'button'
+                      : undefined
+                  }
+                  tabIndex={
+                    detail
+                      ? 0
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (detail) {
+                      openMetricDetails(
+                        metric
+                      )
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      detail &&
+                      (
+                        event.key ===
+                          'Enter' ||
+                        event.key ===
+                          ' '
+                      )
+                    ) {
+                      event.preventDefault()
 
-              <small>
-                ativos na Central
-              </small>
-            </article>
+                      openMetricDetails(
+                        metric
+                      )
+                    }
+                  }}
+                >
+                  <span>
+                    {metric.label}
+                  </span>
 
-            <article>
-              <span>
-                Admins
-              </span>
+                  <strong>
+                    {metric.value}
+                  </strong>
 
-              <strong>
-                {(data.users || []).filter(
-                  (person) =>
-                    person.permissions?.includes(
-                      'admin'
-                    ) &&
-                    Number(person.active) !== 0
-                ).length}
-              </strong>
+                  <small>
+                    {metric.description}
+                  </small>
 
-              <small>
-                com acesso administrativo
-              </small>
-            </article>
-
-            <article>
-              <span>
-                Eventos
-              </span>
-
-              <strong>
-                {(data.events || []).length}
-              </strong>
-
-              <small>
-                cadastrados
-              </small>
-            </article>
-
-            <article>
-              <span>
-                Atividades
-              </span>
-
-              <strong>
-                {(data.eventRoles || []).length}
-              </strong>
-
-              <small>
-                configuradas
-              </small>
-            </article>
-
-            <article className="is-attention">
-              <span>
-                Primeiro acesso
-              </span>
-
-              <strong>
-                {(data.users || []).filter(
-                  (person) =>
-                    person.user_type === 'volunteer' &&
-                    !person.has_pin &&
-                    Number(person.active) !== 0
-                ).length}
-              </strong>
-
-              <small>
-                ainda sem PIN
-              </small>
-            </article>
-
+                  {detail && (
+                    <span className="admin-metric-detail-hint">
+                      Ver detalhes
+                      <span
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+                    </span>
+                  )}
+                </article>
+              )
+            })}
           </div>
         </section>
 
@@ -692,10 +1178,14 @@ function AdminPage({
                           body: JSON.stringify({
                             action:
                               'update-monthly-community',
-                            word:
-                              form.get('word'),
-                            message:
-                              form.get('message'),
+
+                            data: {
+                              word:
+                                form.get('word'),
+
+                              message:
+                                form.get('message'),
+                            },
                           }),
                         }
                       )
@@ -1133,6 +1623,13 @@ function AdminPage({
             </summary>
 
             <div className="admin-collapsible-body">
+              {canManageEvents && (
+                <AdminEventComposer
+                  projects={data.projects || []}
+                  onCreated={reloadAdmin}
+                />
+              )}
+
               <div className="admin-grid">
             {data.events.map((event) => (
               <article
@@ -1161,6 +1658,32 @@ function AdminPage({
                   📍 {event.location}
                 </p>
 
+                {event.location && (
+                  <div className="admin-event-map-actions">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        event.location
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-event-map-link"
+                    >
+                      🗺️ Google Maps
+                    </a>
+
+                    <a
+                      href={`https://www.waze.com/ul?q=${encodeURIComponent(
+                        event.location
+                      )}&navigate=yes`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-event-map-link"
+                    >
+                      🚙 Waze
+                    </a>
+                  </div>
+                )}
+
                 <p>
                   {event.project ||
                     'Evento geral da ONG'}
@@ -1180,23 +1703,27 @@ function AdminPage({
                   />
                 )}
 
-                <AdminImageUpload
-                  target="event"
-                  id={event.id}
-                  label={
-                    event.event_image_path
-                      ? '🎨 Trocar capa'
-                      : '🎨 Adicionar capa'
-                  }
-                  onUpdated={reloadAdmin}
-                />
+                {canManageEvents && (
+                  <>
+                    <AdminImageUpload
+                      target="event"
+                      id={event.id}
+                      label={
+                        event.event_image_path
+                          ? '🎨 Trocar capa'
+                          : '🎨 Adicionar capa'
+                      }
+                      onUpdated={reloadAdmin}
+                    />
 
-                <AdminManageActions
-                  type="event"
-                  item={event}
-                  projects={data.projects}
-                  onUpdated={reloadAdmin}
-                />
+                    <AdminManageActions
+                      type="event"
+                      item={event}
+                      projects={data.projects}
+                      onUpdated={reloadAdmin}
+                    />
+                  </>
+                )}
               </article>
             ))}
               </div>
@@ -1247,8 +1774,10 @@ function AdminPage({
           </section>
         )}
 
-        {(isManagementAdmin ||
-          isTeamAdmin) && (
+        {(
+          isTeamAdmin &&
+          !isManagementAdmin
+        ) && (
           <section
             id="relatorios-equipe"
             className="admin-section admin-section-collapsible"
@@ -1262,11 +1791,11 @@ function AdminPage({
 
                   <div>
                     <small>
-                      LEITURA OPERACIONAL
+                      DEPOIS DO EVENTO
                     </small>
 
                     <strong>
-                      Relatórios de equipe
+                      Fechamento da Equipe
                     </strong>
                   </div>
                 </div>
@@ -1280,6 +1809,9 @@ function AdminPage({
                 <AdminPostEventTeamReports
                   events={
                     data.events || []
+                  }
+                  teams={
+                    data.teams || []
                   }
                   access={
                     data.adminAccess
@@ -1340,6 +1872,46 @@ function AdminPage({
         )}
 
         {data.adminAccess
+          ?.canManageAssisted && (
+          <section
+            id="assistidos"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    🧡
+                  </span>
+
+                  <div>
+                    <small>
+                      PESSOAS E ACOLHIMENTO
+                    </small>
+
+                    <strong>
+                      Assistidos
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  Cadastro
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminAssistedPanel
+                  onUpdated={reloadAdmin}
+                  projects={data.projects || []}
+                  access={data.adminAccess}
+                />
+              </div>
+            </details>
+          </section>
+        )}
+
+        {data.adminAccess
           ?.canManageRegistrations && (
           <section
             id="visao-voluntarios"
@@ -1372,46 +1944,6 @@ function AdminPage({
                 <AdminVolunteerOverview
                   events={
                     data.volunteerEventStats || []
-                  }
-                />
-              </div>
-            </details>
-          </section>
-        )}
-
-        {data.adminAccess
-          ?.canViewActivitiesOverview && (
-          <section
-            id="visao-atividades"
-            className="admin-section admin-section-collapsible"
-          >
-            <details className="admin-collapsible">
-              <summary className="admin-collapsible-summary">
-                <div className="admin-collapsible-title">
-                  <span className="admin-collapsible-icon">
-                    📈
-                  </span>
-
-                  <div>
-                    <small>
-                      INDICADORES DE OPERAÇÃO
-                    </small>
-
-                    <strong>
-                      Visão de atividades
-                    </strong>
-                  </div>
-                </div>
-
-                <span className="admin-collapsible-count">
-                  {(data.activitiesEventStats || []).length}
-                </span>
-              </summary>
-
-              <div className="admin-collapsible-body">
-                <AdminActivitiesOverview
-                  events={
-                    data.activitiesEventStats || []
                   }
                 />
               </div>
@@ -1617,11 +2149,134 @@ function AdminPage({
                 Number(activity.vacancy_limit) -
                 Number(activity.confirmed_count)
 
+              const acceptUntilDate =
+                activity.accept_until
+                  ? new Date(
+                      activity.accept_until
+                    )
+                  : null
+
+              const activityDeadlinePassed =
+                Boolean(
+                  acceptUntilDate &&
+                  !Number.isNaN(
+                    acceptUntilDate.getTime()
+                  ) &&
+                  acceptUntilDate < new Date()
+                )
+
+              const activityIsFull =
+                remaining <= 0
+
+              const activityStatus =
+                !activity.active
+                  ? {
+                      key: 'disabled',
+                      label: '⚪ Desativada',
+                    }
+                  : activityDeadlinePassed
+                    ? {
+                        key: 'expired',
+                        label: '🔒 Prazo encerrado',
+                      }
+                    : activityIsFull
+                      ? {
+                          key: 'full',
+                          label: '🔵 Vagas preenchidas',
+                        }
+                      : {
+                          key: 'open',
+                          label: '🟢 Aceitando voluntários',
+                        }
+
+              const activityParticipants =
+                activity.participants || []
+
+              const pendingDeliveries =
+                activityParticipants.filter(
+                  (participant) =>
+                    participant.photo_submitted_at &&
+                    !participant.completed_at &&
+                    participant.delivery_review_status !==
+                      'approved' &&
+                    participant.delivery_review_status !==
+                      'changes_requested'
+                ).length
+
+              const requestedChanges =
+                activityParticipants.filter(
+                  (participant) =>
+                    participant.delivery_review_status ===
+                    'changes_requested'
+                ).length
+
               return (
-                <article
-                  className="admin-card"
+                <details
+                  className="admin-activity-card"
                   key={activity.id}
                 >
+                  <summary className="admin-activity-card-summary">
+                    <div className="admin-activity-card-summary-main">
+                      <small>
+                        ATIVIDADE
+                      </small>
+
+                      <strong>
+                        {activity.role_name}
+                      </strong>
+
+                      <span>
+                        {activity.confirmed_count || 0}
+                        {' / '}
+                        {activity.vacancy_limit}
+                        {' vagas'}
+                      </span>
+
+                      <div className="admin-activity-summary-alerts">
+                        <span>
+                          👥 {activityParticipants.length}
+                          {' '}
+                          {activityParticipants.length === 1
+                            ? 'participante'
+                            : 'participantes'}
+                        </span>
+
+                        {pendingDeliveries > 0 && (
+                          <span className="is-review">
+                            🔎 {pendingDeliveries}
+                            {' '}
+                            {pendingDeliveries === 1
+                              ? 'em análise'
+                              : 'em análise'}
+                          </span>
+                        )}
+
+                        {requestedChanges > 0 && (
+                          <span className="is-changes">
+                            ↩ {requestedChanges}
+                            {' '}
+                            {requestedChanges === 1
+                              ? 'correção'
+                              : 'correções'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="admin-activity-card-summary-side">
+                      <span
+                        className={`admin-activity-summary-state is-${activityStatus.key}`}
+                      >
+                        {activityStatus.label}
+                      </span>
+
+                      <i aria-hidden="true">
+                        ⌄
+                      </i>
+                    </div>
+                  </summary>
+
+                  <div className="admin-activity-card-body">
                   <h3>
                     {activity.role_name}
                   </h3>
@@ -1653,11 +2308,57 @@ function AdminPage({
                     </span>
                   </div>
 
-                  <p>
-                    {activity.active
-                      ? '🟢 Aberta'
-                      : '⚪ Fechada'}
-                  </p>
+                  <div className="admin-activity-section-head">
+                    <div>
+                      <small>
+                        CONFIGURAÇÃO
+                      </small>
+
+                      <strong>
+                        Gestão da atividade
+                      </strong>
+                    </div>
+
+                    <span>
+                      Vagas, prazo e regras
+                    </span>
+                  </div>
+
+                  <div className="admin-activity-status-row">
+                    <span
+                      className={`admin-activity-state is-${activityStatus.key}`}
+                    >
+                      {activityStatus.label}
+                    </span>
+
+                    {activity.accept_until && (
+                      <span className="admin-activity-deadline">
+                        Aceitar voluntários até
+                        {' '}
+                        {(() => {
+                          const date =
+                            new Date(
+                              activity.accept_until
+                            )
+
+                          return Number.isNaN(
+                            date.getTime()
+                          )
+                            ? ''
+                            : date.toLocaleString(
+                                'pt-BR',
+                                {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )
+                        })()}
+                      </span>
+                    )}
+                  </div>
 
                   <AdminManageActions
                     type="activity"
@@ -1669,13 +2370,23 @@ function AdminPage({
                   {Number(
                     activity.allows_checklist
                   ) === 1 && (
-                    <AdminChecklistPanel
-                      activity={activity}
-                      participants={
-                        data.activityParticipants ||
-                        []
-                      }
-                    />
+                    <>
+                      <AdminChecklistPanel
+                        activity={activity}
+                        participants={
+                          data.activityParticipants ||
+                          []
+                        }
+                      />
+
+                      <AdminAssistedEventOverview
+                        activity={activity}
+                        activities={
+                          data.activities ||
+                          []
+                        }
+                      />
+                    </>
                   )}
 
                   {data.activityParticipants
@@ -1685,7 +2396,24 @@ function AdminPage({
                         Number(activity.id)
                     )
                     .length > 0 && (
-                    <div className="admin-participants">
+                    <>
+                    <div className="admin-activity-section-head admin-activity-people-head">
+                    <div>
+                      <small>
+                        PARTICIPANTES
+                      </small>
+
+                      <strong>
+                        Pessoas e entregas
+                      </strong>
+                    </div>
+
+                    <span>
+                      Confirmações e revisão
+                    </span>
+                  </div>
+
+                  <div className="admin-participants">
                       <h4>
                         👥 Participantes
                       </h4>
@@ -1715,10 +2443,216 @@ function AdminPage({
                               {Number(
                                 participant.requires_delivery
                               ) === 1 ? (
-                                participant.photo_submitted_at ? (
-                                  <span className="admin-participant-status admin-participant-ready">
-                                    🔎 Entrega realizada — aguardando validação
-                                  </span>
+                                (
+                                  participant.delivery_review_status ===
+                                    'approved' ||
+                                  participant.completed_at
+                                ) ? (
+                                  <div className="admin-delivery-reviewed">
+                                    <span className="admin-participant-status admin-participant-approved">
+                                      ✅ Entrega aprovada
+                                    </span>
+
+                                    {participant.delivery_link && (
+                                      <a
+                                        href={
+                                          participant.delivery_link
+                                        }
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="admin-delivery-view-button"
+                                      >
+                                        📁 Ver entrega
+                                      </a>
+                                    )}
+                                  </div>
+                                ) : participant.delivery_review_status ===
+                                  'changes_requested' ? (
+                                  <div className="admin-delivery-review admin-delivery-needs-changes">
+                                    <span className="admin-participant-status admin-participant-changes">
+                                      ↩ Correção solicitada
+                                    </span>
+
+                                    {participant.delivery_review_note && (
+                                      <div className="admin-delivery-review-note">
+                                        <small>
+                                          MOTIVO DA REVISÃO
+                                        </small>
+
+                                        <p>
+                                          {
+                                            participant.delivery_review_note
+                                          }
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {participant.delivery_link && (
+                                      <a
+                                        href={
+                                          participant.delivery_link
+                                        }
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="admin-delivery-view-button"
+                                      >
+                                        📁 Ver entrega
+                                      </a>
+                                    )}
+                                  </div>
+                                ) : participant.photo_submitted_at ? (
+                                  <div className="admin-delivery-review">
+                                    <span className="admin-participant-status admin-participant-ready">
+                                      🔎 Em análise pela equipe de Mídias
+                                    </span>
+
+                                    {participant.delivery_link && (
+                                      <a
+                                        href={
+                                          participant.delivery_link
+                                        }
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="admin-delivery-view-button"
+                                      >
+                                        📁 Ver entrega
+                                      </a>
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      className="admin-delivery-approve-button"
+                                      onClick={async () => {
+                                        try {
+                                          const response =
+                                            await fetch(
+                                              '/api/admin?action=update',
+                                              {
+                                                method: 'POST',
+
+                                                headers: {
+                                                  'Content-Type':
+                                                    'application/json',
+                                                },
+
+                                                body:
+                                                  JSON.stringify({
+                                                    action:
+                                                      'toggle-activity-participant',
+
+                                                    id:
+                                                      participant.confirmation_id,
+                                                  }),
+                                              }
+                                            )
+
+                                          const result =
+                                            await response.json()
+
+                                          if (!response.ok) {
+                                            throw new Error(
+                                              result.error ||
+                                              'Não foi possível aprovar a entrega.'
+                                            )
+                                          }
+
+                                          window.alert(
+                                            result.message ||
+                                            'Entrega aprovada com sucesso! ✅'
+                                          )
+
+                                          await reloadAdmin()
+                                        } catch (error) {
+                                          window.alert(
+                                            error?.message ||
+                                            'Não foi possível aprovar a entrega.'
+                                          )
+                                        }
+                                      }}
+                                    >
+                                      ✓ Aprovar entrega
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      className="admin-delivery-changes-button"
+                                      onClick={async () => {
+                                        const reviewNote =
+                                          window.prompt(
+                                            'O que precisa ser corrigido nesta entrega?'
+                                          )
+
+                                        if (reviewNote === null) {
+                                          return
+                                        }
+
+                                        const normalizedNote =
+                                          String(
+                                            reviewNote
+                                          ).trim()
+
+                                        if (!normalizedNote) {
+                                          window.alert(
+                                            'Informe o motivo da correção.'
+                                          )
+                                          return
+                                        }
+
+                                        try {
+                                          const response =
+                                            await fetch(
+                                              '/api/admin?action=update',
+                                              {
+                                                method: 'POST',
+
+                                                headers: {
+                                                  'Content-Type':
+                                                    'application/json',
+                                                },
+
+                                                body:
+                                                  JSON.stringify({
+                                                    action:
+                                                      'request-delivery-changes',
+
+                                                    id:
+                                                      participant.confirmation_id,
+
+                                                    data: {
+                                                      reviewNote:
+                                                        normalizedNote,
+                                                    },
+                                                  }),
+                                              }
+                                            )
+
+                                          const result =
+                                            await response.json()
+
+                                          if (!response.ok) {
+                                            throw new Error(
+                                              result.error ||
+                                              'Não foi possível solicitar a correção.'
+                                            )
+                                          }
+
+                                          window.alert(
+                                            result.message ||
+                                            'Correção solicitada! ↩️'
+                                          )
+
+                                          await reloadAdmin()
+                                        } catch (error) {
+                                          window.alert(
+                                            error?.message ||
+                                            'Não foi possível solicitar a correção.'
+                                          )
+                                        }
+                                      }}
+                                    >
+                                      ↩ Solicitar correção
+                                    </button>
+                                  </div>
                                 ) : (
                                   <span className="admin-participant-status admin-participant-pending">
                                     ⏳ Aguardando entrega
@@ -1735,8 +2669,10 @@ function AdminPage({
                           </div>
                         ))}
                     </div>
+                    </>
                   )}
-                </article>
+                  </div>
+                </details>
               )
             })}
                   </div>
@@ -1968,46 +2904,100 @@ function AdminPage({
 
               <div className="admin-announcement-feed">
                 {data.announcements.map(
-                  (announcement) => (
-                    <article
-                      className={`admin-announcement-card is-${
+                  (announcement) => {
+                    const priority =
+                      String(
                         announcement.priority ||
                         'normal'
-                      }`}
-                    >
-                      <h3>
-                        {announcement.title}
-                      </h3>
+                      ).toLowerCase()
 
-                      <p>
-                        {announcement.message}
-                      </p>
+                    const priorityLabel =
+                      priority === 'urgent'
+                        ? 'URGENTE'
+                        : priority === 'important'
+                          ? 'IMPORTANTE'
+                          : 'NORMAL'
 
-                      <p>
-                        Prioridade:
-                        {' '}
-                        {announcement.priority}
-                      </p>
+                    const destinationProject =
+                      announcement.project_name ||
+                      announcement.projectName ||
+                      null
 
-                      <p>
-                        Por:
-                        {' '}
-                        {announcement.created_by_name}
-                      </p>
+                    const destinationTeam =
+                      announcement.team_name ||
+                      announcement.teamName ||
+                      null
 
-                      <p>
-                        {announcement.active
-                          ? '🟢 Ativo'
-                          : '⚪ Arquivado'}
-                      </p>
+                    return (
+                      <article
+                        key={announcement.id}
+                        className={`admin-announcement-card is-${priority}`}
+                      >
+                        <div className="admin-announcement-card-head">
+                          <span
+                            className={`admin-announcement-priority is-${priority}`}
+                          >
+                            {priorityLabel}
+                          </span>
 
-                      <AdminManageActions
-                        type="announcement"
-                        item={announcement}
-                        onUpdated={reloadAdmin}
-                      />
-                    </article>
-                  )
+                          <span
+                            className={`admin-announcement-status ${
+                              announcement.active
+                                ? 'is-active'
+                                : 'is-archived'
+                            }`}
+                          >
+                            {announcement.active
+                              ? '🟢 Ativo'
+                              : '⚪ Arquivado'}
+                          </span>
+                        </div>
+
+                        <div className="admin-announcement-card-copy">
+                          <h3>
+                            {announcement.title}
+                          </h3>
+
+                          <p>
+                            {announcement.message}
+                          </p>
+                        </div>
+
+                        <div className="admin-announcement-audience">
+                          <span>
+                            {destinationProject
+                              ? `📍 ${destinationProject}`
+                              : '🌎 Toda a ONG'}
+                          </span>
+
+                          <span>
+                            {destinationTeam
+                              ? `👥 ${destinationTeam}`
+                              : '👥 Todas as equipes'}
+                          </span>
+                        </div>
+
+                        <div className="admin-announcement-card-footer">
+                          <div className="admin-announcement-author">
+                            <small>
+                              PUBLICADO POR
+                            </small>
+
+                            <strong>
+                              {announcement.created_by_name ||
+                                'Admin'}
+                            </strong>
+                          </div>
+
+                          <AdminManageActions
+                            type="announcement"
+                            item={announcement}
+                            onUpdated={reloadAdmin}
+                          />
+                        </div>
+                      </article>
+                    )
+                  }
                 )}
               </div>
             </div>
@@ -2015,6 +3005,173 @@ function AdminPage({
         </section>
         )}
       </main>
+
+      {selectedMetric && (
+        <div
+          className="admin-user-profile-backdrop"
+          role="presentation"
+          onClick={() =>
+            setSelectedMetric(null)
+          }
+        >
+          <section
+            className="admin-user-profile-modal admin-metric-detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={
+              selectedMetric.title
+            }
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <button
+              type="button"
+              className="admin-user-profile-close"
+              onClick={() =>
+                setSelectedMetric(null)
+              }
+              aria-label="Fechar detalhes"
+            >
+              ×
+            </button>
+
+            <header className="admin-metric-detail-header">
+              <span>
+                VISÃO GERAL
+              </span>
+
+              <h2>
+                {selectedMetric.title}
+              </h2>
+
+              <p>
+                {selectedMetric.items.length}{' '}
+                {selectedMetric.items.length === 1
+                  ? 'registro'
+                  : 'registros'}
+              </p>
+            </header>
+
+            <div className="admin-metric-detail-list">
+              {selectedMetric.items.length === 0 ? (
+                <div className="admin-metric-detail-empty">
+                  Nenhum registro encontrado.
+                </div>
+              ) : (
+                selectedMetric.items.map(
+                  (item, index) => {
+                    const title =
+                      getMetricItemTitle(
+                        item,
+                        selectedMetric.type
+                      )
+
+                    const description =
+                      getMetricItemDescription(
+                        item,
+                        selectedMetric.type
+                      )
+
+                    if (
+                      selectedMetric.type ===
+                      'people'
+                    ) {
+                      return (
+                        <button
+                          type="button"
+                          key={
+                            item.id ||
+                            `${title}-${index}`
+                          }
+                          className="admin-metric-detail-item is-person"
+                          onClick={() => {
+                            setSelectedMetric(
+                              null
+                            )
+
+                            setSelectedUser(
+                              item
+                            )
+
+                            setUserProfileTab(
+                              'overview'
+                            )
+                          }}
+                        >
+                          <span className="admin-metric-person-avatar">
+                            {item.avatar_path ? (
+                              <img
+                                src={
+                                  item.avatar_path
+                                }
+                                alt=""
+                              />
+                            ) : (
+                              String(
+                                item.full_name ||
+                                item.name ||
+                                item.username ||
+                                '?'
+                              )
+                                .trim()
+                                .charAt(0)
+                                .toUpperCase()
+                            )}
+                          </span>
+
+                          <span className="admin-metric-detail-copy">
+                            <strong>
+                              {title}
+                            </strong>
+
+                            {description && (
+                              <small>
+                                {
+                                  description
+                                }
+                              </small>
+                            )}
+                          </span>
+
+                          <span
+                            className="admin-metric-item-arrow"
+                            aria-hidden="true"
+                          >
+                            →
+                          </span>
+                        </button>
+                      )
+                    }
+
+                    return (
+                      <div
+                        key={
+                          item.id ||
+                          `${title}-${index}`
+                        }
+                        className="admin-metric-detail-item"
+                      >
+                        <span className="admin-metric-detail-copy">
+                          <strong>
+                            {title}
+                          </strong>
+
+                          {description && (
+                            <small>
+                              {description}
+                            </small>
+                          )}
+                        </span>
+                      </div>
+                    )
+                  }
+                )
+              )}
+            </div>
+          </section>
+        </div>
+      )}
 
       {selectedUser && (
         <div

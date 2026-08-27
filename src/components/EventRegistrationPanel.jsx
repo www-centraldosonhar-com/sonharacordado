@@ -22,20 +22,63 @@ function EventRegistrationPanel({
   onUpdated,
   compact = false,
 }) {
-  const [email, setEmail] =
-    useState(
-      event.registration?.email ||
-      currentUser?.email ||
-      ''
-    )
+  const registrationProfileTeam =
+    (() => {
+      const teams =
+        Array.isArray(currentUser?.teams)
+          ? currentUser.teams
+          : []
 
-  const [team, setTeam] =
-    useState(
-      event.registration?.team ||
-      ''
-    )
+      const normalizedTeams =
+        teams.map((item) => ({
+          code:
+            String(
+              item?.code ||
+              item?.team_code ||
+              item?.teamCode ||
+              ''
+            )
+              .trim()
+              .toLowerCase(),
 
-  const [coupon, setCoupon] =
+          name:
+            item?.name ||
+            item?.team_name ||
+            item?.teamName ||
+            '',
+        }))
+
+      /*
+       * Se o usuário possuir uma equipe operacional
+       * além de Mídias, ela é usada como equipe principal
+       * da inscrição.
+       *
+       * Caso Mídias seja a única equipe, usa Mídias.
+       */
+      return (
+        normalizedTeams.find(
+          (item) =>
+            item.code &&
+            item.code !== 'media'
+        ) ||
+        normalizedTeams.find(
+          (item) =>
+            item.code
+        ) ||
+        null
+      )
+    })()
+
+  const registrationEmail =
+    String(
+      currentUser?.email || ''
+    ).trim()
+
+  const registrationTeam =
+    registrationProfileTeam?.code || ''
+
+
+const [coupon, setCoupon] =
     useState('')
 
   const [receipt, setReceipt] =
@@ -64,6 +107,9 @@ function EventRegistrationPanel({
     ) >= new Date()
 
   const registrationOpen =
+    Number(
+      event.active
+    ) === 1 &&
     Number(
       event.registrations_open
     ) === 1 &&
@@ -189,6 +235,12 @@ function EventRegistrationPanel({
     setIsLoading(true)
     setMessage('')
 
+    let uploadedStoragePath =
+      null
+
+    let registrationSaved =
+      false
+
     try {
       const usingCoupon =
         Boolean(coupon.trim())
@@ -202,6 +254,9 @@ function EventRegistrationPanel({
 
         storagePath =
           await prepareReceipt()
+
+        uploadedStoragePath =
+          storagePath
       }
 
       setMessage(
@@ -223,8 +278,10 @@ function EventRegistrationPanel({
               JSON.stringify({
                 operation: 'submit',
                 eventId: event.id,
-                email,
-                team,
+                email:
+                  registrationEmail,
+                team:
+                  registrationTeam,
                 couponCode:
                   coupon,
                 storagePath,
@@ -242,6 +299,9 @@ function EventRegistrationPanel({
         )
       }
 
+      registrationSaved =
+        true
+
       setMessage(
         `✅ ${result.message}`
       )
@@ -251,6 +311,44 @@ function EventRegistrationPanel({
 
       await onUpdated()
     } catch (error) {
+      // Se o comprovante chegou ao Supabase,
+      // mas a inscrição não foi gravada no banco,
+      // removemos automaticamente o arquivo órfão.
+      if (
+        uploadedStoragePath &&
+        !registrationSaved
+      ) {
+        try {
+          await fetch(
+            '/api/volunteer?action=registration',
+            {
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json',
+              },
+
+              body:
+                JSON.stringify({
+                  operation:
+                    'discard-receipt',
+
+                  eventId:
+                    event.id,
+
+                  storagePath:
+                    uploadedStoragePath,
+                }),
+            }
+          )
+        } catch {
+          // O erro principal da inscrição continua sendo
+          // mostrado ao usuário. Falha de limpeza não deve
+          // esconder o problema original.
+        }
+      }
+
       setMessage(
         error.message ||
         'Não foi possível concluir.'
@@ -422,45 +520,44 @@ function EventRegistrationPanel({
           E-mail de confirmação
         </label>
 
-        <input
-          type="email"
-          value={email}
-          onChange={(e) =>
-            setEmail(
-              e.target.value
-            )
-          }
-          required
-        />
+        <div className="registration-profile-field">
+          <input
+            type="email"
+            value={registrationEmail}
+            readOnly
+            required
+          />
+
+          <small>
+            ✓ Preenchido pelo seu cadastro
+          </small>
+        </div>
 
         <label>
-          Como você pretende participar?
+          Sua equipe
         </label>
 
-        <select
-          value={team}
-          onChange={(e) =>
-            setTeam(
-              e.target.value
-            )
-          }
-          required
-        >
-          <option value="">
-            Selecione
-          </option>
+        <div className="registration-profile-field">
+          <div className="registration-profile-value">
+            <span>
+              👥
+            </span>
 
-          {REGISTRATION_TEAMS.map(
-            (option) => (
-              <option
-                key={option.value}
-                value={option.value}
-              >
-                {option.label}
-              </option>
-            )
-          )}
-        </select>
+            <strong>
+              {registrationProfileTeam?.name ||
+                REGISTRATION_TEAMS.find(
+                  (option) =>
+                    option.value ===
+                      registrationTeam
+                )?.label ||
+                'Equipe não cadastrada'}
+            </strong>
+          </div>
+
+          <small>
+            ✓ Definida pelo seu cadastro na Central
+          </small>
+        </div>
 
         <div className="registration-divider">
           <span>

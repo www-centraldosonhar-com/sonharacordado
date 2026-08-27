@@ -1,3 +1,4 @@
+import process from 'node:process'
 import crypto from 'node:crypto'
 import { promisify } from 'node:util'
 import {
@@ -297,7 +298,6 @@ export default async function handler(request, response) {
         eventDate,
         eventTime,
         location,
-        confirmationDeadline,
         registrationFee,
         registrationDeadline,
         driveLink,
@@ -308,7 +308,6 @@ export default async function handler(request, response) {
         !eventDate ||
         !eventTime ||
         !location?.trim() ||
-        !confirmationDeadline ||
         !registrationDeadline ||
         Number.isNaN(
           Number(registrationFee)
@@ -334,16 +333,19 @@ export default async function handler(request, response) {
           ? Number(projectId)
           : null
 
-      // Evento geral da ONG é exclusivo do Admin Geral.
+      // Evento geral da ONG pode ser administrado pelo
+      // Admin Geral ou pela equipe transversal de Mídias.
       if (
         targetProjectId === null &&
-        !isGlobalAdmin(admin)
+        !isGlobalAdmin(admin) &&
+        !isMediaAdmin(admin)
       ) {
         return forbidden(response)
       }
 
       if (
         targetProjectId !== null &&
+        !isMediaAdmin(admin) &&
         !adminCanAccessProject(
           admin,
           targetProjectId
@@ -352,7 +354,7 @@ export default async function handler(request, response) {
         return forbidden(response)
       }
 
-      await sql`
+      const createdEvents = await sql`
         INSERT INTO events (
           name,
           project_id,
@@ -374,18 +376,268 @@ export default async function handler(request, response) {
           ${eventDate},
           ${eventTime},
           ${location.trim()},
-          ${confirmationDeadline},
+          ${registrationDeadline},
           ${Number(registrationFee)},
           ${registrationDeadline},
           1,
           ${driveLink?.trim() || null},
           1
         )
+        RETURNING id
       `
+
+      const createdEventId =
+        Number(createdEvents[0]?.id)
+
+      // =====================================================
+      // FIXED EVENT ACTIVITIES
+      // =====================================================
+      //
+      // Todo evento nasce com o catálogo operacional fixo
+      // da Central.
+      //
+      // MÍDIAS:
+      // - Fotógrafo(a)
+      // - Storymaker
+      //
+      // VOLUNTÁRIOS:
+      // - Recepção / Check-in de Voluntários
+      //
+      // ASSISTIDOS:
+      // - Recepção / Check-in de Assistidos
+      // - Despedida / Check-out de Assistidos
+      //
+      // Novas atividades futuras serão adicionadas por
+      // código, não pela interface.
+      // =====================================================
+
+      const activityTeams =
+        await sql`
+          SELECT
+            id,
+            code
+
+          FROM teams
+
+          WHERE code IN (
+            'media',
+            'volunteers',
+            'assisted'
+          )
+        `
+
+      const teamIds =
+        Object.fromEntries(
+          activityTeams.map(
+            team => [
+              team.code,
+              Number(team.id),
+            ]
+          )
+        )
+
+      const requiredTeamCodes = [
+        'media',
+        'volunteers',
+        'assisted',
+      ]
+
+      for (
+        const requiredCode
+        of requiredTeamCodes
+      ) {
+        if (!teamIds[requiredCode]) {
+          throw new Error(
+            `Equipe obrigatória não encontrada: ${requiredCode}`
+          )
+        }
+      }
+
+      const officialRoleNames = [
+        'Fotógrafo(a)',
+        'Storymaker',
+        'Recepção / Check-in de Voluntários',
+        'Recepção / Check-in de Assistidos',
+        'Despedida / Check-out de Assistidos',
+      ]
+
+      const officialRoles =
+        await sql`
+          SELECT
+            id,
+            name,
+            team_id,
+            allows_checklist
+
+          FROM roles
+
+          WHERE name =
+            ANY(${officialRoleNames})
+        `
+
+      const roleByName =
+        Object.fromEntries(
+          officialRoles.map(
+            role => [
+              role.name,
+              role,
+            ]
+          )
+        )
+
+      const fixedActivities = [
+        {
+          roleName:
+            'Fotógrafo(a)',
+
+          teamId:
+            teamIds.media,
+
+          vacancyLimit:
+            3,
+
+          requiresDelivery:
+            1,
+
+          communityVisible:
+            true,
+        },
+
+        {
+          roleName:
+            'Storymaker',
+
+          teamId:
+            teamIds.media,
+
+          vacancyLimit:
+            2,
+
+          requiresDelivery:
+            1,
+
+          communityVisible:
+            true,
+        },
+
+        {
+          roleName:
+            'Recepção / Check-in de Voluntários',
+
+          teamId:
+            teamIds.volunteers,
+
+          vacancyLimit:
+            3,
+
+          requiresDelivery:
+            0,
+
+          communityVisible:
+            false,
+        },
+
+        {
+          roleName:
+            'Recepção / Check-in de Assistidos',
+
+          teamId:
+            teamIds.assisted,
+
+          vacancyLimit:
+            3,
+
+          requiresDelivery:
+            0,
+
+          communityVisible:
+            false,
+        },
+
+        {
+          roleName:
+            'Despedida / Check-out de Assistidos',
+
+          teamId:
+            teamIds.assisted,
+
+          vacancyLimit:
+            3,
+
+          requiresDelivery:
+            0,
+
+          communityVisible:
+            false,
+        },
+      ]
+
+      for (
+        const activity
+        of fixedActivities
+      ) {
+        const role =
+          roleByName[
+            activity.roleName
+          ]
+
+        if (!role) {
+          throw new Error(
+            `Role oficial não encontrada: ${activity.roleName}`
+          )
+        }
+
+        const alreadyExists =
+          await sql`
+            SELECT id
+
+            FROM event_roles
+
+            WHERE
+              event_id =
+                ${createdEventId}
+
+              AND role_id =
+                ${role.id}
+
+            LIMIT 1
+          `
+
+        if (alreadyExists[0]) {
+          continue
+        }
+
+        await sql`
+          INSERT INTO event_roles (
+            event_id,
+            role_id,
+            team_id,
+            vacancy_limit,
+            requires_delivery,
+            delivery_deadline,
+            community_visible,
+            active
+          )
+
+          VALUES (
+            ${createdEventId},
+            ${role.id},
+            ${activity.teamId},
+            ${activity.vacancyLimit},
+            ${activity.requiresDelivery},
+            NULL,
+            ${activity.communityVisible},
+            1
+          )
+        `
+      }
 
       return response.status(201).json({
         success: true,
-        message: 'Evento criado! 📅',
+        eventId:
+          createdEventId,
+        message:
+          'Evento criado com as atividades oficiais da Central! 📅',
       })
     }
 
@@ -918,11 +1170,23 @@ export default async function handler(request, response) {
       error: 'Ação administrativa inválida.',
     })
   } catch (error) {
-    console.error('Admin create error:', error)
+    console.error(
+      'Admin create error:',
+      error
+    )
+
+    const isDevelopment =
+      process.env.NODE_ENV !==
+      'production'
 
     return response.status(500).json({
       error:
-        'Não foi possível concluir essa operação.',
+        isDevelopment
+          ? (
+              error?.message ||
+              'Erro interno ao criar evento.'
+            )
+          : 'Não foi possível concluir essa operação.',
     })
   }
 }

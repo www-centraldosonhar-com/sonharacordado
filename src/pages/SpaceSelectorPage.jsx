@@ -1,5 +1,7 @@
 import '../styles/login.css'
 
+import PostEventFeedbackModal from '../components/PostEventFeedbackModal'
+
 
 function SpaceSelectorPage({
   user,
@@ -35,6 +37,10 @@ function SpaceSelectorPage({
 
   return (
     <main className="portal-page">
+      <PostEventFeedbackModal
+        user={user}
+      />
+
       <section className="portal-shell">
 
         {/* ================================================

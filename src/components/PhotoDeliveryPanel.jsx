@@ -23,7 +23,11 @@ function PhotoDeliveryPanel({
   event,
   photographerName,
   confirmationId,
-  photoSubmittedAt,
+  photoSubmittedAt = null,
+  reviewStatus = '',
+  reviewNote = '',
+  deliveryLink = '',
+  completedAt = null,
 }) {
   const [
     driveAccessToken,
@@ -253,6 +257,8 @@ function PhotoDeliveryPanel({
 
             body: JSON.stringify({
               confirmationId,
+              deliveryLink:
+                folder.eventFolder.webViewLink,
             }),
           }
         )
@@ -452,15 +458,84 @@ function PhotoDeliveryPanel({
           {event.name}
         </p>
 
-        {photoSubmittedAt ? (
-          <div className="photo-delivery-status is-complete">
+        {String(reviewStatus)
+          .trim()
+          .toLowerCase() ===
+        'changes_requested' ? (
+          <div className="photo-delivery-status is-review-changes">
             <strong>
-              ✓ Fotos entregues
+              ⚠️ Correção solicitada
             </strong>
 
             <span>
-              Você ainda pode adicionar novas fotos.
+              A equipe de Mídias pediu uma nova revisão desta entrega.
             </span>
+
+            {reviewNote && (
+              <div className="photo-delivery-review-note">
+                <small>
+                  MOTIVO
+                </small>
+
+                <p>
+                  {reviewNote}
+                </p>
+              </div>
+            )}
+
+            <span>
+              Selecione novamente as fotos corrigidas e faça um novo envio.
+            </span>
+          </div>
+        ) : String(reviewStatus)
+            .trim()
+            .toLowerCase() ===
+          'approved' ||
+          completedAt ? (
+          <div className="photo-delivery-status is-approved">
+            <strong>
+              ✅ Entrega aprovada
+            </strong>
+
+            <span>
+              Sua entrega foi validada pela equipe de Mídias.
+            </span>
+
+            {deliveryLink && (
+              <a
+                href={deliveryLink}
+                target="_blank"
+                rel="noreferrer"
+                className="photo-delivery-review-link"
+              >
+                📁 Abrir entrega
+              </a>
+            )}
+          </div>
+        ) : String(reviewStatus)
+            .trim()
+            .toLowerCase() ===
+          'pending' ||
+          photoSubmittedAt ? (
+          <div className="photo-delivery-status is-review-pending">
+            <strong>
+              🔎 Entrega enviada
+            </strong>
+
+            <span>
+              Aguardando validação da equipe de Mídias.
+            </span>
+
+            {deliveryLink && (
+              <a
+                href={deliveryLink}
+                target="_blank"
+                rel="noreferrer"
+                className="photo-delivery-review-link"
+              >
+                📁 Ver entrega enviada
+              </a>
+            )}
           </div>
         ) : (
           <div className="photo-delivery-status is-pending">

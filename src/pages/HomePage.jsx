@@ -1,12 +1,29 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import AppHeader from '../components/AppHeader'
-import VolunteerChecklistPanel from '../components/VolunteerChecklistPanel'
 import VolunteerAreaSelector from '../components/VolunteerAreaSelector'
 
 import '../styles/home.css'
 import CommunityHome from '../components/home/CommunityHome'
 import MyTeamHome from '../components/home/MyTeamHome'
+
+async function fetchHomeData() {
+  const response = await fetch(
+    '/api/volunteer?action=home'
+  )
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      result.error ||
+      'Não foi possível carregar a Central.'
+    )
+  }
+
+  return result
+}
+
 
 function HomePage({
   user,
@@ -24,18 +41,8 @@ function HomePage({
 
   const loadHome = useCallback(async () => {
     try {
-      const response = await fetch(
-        '/api/volunteer?action=home'
-      )
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          'Não foi possível carregar a Central.'
-        )
-      }
+      const result =
+        await fetchHomeData()
 
       setData(result)
     } catch (loadError) {
@@ -48,24 +55,20 @@ function HomePage({
   useEffect(() => {
     let active = true
 
-    fetch('/api/volunteer?action=home')
-      .then(async (response) => {
-        const result = await response.json()
-
-        if (!response.ok) {
-          throw new Error(
-            result.error ||
-            'Não foi possível carregar a Central.'
-          )
+    fetchHomeData()
+      .then((result) => {
+        if (!active) {
+          return
         }
 
-        if (active) {
-          setData(result)
-        }
+        setData(result)
+        setError('')
       })
       .catch((loadError) => {
         if (active) {
-          setError(loadError.message)
+          setError(
+            loadError.message
+          )
         }
       })
       .finally(() => {
@@ -231,6 +234,24 @@ function HomePage({
   // EVENTS
   // =====================================================
 
+  const myConfirmedActivityIds =
+    new Set(
+      (data?.myConfirmations || [])
+        .filter(
+          (confirmation) =>
+            confirmation?.status === 'confirmed'
+        )
+        .map(
+          (confirmation) =>
+            Number(
+              confirmation?.event_role_id ||
+              confirmation?.eventRoleId ||
+              0
+            )
+        )
+        .filter(Number.isFinite)
+    )
+
   const visibleEvents =
     isGeneralView
       ? data.nextEvents.map(
@@ -258,13 +279,36 @@ function HomePage({
             (event) => ({
               ...event,
 
-              // Na página da equipe mostramos somente
-              // atividades da equipe principal.
+              // Na Sala:
+              // 1. vagas disponíveis = somente da equipe principal;
+              // 2. Mídias só aparece se o usuário já assumiu
+              //    a atividade pela Central Principal.
               activities:
                 event.activities.filter(
-                  (activity) =>
-                    activity.team_code ===
-                    primaryTeamCode
+                  (activity) => {
+                    const teamCode =
+                      String(
+                        activity?.team_code || ''
+                      ).toLowerCase()
+
+                    const ownTeamActivity =
+                      Boolean(primaryTeamCode) &&
+                      teamCode ===
+                        String(
+                          primaryTeamCode
+                        ).toLowerCase()
+
+                    const joinedMediaActivity =
+                      teamCode === 'media' &&
+                      myConfirmedActivityIds.has(
+                        Number(activity?.id)
+                      )
+
+                    return (
+                      ownTeamActivity ||
+                      joinedMediaActivity
+                    )
+                  }
                 ),
             })
           )
@@ -329,30 +373,6 @@ function HomePage({
       : parsed
   }
 
-  const universalEvents =
-    data?.nextEvents ||
-    data?.upcomingEvents ||
-    data?.events ||
-    []
-
-  const currentMonthEvents =
-    universalEvents.filter((event) => {
-      const date = getLocalDate(
-        event?.date ||
-        event?.event_date ||
-        event?.starts_at
-      )
-
-      if (!date) return false
-
-      return (
-        date.getMonth() ===
-          communityNow.getMonth() &&
-        date.getFullYear() ===
-          communityNow.getFullYear()
-      )
-    })
-
   const universalMediaActivities =
     data?.communityActivities || []
 
@@ -389,23 +409,46 @@ function HomePage({
       <div className="home-layout">
         <aside className="home-sidebar">
           <div className="home-sidebar-card">
-            <nav className="sidebar-nav">
-              <a href="#inicio">🏠 Início</a>
-
-              <a href="#eventos">
-                📅 Encontros
+            <nav
+              className="sidebar-nav"
+              aria-label="Navegação da Central"
+            >
+              <a href="#inicio">
+                🏠 Início
               </a>
 
-              
+              {isGeneralView ? (
+                <>
+                  <a href="#community-events">
+                    📅 Eventos
+                  </a>
 
-              <a href="#mural">
-                📢 Mural
-              </a>
+                  <a href="#community-media">
+                    🎥 Mídias
+                  </a>
 
-              {isGeneralView && (
-                <a href="#memorias">
-                  📸 Memórias
-                </a>
+                  <a href="#community-photos">
+                    📸 Memórias
+                  </a>
+
+                  <a href="#community-birthdays">
+                    🎂 Aniversariantes
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a href="#team-events">
+                    📅 Encontros
+                  </a>
+
+                  <a href="#pos-evento">
+                    📸 Pós-evento
+                  </a>
+
+                  <a href="#mural">
+                    📢 Mural
+                  </a>
+                </>
               )}
             </nav>
           </div>
@@ -426,44 +469,18 @@ function HomePage({
           />
 
           {isTeamView && (
-            <VolunteerChecklistPanel
-              onUpdated={loadHome}
-            />
-          )}
-
-          {isTeamView && (
             <MyTeamHome
               project={currentUser?.project}
               currentUser={currentUser}
-              projectEvents={
-                (data?.nextEvents || []).filter((event) => {
-                  const userProject =
-                    String(
-                      currentUser?.project || ''
-                    )
-                      .trim()
-                      .toUpperCase()
-
-                  const eventProject =
-                    String(
-                      event?.project ||
-                      event?.project_code ||
-                      event?.projectCode ||
-                      ''
-                    )
-                      .trim()
-                      .toUpperCase()
-
-                  return (
-                    eventProject === userProject
-                  )
-                })
-              }
+              projectEvents={visibleEvents}
               visibleAnnouncements={
                 visibleAnnouncements
               }
               myConfirmations={
                 data?.myConfirmations || []
+              }
+              pastEvents={
+                data?.pastEvents || []
               }
               communityCommitments={
                 (data?.myConfirmations || []).filter(
@@ -489,9 +506,35 @@ function HomePage({
                       item?.photoSubmittedAt
                     )
 
+                  const reviewStatus =
+                    String(
+                      item?.delivery_review_status ||
+                      item?.deliveryReviewStatus ||
+                      ''
+                    )
+                      .trim()
+                      .toLowerCase()
+
+                  const needsChanges =
+                    reviewStatus ===
+                    'changes_requested'
+
+                  const waitingReview =
+                    reviewStatus ===
+                    'pending'
+
+                  const approved =
+                    reviewStatus ===
+                    'approved'
+
                   return (
                     requiresDelivery &&
-                    !alreadySubmitted
+                    !approved &&
+                    (
+                      !alreadySubmitted ||
+                      needsChanges ||
+                      waitingReview
+                    )
                   )
                 })
               }
@@ -502,10 +545,16 @@ function HomePage({
           {isGeneralView && (
             <CommunityHome
               currentMonthLabel={currentMonthLabel}
-              currentMonthEvents={currentMonthEvents}
+              upcomingEvents={data?.nextEvents || []}
               getLocalDate={getLocalDate}
               universalMediaActivities={
                 universalMediaActivities
+              }
+              approvedPhotoMemories={
+                data?.approvedPhotoMemories || []
+              }
+              myConfirmations={
+                data?.myConfirmations || []
               }
               monthlyBirthdays={monthlyBirthdays}
               monthlyCommunity={data?.monthlyCommunity}

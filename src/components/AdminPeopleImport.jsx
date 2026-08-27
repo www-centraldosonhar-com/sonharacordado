@@ -1071,6 +1071,36 @@ export default function AdminPeopleImport() {
 
         newResponses:
           result.newResponses || 0,
+
+        validSheets:
+          Array.isArray(
+            result.validSheets
+          )
+            ? result.validSheets
+            : [],
+
+        ignoredSheets:
+          Array.isArray(
+            result.ignoredSheets
+          )
+            ? result.ignoredSheets
+            : [],
+
+        mergedDuplicates:
+          result.mergedDuplicates || 0,
+
+        possibleDuplicates:
+          result.possibleDuplicates || 0,
+
+        conflictResponses:
+          result.conflictResponses || 0,
+
+        existingConflicts:
+          Array.isArray(
+            result.existingConflicts
+          )
+            ? result.existingConflicts
+            : [],
       })
 
 
@@ -1346,25 +1376,261 @@ export default function AdminPeopleImport() {
 
       {googleSyncInfo && (
         <div className="people-google-sync-result">
-          <div>
-            <strong>
-              {googleSyncInfo.newResponses}
-            </strong>
+          <div className="people-google-sync-summary">
+            <div>
+              <strong>
+                {googleSyncInfo.newResponses}
+              </strong>
 
-            <span>
-              novas respostas
-            </span>
+              <span>
+                novas respostas
+              </span>
+            </div>
+
+            <p>
+              {googleSyncInfo.totalResponses}
+              {' '}
+              respostas encontradas ·
+              {' '}
+              {googleSyncInfo.alreadyImported}
+              {' '}
+              já cadastradas
+            </p>
           </div>
 
-          <p>
-            {googleSyncInfo.totalResponses}
-            {' '}
-            respostas na planilha ·
-            {' '}
-            {googleSyncInfo.alreadyImported}
-            {' '}
-            já cadastradas na Central
-          </p>
+          <div className="people-google-sheets-diagnostic">
+            <div className="people-google-sheets-column">
+              <div className="people-google-sheets-title">
+                <span>
+                  ✓
+                </span>
+
+                <strong>
+                  Abas utilizadas
+                </strong>
+
+                <small>
+                  {
+                    googleSyncInfo
+                      .validSheets
+                      ?.length || 0
+                  }
+                </small>
+              </div>
+
+              {googleSyncInfo
+                .validSheets
+                ?.length > 0 ? (
+                <div className="people-google-sheets-list">
+                  {googleSyncInfo.validSheets.map(
+                    (sheet) => (
+                      <div
+                        key={sheet.title}
+                        className="people-google-sheet-row is-valid"
+                      >
+                        <div>
+                          <strong>
+                            {sheet.title}
+                          </strong>
+
+                          <span>
+                            Aba reconhecida como base
+                            de voluntários
+                          </span>
+                        </div>
+
+                        <small>
+                          {sheet.responses}
+                          {' '}
+                          respostas
+                        </small>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <div className="people-google-sheet-empty">
+                  Nenhuma aba válida encontrada.
+                </div>
+              )}
+            </div>
+
+            <div className="people-google-sheets-column">
+              <div className="people-google-sheets-title">
+                <span>
+                  !
+                </span>
+
+                <strong>
+                  Abas ignoradas
+                </strong>
+
+                <small>
+                  {
+                    googleSyncInfo
+                      .ignoredSheets
+                      ?.length || 0
+                  }
+                </small>
+              </div>
+
+              {googleSyncInfo
+                .ignoredSheets
+                ?.length > 0 ? (
+                <div className="people-google-sheets-list">
+                  {googleSyncInfo.ignoredSheets.map(
+                    (sheet) => (
+                      <div
+                        key={`${sheet.title}-${sheet.reason}`}
+                        className="people-google-sheet-row is-ignored"
+                      >
+                        <div>
+                          <strong>
+                            {sheet.title}
+                          </strong>
+
+                          <span>
+                            {sheet.reason}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <div className="people-google-sheet-empty">
+                  Nenhuma aba foi ignorada.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {googleSyncInfo.existingConflicts?.length > 0 && (
+            <div className="people-google-conflicts">
+              <div className="people-google-conflicts-head">
+                <div>
+                  <small>
+                    REVISÃO NECESSÁRIA
+                  </small>
+
+                  <strong>
+                    Possíveis conflitos encontrados
+                  </strong>
+
+                  <span>
+                    Nenhuma resposta foi descartada.
+                    Revise os dados antes de importar.
+                  </span>
+                </div>
+
+                <span className="people-google-conflicts-count">
+                  {googleSyncInfo.existingConflicts.length}
+                </span>
+              </div>
+
+              <div className="people-google-conflicts-list">
+                {googleSyncInfo.existingConflicts.map(
+                  (item, index) => (
+                    <article
+                      key={`${item.full_name}-${item.source}-${index}`}
+                      className="people-google-conflict-card"
+                    >
+                      <div className="people-google-conflict-person">
+                        <small>
+                          NOVA RESPOSTA
+                        </small>
+
+                        <strong>
+                          {item.full_name ||
+                            'Nome não informado'}
+                        </strong>
+
+                        <span>
+                          {item.project ||
+                            'Projeto não identificado'}
+
+                          {item.source && (
+                            <>
+                              {' · '}
+                              {item.source}
+                            </>
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="people-google-conflict-matches">
+                        {item.conflicts?.map(
+                          (conflict) => (
+                            <div
+                              key={conflict.userId}
+                              className="people-google-conflict-match"
+                            >
+                              <div>
+                                <small>
+                                  CONFLITO COM
+                                </small>
+
+                                <strong>
+                                  {conflict.userName ||
+                                    'Cadastro existente'}
+                                </strong>
+                              </div>
+
+                              <div className="people-google-conflict-reasons">
+                                {conflict.reasons?.map(
+                                  (reason) => (
+                                    <span key={reason}>
+                                      ⚠ {reason}
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="people-google-conflict-review"
+                        onClick={() => {
+                          setPreviewFilter('warning')
+
+                          requestAnimationFrame(() => {
+                            document
+                              .querySelector(
+                                '.people-import-preview'
+                              )
+                              ?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start',
+                              })
+                          })
+                        }}
+                      >
+                        Revisar no preview
+                      </button>
+                    </article>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          {(
+            googleSyncInfo.mergedDuplicates > 0 ||
+            googleSyncInfo.possibleDuplicates > 0
+          ) && (
+            <div className="people-google-sync-note">
+              {googleSyncInfo.mergedDuplicates}
+              {' '}
+              duplicidade(s) mesclada(s)
+              {' · '}
+              {googleSyncInfo.possibleDuplicates}
+              {' '}
+              possível(is) duplicidade(s)
+            </div>
+          )}
         </div>
       )}
 
@@ -1458,19 +1724,40 @@ export default function AdminPeopleImport() {
               Importação concluída
             </strong>
 
-            <p>
-              {importResult.imported}
-              {' '}
-              voluntários foram adicionados à Central.
-            </p>
+            <div className="people-import-result-stats">
+              <div className="is-success">
+                <strong>
+                  {importResult.imported || 0}
+                </strong>
 
-            {importResult.skipped > 0 && (
-              <p>
-                {importResult.skipped}
-                {' '}
-                registros foram ignorados por duplicidade.
-              </p>
-            )}
+                <span>
+                  importados
+                </span>
+              </div>
+
+              <div className="is-skipped">
+                <strong>
+                  {importResult.skipped || 0}
+                </strong>
+
+                <span>
+                  ignorados
+                </span>
+              </div>
+
+              <div className="is-review">
+                <strong>
+                  {
+                    getPreviewCounts()
+                      .warnings
+                  }
+                </strong>
+
+                <span>
+                  em revisão
+                </span>
+              </div>
+            </div>
 
             <small>
               Os novos voluntários já podem fazer
@@ -1591,7 +1878,10 @@ export default function AdminPeopleImport() {
                     />
 
                     {!isIgnored(person.row) &&
-                      person.errors?.length > 0 && (
+                      (
+                        person.errors?.length > 0 ||
+                        person.warnings?.length > 0
+                      ) && (
                         <button
                           type="button"
                           className="people-import-fix-button"
@@ -1603,7 +1893,9 @@ export default function AdminPeopleImport() {
                         >
                           {editingRow === person.row
                             ? 'Cancelar'
-                            : 'Corrigir'}
+                            : person.errors?.length > 0
+                              ? 'Corrigir'
+                              : 'Revisar'}
                         </button>
                       )}
 

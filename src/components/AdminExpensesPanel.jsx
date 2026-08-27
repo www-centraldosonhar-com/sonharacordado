@@ -78,7 +78,24 @@ function AdminExpensesPanel({
   events = [],
   teams = [],
   access,
+  mode = 'normal',
+  fixedEventId = '',
+  fixedTeamId = '',
 }) {
+
+  const isEmbedded =
+    mode === 'embedded'
+
+  const [
+    cancellingExpenseId,
+    setCancellingExpenseId,
+  ] = useState(null)
+
+  const [
+    cancellationReason,
+    setCancellationReason,
+  ] = useState('')
+
   const [
     expenses,
     setExpenses,
@@ -193,100 +210,152 @@ function AdminExpensesPanel({
   // disparar setState dentro de useEffect.
   // =====================================================
 
+  const effectiveEventId =
+    isEmbedded
+      ? (
+          fixedEventId
+            ? String(fixedEventId)
+            : ''
+        )
+      : eventId
+
   const effectiveTeamId =
-    teamId ||
-    (
-      availableTeams.length === 1
-        ? String(
-            availableTeams[0].id
+    isEmbedded
+      ? (
+          fixedTeamId
+            ? String(fixedTeamId)
+            : ''
+        )
+      : (
+          teamId ||
+          (
+            availableTeams.length === 1
+              ? String(
+                  availableTeams[0].id
+                )
+              : ''
           )
-        : ''
-    )
+        )
 
 
   // =====================================================
-  // LOAD EXPENSES
+          
+            async function loadExpenses() {
+              setLoadingExpenses(true)
+          
+              try {
+                const response =
+                  await fetch(
+                    '/api/admin?action=expenses&operation=list'
+                  )
+          
+                const result =
+                  await response.json()
+          
+                if (!response.ok) {
+                  throw new Error(
+                    result.error ||
+                    'Não foi possível carregar os gastos.'
+                  )
+                }
+          
+                setExpenses(
+                  result.expenses || []
+                )
+              } catch (error) {
+                setMessage(
+                  error.message
+                )
+              } finally {
+                setLoadingExpenses(false)
+              }
+            }
+          
+          
+            useEffect(() => {
+              let active = true
+          
+              fetch(
+                '/api/admin?action=expenses&operation=list'
+              )
+                .then(async (response) => {
+                  const result =
+                    await response.json()
+          
+                  if (!response.ok) {
+                    throw new Error(
+                      result.error ||
+                      'Não foi possível carregar os gastos.'
+                    )
+                  }
+          
+                  if (active) {
+                    setExpenses(
+                      result.expenses || []
+                    )
+                  }
+                })
+                .catch((error) => {
+                  if (active) {
+                    setMessage(
+                      error.message
+                    )
+                  }
+                })
+                .finally(() => {
+                  if (active) {
+                    setLoadingExpenses(
+                      false
+                    )
+                  }
+                })
+          
+              return () => {
+                active = false
+              }
+            }, [])
+          
+          
+            // =====================================================
+            // GROUP EXPENSES BY EVENT
+            // =====================================================
+
+  // =====================================================
+  // EXPENSES VISÍVEIS
+  // =====================================================
+  // No painel normal mostramos todo o escopo permitido.
+  // No Pós-Evento mostramos somente os gastos da equipe
+  // e do evento atualmente sendo fechados.
   // =====================================================
 
-  async function loadExpenses() {
-    setLoadingExpenses(true)
-
-    try {
-      const response =
-        await fetch(
-          '/api/admin?action=expenses&operation=list'
-        )
-
-      const result =
-        await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          'Não foi possível carregar os gastos.'
-        )
+  const visibleExpenses =
+    useMemo(() => {
+      if (!isEmbedded) {
+        return expenses
       }
 
-      setExpenses(
-        result.expenses || []
+      return expenses.filter(
+        (expense) =>
+          Number(
+            expense.event_id
+          ) ===
+            Number(
+              effectiveEventId
+            ) &&
+          Number(
+            expense.team_id
+          ) ===
+            Number(
+              effectiveTeamId
+            )
       )
-    } catch (error) {
-      setMessage(
-        error.message
-      )
-    } finally {
-      setLoadingExpenses(false)
-    }
-  }
+    }, [
+      expenses,
+      isEmbedded,
+      effectiveEventId,
+      effectiveTeamId,
+    ])
 
-
-  useEffect(() => {
-    let active = true
-
-    fetch(
-      '/api/admin?action=expenses&operation=list'
-    )
-      .then(async (response) => {
-        const result =
-          await response.json()
-
-        if (!response.ok) {
-          throw new Error(
-            result.error ||
-            'Não foi possível carregar os gastos.'
-          )
-        }
-
-        if (active) {
-          setExpenses(
-            result.expenses || []
-          )
-        }
-      })
-      .catch((error) => {
-        if (active) {
-          setMessage(
-            error.message
-          )
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoadingExpenses(
-            false
-          )
-        }
-      })
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-
-  // =====================================================
-  // GROUP EXPENSES BY EVENT
-  // =====================================================
 
   const expenseGroups =
     useMemo(() => {
@@ -295,7 +364,7 @@ function AdminExpensesPanel({
 
       for (
         const expense
-        of expenses
+        of visibleExpenses
       ) {
         const id =
           Number(
@@ -332,7 +401,30 @@ function AdminExpensesPanel({
       return Array.from(
         map.values()
       )
-    }, [expenses])
+    }, [visibleExpenses])
+
+
+  // =====================================================
+  // GASTOS ATIVOS VISÍVEIS
+  // =====================================================
+  // Mantemos visibleExpenses para o histórico completo.
+  // Este array é usado somente para contador e total
+  // financeiro atual.
+  // =====================================================
+
+  const activeVisibleExpenses =
+    useMemo(
+      () =>
+        visibleExpenses.filter(
+          (expense) =>
+            Number(
+              expense.active
+            ) === 1
+        ),
+      [
+        visibleExpenses,
+      ]
+    )
 
 
   // =====================================================
@@ -340,7 +432,7 @@ function AdminExpensesPanel({
   // =====================================================
 
   const totalExpenses =
-    expenses.reduce(
+    activeVisibleExpenses.reduce(
       (
         total,
         expense
@@ -388,7 +480,7 @@ function AdminExpensesPanel({
                 'prepare-receipt',
 
               eventId:
-                Number(eventId),
+                Number(effectiveEventId),
 
               teamId:
                 Number(effectiveTeamId),
@@ -455,7 +547,7 @@ function AdminExpensesPanel({
     setMessage('')
 
     if (
-      !eventId ||
+      !effectiveEventId ||
       !effectiveTeamId ||
       !description.trim() ||
       !amount ||
@@ -521,7 +613,7 @@ function AdminExpensesPanel({
                   'create',
 
                 eventId:
-                  Number(eventId),
+                  Number(effectiveEventId),
 
                 teamId:
                   Number(effectiveTeamId),
@@ -581,26 +673,38 @@ function AdminExpensesPanel({
   // OPEN RECEIPT
   // =====================================================
 
+  function openCancellation(
+    expense
+  ) {
+    setMessage('')
+
+    setCancellingExpenseId(
+      expense.id
+    )
+
+    setCancellationReason('')
+  }
+
+
+  function closeCancellation() {
+    setCancellingExpenseId(null)
+    setCancellationReason('')
+  }
+
+
   async function cancelExpense(
     expense
   ) {
     setMessage('')
 
     const reason =
-      window.prompt(
-        `Por que deseja cancelar o lançamento "${expense.description}"?`
+      cancellationReason.trim()
+
+    if (!reason) {
+      setMessage(
+        'Informe o motivo do cancelamento.'
       )
 
-    if (!reason?.trim()) {
-      return
-    }
-
-    const confirmed =
-      window.confirm(
-        'Confirmar cancelamento? O lançamento continuará no histórico e não entrará mais nos totais.'
-      )
-
-    if (!confirmed) {
       return
     }
 
@@ -627,7 +731,7 @@ function AdminExpensesPanel({
                   expense.id,
 
                 cancellationReason:
-                  reason.trim(),
+                  reason,
               }),
           }
         )
@@ -646,6 +750,8 @@ function AdminExpensesPanel({
         result.message ||
         'Lançamento cancelado. 🧾❌'
       )
+
+      closeCancellation()
 
       await loadExpenses()
     } catch (error) {
@@ -734,38 +840,63 @@ function AdminExpensesPanel({
 
   return (
     <section
-      id="gastos"
-      className="admin-section admin-expenses-section"
+      id={
+        isEmbedded
+          ? undefined
+          : 'gastos'
+      }
+      className={[
+        'admin-section',
+        'admin-expenses-section',
+        isEmbedded
+          ? 'is-embedded'
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
-      <p className="admin-eyebrow admin-orange">
-        PRESTAÇÃO DE CONTAS
-      </p>
+      {!isEmbedded && (
+        <>
+          <p className="admin-eyebrow admin-orange">
+            PRESTAÇÃO DE CONTAS
+          </p>
 
-      <h2>
-        🧾 Gastos do Evento
-      </h2>
+          <h2>
+            🧾 Gastos do Evento
+          </h2>
 
-      <p className="admin-form-help">
-        Registre despesas das equipes e mantenha
-        os comprovantes organizados por evento.
-      </p>
+          <p className="admin-form-help">
+            Registre despesas das equipes e mantenha
+            os comprovantes organizados por evento.
+          </p>
+        </>
+      )}
 
 
       {/* =================================================
           SUMMARY
          ================================================= */}
 
-      <div className="expense-summary">
+      <div
+        className={[
+          'expense-summary',
+          isEmbedded
+            ? 'is-embedded'
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <article>
           <span>🧾</span>
 
           <div>
             <small>
-              Lançamentos
+              Gastos ativos
             </small>
 
             <strong>
-              {expenses.length}
+              {activeVisibleExpenses.length}
             </strong>
           </div>
         </article>
@@ -775,7 +906,7 @@ function AdminExpensesPanel({
 
           <div>
             <small>
-              Total registrado
+              Total ativo
             </small>
 
             <strong>
@@ -811,6 +942,8 @@ function AdminExpensesPanel({
 
 
           <div className="expense-form-grid">
+            {!isEmbedded && (
+              <>
             <label>
               <span>
                 Evento
@@ -890,6 +1023,9 @@ function AdminExpensesPanel({
               </select>
             </label>
 
+
+              </>
+            )}
 
             <label className="expense-description-field">
               <span>
@@ -1026,10 +1162,10 @@ function AdminExpensesPanel({
           </strong>
 
           <small>
-            {expenses.length}
+            {visibleExpenses.length}
             {' '}
             lançamento
-            {expenses.length !== 1
+            {visibleExpenses.length !== 1
               ? 's'
               : ''}
           </small>
@@ -1072,6 +1208,64 @@ function AdminExpensesPanel({
                   0
                 )
 
+              const activeExpenses =
+                group.expenses.filter(
+                  (expense) =>
+                    Number(
+                      expense.active
+                    ) === 1
+                )
+
+              const cancelledExpenses =
+                group.expenses.filter(
+                  (expense) =>
+                    Number(
+                      expense.active
+                    ) !== 1
+                )
+
+              const teamSummary =
+                Object.values(
+                  activeExpenses.reduce(
+                    (
+                      teams,
+                      expense
+                    ) => {
+                      const teamName =
+                        expense.team_name ||
+                        'Sem equipe'
+
+                      if (!teams[teamName]) {
+                        teams[teamName] = {
+                          name:
+                            teamName,
+                          total:
+                            0,
+                          count:
+                            0,
+                        }
+                      }
+
+                      teams[teamName].total +=
+                        Number(
+                          expense.amount ||
+                          0
+                        )
+
+                      teams[teamName].count +=
+                        1
+
+                      return teams
+                    },
+                    {}
+                  )
+                )
+                .sort(
+                  (a, b) =>
+                    b.total -
+                    a.total
+                )
+
               return (
                 <details
                   key={
@@ -1105,6 +1299,101 @@ function AdminExpensesPanel({
                       )}
                     </span>
                   </summary>
+
+
+                  <div className="expense-event-overview">
+                    <div className="expense-event-overview-stats">
+                      <div className="is-total">
+                        <small>
+                          TOTAL ATIVO
+                        </small>
+
+                        <strong>
+                          {formatMoney(
+                            eventTotal
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <small>
+                          LANÇAMENTOS
+                        </small>
+
+                        <strong>
+                          {
+                            activeExpenses.length
+                          }
+                        </strong>
+                      </div>
+
+                      <div>
+                        <small>
+                          CANCELADOS
+                        </small>
+
+                        <strong>
+                          {
+                            cancelledExpenses.length
+                          }
+                        </strong>
+                      </div>
+
+                      <div>
+                        <small>
+                          EQUIPES
+                        </small>
+
+                        <strong>
+                          {
+                            teamSummary.length
+                          }
+                        </strong>
+                      </div>
+                    </div>
+
+                    {teamSummary.length > 0 && (
+                      <div className="expense-team-summary">
+                        <div className="expense-team-summary-head">
+                          <small>
+                            GASTOS POR EQUIPE
+                          </small>
+                        </div>
+
+                        <div className="expense-team-summary-list">
+                          {teamSummary.map(
+                            (team) => (
+                              <div
+                                key={team.name}
+                                className="expense-team-summary-row"
+                              >
+                                <div>
+                                  <strong>
+                                    {team.name}
+                                  </strong>
+
+                                  <small>
+                                    {team.count}
+                                    {' '}
+                                    lançamento
+                                    {team.count !== 1
+                                      ? 's'
+                                      : ''}
+                                  </small>
+                                </div>
+
+                                <strong>
+                                  {formatMoney(
+                                    team.total
+                                  )}
+                                </strong>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
 
                   <div className="expense-list">
@@ -1217,7 +1506,7 @@ function AdminExpensesPanel({
                                 className="expense-cancel-button"
                                 disabled={loading}
                                 onClick={() =>
-                                  cancelExpense(
+                                  openCancellation(
                                     expense
                                   )
                                 }
@@ -1226,6 +1515,82 @@ function AdminExpensesPanel({
                               </button>
                             )}
                           </div>
+
+                          {cancellingExpenseId ===
+                            expense.id && (
+                            <div className="expense-cancellation-editor">
+                              <div className="expense-cancellation-editor-head">
+                                <div>
+                                  <small>
+                                    CANCELAR LANÇAMENTO
+                                  </small>
+
+                                  <strong>
+                                    Informe o motivo
+                                  </strong>
+                                </div>
+
+                                <span>
+                                  R$ {
+                                    Number(
+                                      expense.amount ||
+                                      0
+                                    )
+                                      .toFixed(2)
+                                      .replace('.', ',')
+                                  }
+                                </span>
+                              </div>
+
+                              <p>
+                                O lançamento continuará
+                                no histórico, mas deixará
+                                de entrar nos totais.
+                              </p>
+
+                              <textarea
+                                value={cancellationReason}
+                                onChange={(event) =>
+                                  setCancellationReason(
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Ex.: lançamento duplicado, valor incorreto..."
+                                rows={3}
+                                autoFocus
+                              />
+
+                              <div className="expense-cancellation-editor-actions">
+                                <button
+                                  type="button"
+                                  disabled={loading}
+                                  onClick={
+                                    closeCancellation
+                                  }
+                                >
+                                  Voltar
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="is-danger"
+                                  disabled={
+                                    loading ||
+                                    !cancellationReason.trim()
+                                  }
+                                  onClick={() =>
+                                    cancelExpense(
+                                      expense
+                                    )
+                                  }
+                                >
+                                  {loading
+                                    ? 'Cancelando...'
+                                    : 'Confirmar cancelamento'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )
                     )}

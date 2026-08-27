@@ -34,12 +34,23 @@ export default async function handler(request, response) {
 
   const {
     confirmationId,
+    deliveryLink,
   } = request.body ?? {}
 
   if (!confirmationId) {
     return response.status(400).json({
       error:
         'Confirmação de fotografia não informada.',
+    })
+  }
+
+  const normalizedDeliveryLink =
+    String(deliveryLink || '').trim()
+
+  if (!normalizedDeliveryLink) {
+    return response.status(400).json({
+      error:
+        'Link da entrega não informado.',
     })
   }
 
@@ -82,13 +93,38 @@ export default async function handler(request, response) {
       })
     }
 
-    // Already delivered: keep the original timestamp.
+    // Already delivered:
+    // keep the original timestamp, but refresh
+    // the delivery link and review state.
     if (confirmation.photo_submitted_at) {
+      await sql`
+        UPDATE confirmations
+        SET
+          delivery_link =
+            ${normalizedDeliveryLink},
+          delivery_review_status =
+            'pending',
+          delivery_review_note =
+            NULL,
+          delivery_reviewed_at =
+            NULL,
+          completed_at =
+            NULL
+        WHERE id = ${confirmationId}
+          AND user_id = ${sessionUser.userId}
+      `
+
       return response.status(200).json({
         success: true,
         alreadySubmitted: true,
         photoSubmittedAt:
           confirmation.photo_submitted_at,
+        deliveryLink:
+          normalizedDeliveryLink,
+        reviewStatus:
+          'pending',
+        message:
+          'Entrega atualizada e enviada para revisão. 📸',
       })
     }
 
@@ -96,12 +132,24 @@ export default async function handler(request, response) {
       UPDATE confirmations
       SET
         photo_submitted_at =
-          CURRENT_TIMESTAMP
+          CURRENT_TIMESTAMP,
+        delivery_link =
+          ${normalizedDeliveryLink},
+        delivery_review_status =
+          'pending',
+        delivery_review_note =
+          NULL,
+        delivery_reviewed_at =
+          NULL,
+        completed_at =
+          NULL
       WHERE id = ${confirmationId}
         AND user_id = ${sessionUser.userId}
       RETURNING
         id,
-        photo_submitted_at
+        photo_submitted_at,
+        delivery_link,
+        delivery_review_status
     `
 
     return response.status(200).json({
@@ -109,8 +157,12 @@ export default async function handler(request, response) {
       alreadySubmitted: false,
       photoSubmittedAt:
         updated[0].photo_submitted_at,
+      deliveryLink:
+        updated[0].delivery_link,
+      reviewStatus:
+        updated[0].delivery_review_status,
       message:
-        'Entrega de fotografia concluída! 📸✅',
+        'Entrega enviada para revisão! 📸✅',
     })
   } catch (error) {
     console.error(

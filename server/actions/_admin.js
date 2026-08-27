@@ -150,6 +150,294 @@ export function isMediaAdmin(admin) {
 }
 
 // =========================================================
+// ADMIN CAPABILITIES
+// =========================================================
+// Fonte única para a interface administrativa decidir quais
+// contextos devem ser exibidos. Segurança continua sendo
+// validada individualmente pelos helpers do backend.
+//
+// Nesta primeira etapa, as capacidades preservam exatamente
+// o comportamento atual. As regras novas da 3.0 serão
+// habilitadas progressivamente.
+// =========================================================
+
+export function getAdminCapabilities(admin) {
+  const globalAdmin =
+    isGlobalAdmin(admin)
+
+  const projectAdmin =
+    isProjectAdmin(admin)
+
+  const teamAdmin =
+    isTeamAdmin(admin)
+
+  const mediaAdmin =
+    isMediaAdmin(admin)
+
+  const volunteerAdmin =
+    isVolunteerTeamAdmin(admin)
+
+  const managementAdmin =
+    globalAdmin || projectAdmin
+
+  const teamCodes =
+    (
+      admin?.teams || []
+    ).map(
+      (team) =>
+        team.code
+    )
+
+  const assistedAdmin =
+    teamAdmin &&
+    teamCodes.includes(
+      'assisted'
+    )
+
+  // =======================================================
+  // CONTEXT / SCOPES
+  // =======================================================
+  // Esses campos descrevem o alcance administrativo.
+  //
+  // Nesta etapa eles ainda NÃO alteram sozinhos as telas
+  // existentes. Eles serão utilizados progressivamente pelo
+  // Admin contextual da Central 3.0.
+  // =======================================================
+
+  let peopleScope =
+    'none'
+
+  let eventScope =
+    'none'
+
+  let activityScope =
+    'none'
+
+  let reportScope =
+    'none'
+
+  if (globalAdmin) {
+    peopleScope =
+      'global'
+
+    eventScope =
+      'global'
+
+    activityScope =
+      'global'
+
+    reportScope =
+      'global'
+  } else if (projectAdmin) {
+    peopleScope =
+      'project'
+
+    eventScope =
+      'project'
+
+    activityScope =
+      'project'
+
+    reportScope =
+      'project'
+  } else if (teamAdmin) {
+    peopleScope =
+      'own_team'
+
+    eventScope =
+      'project'
+
+    activityScope =
+      'own_team'
+
+    reportScope =
+      'own_team'
+  }
+
+  // -------------------------------------------------------
+  // EXCEÇÃO — VOLUNTÁRIOS
+  // -------------------------------------------------------
+  // O Admin da equipe Voluntários gerencia as pessoas de
+  // todo o seu projeto, além de sua própria equipe.
+  // -------------------------------------------------------
+
+  if (
+    teamAdmin &&
+    volunteerAdmin
+  ) {
+    peopleScope =
+      'project'
+
+    eventScope =
+      'project'
+
+    activityScope =
+      'own_team'
+  }
+
+  // -------------------------------------------------------
+  // EXCEÇÃO — MÍDIAS
+  // -------------------------------------------------------
+  // Mídias é transversal entre projetos.
+  //
+  // peopleScope:
+  //   membros que pertencem ou participam de Mídias,
+  //   independentemente do projeto principal.
+  //
+  // eventScope:
+  //   todos os eventos, pois Mídias atende a ONG inteira.
+  //
+  // A aplicação desses escopos aos dados será feita em
+  // bloco próprio para não quebrar os fluxos maduros atuais.
+  // -------------------------------------------------------
+
+  if (
+    teamAdmin &&
+    mediaAdmin
+  ) {
+    peopleScope =
+      'media_global'
+
+    eventScope =
+      'global'
+
+    activityScope =
+      'own_team'
+  }
+
+  return {
+    // -----------------------------------------------------
+    // Identidade contextual
+    // -----------------------------------------------------
+
+    teamCodes,
+
+    peopleScope,
+
+    eventScope,
+
+    activityScope,
+
+    reportScope,
+
+    // -----------------------------------------------------
+    // Capacidades atuais
+    // -----------------------------------------------------
+    // Mantidas compatíveis com o comportamento existente.
+    // -----------------------------------------------------
+
+    // Todo Admin de Equipe pode consultar as pessoas
+    // que o backend já limita ao seu próprio escopo.
+    //
+    // Voluntários e Mídias continuam recebendo seus
+    // escopos especiais pelas queries do admin-data.
+    canViewPeople:
+      managementAdmin ||
+      teamAdmin,
+
+    // Todo Admin de Equipe pode consultar eventos do
+    // próprio projeto como contexto operacional.
+    //
+    // Mídias permanece global por meio do eventScope.
+    canViewEvents:
+      managementAdmin ||
+      teamAdmin,
+
+    // Admin Geral e Admin de Projeto gerenciam eventos
+    // dentro de seus escopos normais.
+    //
+    // Mídias é uma exceção transversal e pode gerenciar
+    // eventos de qualquer projeto e eventos gerais da ONG.
+    canManageEvents:
+      managementAdmin ||
+      mediaAdmin,
+
+    canManageRegistrations:
+      managementAdmin ||
+      volunteerAdmin,
+
+    // Cadastro permanente e importação manual
+    // dos Assistidos do projeto.
+    canManageAssisted:
+      managementAdmin ||
+      assistedAdmin,
+
+    // O backend já restringe Admins de Equipe às
+    // atividades pertencentes às próprias equipes.
+    //
+    // Equipes sem atividades exclusivas recebem lista vazia.
+    canViewActivities:
+      managementAdmin ||
+      teamAdmin,
+
+    canViewAnnouncements:
+      managementAdmin ||
+      teamAdmin,
+
+    canViewExpenses:
+      globalAdmin ||
+      projectAdmin ||
+      teamAdmin,
+
+    canViewPostEvent:
+      globalAdmin ||
+      projectAdmin ||
+      teamAdmin,
+
+    canViewTeamReports:
+      globalAdmin ||
+      projectAdmin ||
+      teamAdmin,
+
+    canViewVolunteerOverview:
+      managementAdmin ||
+      volunteerAdmin,
+
+    canEditMonthlyCommunity:
+      globalAdmin ||
+      mediaAdmin,
+
+    canManageCoupons:
+      globalAdmin ||
+      projectAdmin,
+
+    // -----------------------------------------------------
+    // Capacidades preparatórias da Central 3.0
+    // -----------------------------------------------------
+
+    canSubmitExpenses:
+      teamAdmin,
+
+    canSubmitPostEvent:
+      teamAdmin,
+
+    canApprovePostEvent:
+      globalAdmin ||
+      projectAdmin,
+
+    canViewOwnTeamNumbers:
+      teamAdmin,
+
+    canViewProjectNumbers:
+      globalAdmin ||
+      projectAdmin ||
+      volunteerAdmin,
+
+    canManageOwnTeamActivities:
+      teamAdmin,
+
+    canManageAllProjectActivities:
+      globalAdmin ||
+      projectAdmin,
+
+    // Mídias terá o gerenciamento global de eventos
+    // ativado no bloco específico da equipe.
+    canAccessGlobalMediaContext:
+      mediaAdmin,
+  }
+}
+
+// =========================================================
 // PROJECT ACCESS
 // =========================================================
 // Admin Geral       -> qualquer projeto

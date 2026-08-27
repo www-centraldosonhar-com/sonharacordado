@@ -2,6 +2,7 @@ import {
   useEffect,
   useState,
 } from 'react'
+import AdminExpensesPanel from './AdminExpensesPanel'
 
 
 function getStatusLabel(status) {
@@ -17,6 +18,7 @@ function getStatusLabel(status) {
 
 function AdminPostEventTeamReports({
   events = [],
+  teams = [],
   access,
 }) {
   const defaultEvent =
@@ -51,17 +53,29 @@ function AdminPostEventTeamReports({
     setMessage,
   ] = useState('')
 
+  
+
   const [
-    isLoading,
-    setIsLoading,
-  ] = useState(false)
+    assigningTeamId,
+    setAssigningTeamId,
+  ] = useState(null)
 
 
-  const isManagement =
-    access?.scope === 'global' ||
-    access?.scope === 'project'
+  const [
+    completingFinancialTeamId,
+    setCompletingFinancialTeamId,
+  ] = useState(null)
 
 
+  const [
+    expensesFlowTeamId,
+    setExpensesFlowTeamId,
+  ] = useState(null)
+
+  const [
+    editingResponsibleTeamId,
+    setEditingResponsibleTeamId,
+  ] = useState(null)
   // =====================================================
   // LOAD REPORTS
   // =====================================================
@@ -127,6 +141,395 @@ function AdminPostEventTeamReports({
   }, [selectedEventId])
 
 
+  async function completeFinancialStatus(
+    report,
+    financialStatus
+  ) {
+    setCompletingFinancialTeamId(
+      Number(report.team_id)
+    )
+
+    setMessage('')
+
+    try {
+      const response = await fetch(
+        '/api/admin?action=post-event',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            operation:
+              'complete-team-financial',
+
+            eventId:
+              Number(selectedEventId),
+
+            teamId:
+              Number(report.team_id),
+
+            financialStatus,
+          }),
+        }
+      )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível concluir a situação financeira.'
+        )
+      }
+
+      // Atualização instantânea no card.
+      setReports(
+        (currentReports) =>
+          currentReports.map(
+            (currentReport) =>
+              Number(
+                currentReport.team_id
+              ) ===
+              Number(report.team_id)
+                ? {
+                    ...currentReport,
+
+                    status:
+                      financialStatus === 'expenses'
+                        ? 'submitted'
+                        : 'approved',
+
+                    financial_status:
+                      financialStatus,
+
+                    financial_completed_at:
+                      new Date()
+                        .toISOString(),
+                  }
+                : currentReport
+          )
+      )
+
+      setMessage(
+        result.message ||
+        'Situação financeira atualizada.'
+      )
+
+      // Sem gastos e Doação encerram a etapa
+      // diretamente, então o formulário de
+      // lançamentos não deve continuar aberto.
+      if (
+        financialStatus !==
+        'expenses'
+      ) {
+        setExpensesFlowTeamId(
+          null
+        )
+      }
+
+      // O POST já confirmou o salvamento.
+      // Não seguramos o feedback visual
+      // durante a sincronização posterior.
+      setCompletingFinancialTeamId(
+        null
+      )
+
+      try {
+        await reloadReports()
+      } catch (reloadError) {
+        console.error(
+          'Financial status reload error:',
+          reloadError
+        )
+      }
+    } catch (error) {
+      setMessage(
+        error.message ||
+        'Não foi possível concluir a situação financeira.'
+      )
+    } finally {
+      setCompletingFinancialTeamId(
+        null
+      )
+    }
+  }
+
+
+  function openExpensesEditor(
+    report
+  ) {
+    const teamId =
+      Number(
+        report.team_id
+      )
+
+    setExpensesFlowTeamId(
+      teamId
+    )
+
+    window.setTimeout(
+      () => {
+        const element =
+          document.getElementById(
+            `post-event-expenses-${teamId}`
+          )
+
+        element?.scrollIntoView({
+          behavior:
+            'smooth',
+          block:
+            'start',
+        })
+      },
+      80
+    )
+  }
+
+
+  async function resetFinancialStatus(
+    report
+  ) {
+    const confirmed =
+      window.confirm(
+        'Deseja alterar a decisão financeira desta equipe?'
+      )
+
+    if (!confirmed) {
+      return
+    }
+
+    setCompletingFinancialTeamId(
+      Number(
+        report.team_id
+      )
+    )
+
+    setMessage('')
+
+    try {
+      const response =
+        await fetch(
+          '/api/admin?action=post-event',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                operation:
+                  'reset-team-financial',
+
+                eventId:
+                  Number(
+                    selectedEventId
+                  ),
+
+                teamId:
+                  Number(
+                    report.team_id
+                  ),
+              }),
+          }
+        )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível reabrir a decisão financeira.'
+        )
+      }
+
+      setReports(
+        currentReports =>
+          currentReports.map(
+            item =>
+              Number(
+                item.team_id
+              ) ===
+              Number(
+                report.team_id
+              )
+                ? {
+                    ...item,
+                    status:
+                      'pending',
+                    financial_status:
+                      'pending',
+                    financial_completed_at:
+                      null,
+                    financial_completed_by:
+                      null,
+                  }
+                : item
+          )
+      )
+
+      setExpensesFlowTeamId(
+        null
+      )
+
+      setMessage(
+        result.message ||
+        'Decisão financeira reaberta. ✅'
+      )
+
+      await reloadReports()
+    } catch (error) {
+      setMessage(
+        error.message
+      )
+    } finally {
+      setCompletingFinancialTeamId(
+        null
+      )
+    }
+  }
+
+
+  async function assignResponsible(
+    report,
+    responsibleUserId
+  ) {
+    const numericResponsibleUserId =
+      Number(responsibleUserId)
+
+    if (
+      !Number.isInteger(
+        numericResponsibleUserId
+      )
+    ) {
+      return
+    }
+
+    setAssigningTeamId(
+      Number(report.team_id)
+    )
+
+    setMessage('')
+
+    try {
+      const response = await fetch(
+        '/api/admin?action=post-event',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            operation:
+              'assign-team-responsible',
+
+            eventId:
+              Number(selectedEventId),
+
+            teamId:
+              Number(report.team_id),
+
+            responsibleUserId:
+              numericResponsibleUserId,
+          }),
+        }
+      )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível definir o responsável.'
+        )
+      }
+
+      setMessage(
+        result.message ||
+        'Responsável atualizado.'
+      )
+
+      // Atualiza imediatamente o card no React.
+      // Não dependemos de um novo GET para refletir
+      // uma operação que o backend já confirmou.
+      const selectedResponsible =
+        (
+          report.eligible_admins ||
+          []
+        ).find(
+          (person) =>
+            Number(person.id) ===
+            numericResponsibleUserId
+        )
+
+      setReports(
+        (currentReports) =>
+          currentReports.map(
+            (currentReport) =>
+              Number(
+                currentReport.team_id
+              ) ===
+              Number(report.team_id)
+                ? {
+                    ...currentReport,
+
+                    responsible_user_id:
+                      numericResponsibleUserId,
+
+                    responsible_user_name:
+                      selectedResponsible
+                        ?.name ||
+                      result.responsibleName ||
+                      currentReport
+                        .responsible_user_name,
+                  }
+                : currentReport
+          )
+      )
+
+      // O POST já terminou. Portanto o feedback de
+      // salvamento pode desaparecer imediatamente.
+      setAssigningTeamId(null)
+
+      setEditingResponsibleTeamId(
+        null
+      )
+
+      try {
+        await reloadReports()
+      } catch (reloadError) {
+        console.error(
+          'Post-event reports reload error:',
+          reloadError
+        )
+
+        setMessage(
+          'Responsável salvo. Atualize a página caso os dados não apareçam imediatamente.'
+        )
+      }
+    } catch (error) {
+      setMessage(
+        error.message ||
+        'Não foi possível definir o responsável.'
+      )
+    } finally {
+      setAssigningTeamId(null)
+    }
+  }
+
+
   async function reloadReports() {
     const params =
       new URLSearchParams({
@@ -164,168 +567,7 @@ function AdminPostEventTeamReports({
   // SUBMIT / UPDATE REPORT
   // =====================================================
 
-  async function handleSubmit(
-    event,
-    report
-  ) {
-    event.preventDefault()
 
-    const form =
-      new FormData(
-        event.currentTarget
-      )
-
-    setIsLoading(true)
-    setMessage('')
-
-    try {
-      const response =
-        await fetch(
-          '/api/admin?action=post-event',
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json',
-            },
-
-            body: JSON.stringify({
-              operation:
-                'submit-team-report',
-
-              eventId:
-                Number(
-                  selectedEventId
-                ),
-
-              teamId:
-                Number(
-                  report.team_id
-                ),
-
-              summary:
-                form.get('summary'),
-
-              whatWorked:
-                form.get(
-                  'whatWorked'
-                ),
-
-              whatToImprove:
-                form.get(
-                  'whatToImprove'
-                ),
-
-              nextEventNotes:
-                form.get(
-                  'nextEventNotes'
-                ),
-            }),
-          }
-        )
-
-      const result =
-        await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          'Não foi possível enviar o relatório.'
-        )
-      }
-
-      setMessage(
-        result.message
-      )
-
-      await reloadReports()
-    } catch (error) {
-      setMessage(
-        error.message
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-
-  // =====================================================
-  // APPROVE REPORT
-  // =====================================================
-
-  async function handleApprove(
-    report
-  ) {
-    const confirmed =
-      window.confirm(
-        `Aprovar o relatório da equipe "${report.team_name}"?\n\nDepois da aprovação ele ficará bloqueado para edição.`
-      )
-
-    if (!confirmed) {
-      return
-    }
-
-    setIsLoading(true)
-    setMessage('')
-
-    try {
-      const response =
-        await fetch(
-          '/api/admin?action=post-event',
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json',
-            },
-
-            body: JSON.stringify({
-              operation:
-                'approve-team-report',
-
-              eventId:
-                Number(
-                  selectedEventId
-                ),
-
-              reportId:
-                Number(
-                  report.id
-                ),
-            }),
-          }
-        )
-
-      const result =
-        await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          'Não foi possível aprovar o relatório.'
-        )
-      }
-
-      setMessage(
-        result.message
-      )
-
-      await reloadReports()
-    } catch (error) {
-      setMessage(
-        error.message
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-
-  if (events.length === 0) {
-    return null
-  }
 
 
   return (
@@ -334,16 +576,16 @@ function AdminPostEventTeamReports({
       className="admin-section post-event-team-reports"
     >
       <p className="admin-eyebrow">
-        APRENDER COM CADA EVENTO
+        PRESTAÇÃO DE CONTAS
       </p>
 
       <h2>
-        🤝 Relatórios das Equipes
+        🧾 Gastos das Equipes
       </h2>
 
       <p className="post-event-team-intro">
-        Um espaço para registrar aprendizados
-        e deixar o próximo evento ainda melhor.
+        Informe como sua equipe encerrou financeiramente
+        a participação neste evento.
       </p>
 
 
@@ -385,18 +627,97 @@ function AdminPostEventTeamReports({
       <div className="post-event-report-grid">
         {reports.map(
           (report) => {
-            const approved =
-              report.status ===
-              'approved'
+            const isGeneralEvent =
+              Boolean(
+                reportAccess?.isGeneralEvent
+              )
+
+            const isResponsible =
+              Number(
+                report.responsible_user_id
+              ) ===
+              Number(
+                reportAccess?.currentAdminId
+              )
+
+            const ownsFinancialFlow =
+              reportAccess?.canSubmit &&
+              !reportAccess?.expensesClosed &&
+              (
+                !isGeneralEvent ||
+                isResponsible
+              )
+
+            // =================================================
+            // ESTADOS DO FLUXO FINANCEIRO
+            // =================================================
+            //
+            // pending:
+            //   equipe pode editar
+            //
+            // submitted:
+            //   enviado à gestão; fica bloqueado, mas pode
+            //   ser reaberto pela própria equipe antes da análise
+            //
+            // approved + expenses:
+            //   aprovado pela gestão; trava definitivamente
+            //
+            // approved + no_expenses/donation:
+            //   conclusão automática; ainda pode ser corrigida
+            //   antes do fechamento financeiro do evento
+            // =================================================
 
             const canEdit =
-              reportAccess?.canSubmit &&
-              !approved
+              ownsFinancialFlow &&
+              report.status === 'pending'
+
+            const canResetDecision =
+              ownsFinancialFlow &&
+              Boolean(
+                report.financial_status &&
+                report.financial_status !==
+                  'pending'
+              ) &&
+              (
+                report.status === 'submitted' ||
+                (
+                  report.status === 'approved' &&
+                  (
+                    report.financial_status ===
+                      'no_expenses' ||
+                    report.financial_status ===
+                      'donation'
+                  )
+                )
+              )
+
+            const awaitingReview =
+              report.status === 'submitted' &&
+              report.financial_status ===
+                'expenses'
+
+            const approvedByManagement =
+              report.status === 'approved' &&
+              report.financial_status ===
+                'expenses'
+
+            const returnedForChanges =
+              report.status === 'pending' &&
+              Boolean(
+                report.return_reason
+              )
+
+            const canAssignResponsible =
+              isGeneralEvent &&
+              Boolean(
+                reportAccess
+                  ?.canAssignResponsible
+              )
 
             return (
               <article
                 className="post-event-report-card"
-                key={report.id}
+                key={report.team_id}
               >
                 <header className="post-event-report-header">
                   <div>
@@ -413,160 +734,539 @@ function AdminPostEventTeamReports({
                 </header>
 
 
-                {canEdit ? (
-                  <form
-                    onSubmit={(event) =>
-                      handleSubmit(
-                        event,
-                        report
-                      )
-                    }
+                {isGeneralEvent &&
+                  (
+                    canAssignResponsible ||
+                    isResponsible
+                  ) && (
+                  <div
+                    className={[
+                      'post-event-responsible-card',
+                      report.responsible_user_id
+                        ? 'is-assigned'
+                        : 'is-unassigned',
+                    ].join(' ')}
                   >
-                    <label>
-                      Resumo do evento
-                    </label>
+                    <div className="post-event-responsible-main">
+                      <div className="post-event-responsible-icon">
+                        {report.responsible_user_id
+                          ? '✓'
+                          : '!'}
+                      </div>
 
-                    <textarea
-                      name="summary"
-                      defaultValue={
-                        report.summary || ''
-                      }
-                      placeholder="Como foi a atuação da equipe?"
-                      required
-                    />
+                      <div className="post-event-responsible-copy">
+                        <small>
+                          RESPONSÁVEL PELO PÓS-EVENTO
+                        </small>
 
+                        <strong>
+                          {report.responsible_user_name ||
+                            'Nenhum responsável definido'}
+                        </strong>
 
-                    <label>
-                      ✨ O que funcionou bem?
-                    </label>
+                        <span>
+                          {canAssignResponsible
+                            ? (
+                                report.responsible_user_id
+                                  ? 'Responsável definido para este evento.'
+                                  : 'Escolha um Admin desta equipe para realizar o fechamento.'
+                              )
+                            : (
+                                isResponsible
+                                  ? 'Você é o responsável selecionado para este Pós-Evento.'
+                                  : ''
+                              )}
+                        </span>
 
-                    <textarea
-                      name="whatWorked"
-                      defaultValue={
-                        report.what_worked ||
-                        ''
-                      }
-                      placeholder="O que vale repetir?"
-                    />
-
-
-                    <label>
-                      💡 O que podemos melhorar?
-                    </label>
-
-                    <textarea
-                      name="whatToImprove"
-                      defaultValue={
-                        report.what_to_improve ||
-                        ''
-                      }
-                      placeholder="O que pode ser melhor no próximo?"
-                    />
-
-
-                    <label>
-                      🚀 Para o próximo evento
-                    </label>
-
-                    <textarea
-                      name="nextEventNotes"
-                      defaultValue={
-                        report.next_event_notes ||
-                        ''
-                      }
-                      placeholder="Ideias, cuidados ou próximos passos..."
-                    />
-
-
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                    >
-                      {report.status ===
-                      'submitted'
-                        ? '💾 Atualizar relatório'
-                        : '📨 Enviar relatório'}
-                    </button>
-                  </form>
-                ) : (
-                  <div className="post-event-report-content">
-                    <div>
-                      <small>
-                        RESUMO
-                      </small>
-
-                      <p>
-                        {report.summary ||
-                          'Ainda não enviado.'}
-                      </p>
+                        {report.responsible_user_id &&
+                          !isResponsible &&
+                          reportAccess?.canSubmit && (
+                            <span className="post-event-responsible-note">
+                              Este Pós-Evento será enviado pelo responsável selecionado.
+                            </span>
+                          )}
+                      </div>
                     </div>
 
+                    {canAssignResponsible && (
+                      <div className="post-event-responsible-action">
+                        {Number(
+                          editingResponsibleTeamId
+                        ) !==
+                        Number(
+                          report.team_id
+                        ) ? (
+                          <button
+                            type="button"
+                            className="post-event-responsible-edit-button"
+                            onClick={() =>
+                              setEditingResponsibleTeamId(
+                                Number(
+                                  report.team_id
+                                )
+                              )
+                            }
+                          >
+                            {report.responsible_user_id
+                              ? 'Alterar responsável'
+                              : '+ Escolher responsável'}
+                          </button>
+                        ) : (
+                          <div className="post-event-responsible-editor">
+                            <label>
+                              <span>
+                                Selecione o Admin responsável
+                              </span>
 
-                    {report.what_worked && (
-                      <div>
-                        <small>
-                          ✨ FUNCIONOU BEM
-                        </small>
+                              <select
+                                value={
+                                  report.responsible_user_id ||
+                                  ''
+                                }
+                                disabled={
+                                  Number(
+                                    assigningTeamId
+                                  ) ===
+                                  Number(
+                                    report.team_id
+                                  )
+                                }
+                                onChange={(event) => {
+                                  if (
+                                    event.target.value
+                                  ) {
+                                    assignResponsible(
+                                      report,
+                                      event.target.value
+                                    )
+                                  }
+                                }}
+                              >
+                                <option value="">
+                                  Selecione um Admin
+                                </option>
 
-                        <p>
-                          {report.what_worked}
-                        </p>
+                                {(
+                                  report.eligible_admins ||
+                                  []
+                                ).map(
+                                  (person) => (
+                                    <option
+                                      key={person.id}
+                                      value={person.id}
+                                    >
+                                      {person.name}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            </label>
+
+                            <div className="post-event-responsible-editor-footer">
+                              {Number(
+                                assigningTeamId
+                              ) ===
+                              Number(
+                                report.team_id
+                              ) ? (
+                                <small>
+                                  Salvando responsável...
+                                </small>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditingResponsibleTeamId(
+                                      null
+                                    )
+                                  }
+                                >
+                                  Cancelar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
+                  </div>
+                )}
 
+                {returnedForChanges && (
+                  <div className="post-event-return-notice">
+                    <strong>
+                      ⚠️ Ajustes solicitados pela gestão
+                    </strong>
 
-                    {report.what_to_improve && (
-                      <div>
-                        <small>
-                          💡 PODE MELHORAR
-                        </small>
+                    <p>
+                      <b>Motivo:</b>{' '}
+                      {report.return_reason}
+                    </p>
 
-                        <p>
-                          {report.what_to_improve}
-                        </p>
-                      </div>
-                    )}
+                    <span>
+                      Corrija o que for necessário e envie
+                      novamente a prestação financeira.
+                    </span>
 
-
-                    {report.next_event_notes && (
-                      <div>
-                        <small>
-                          🚀 PRÓXIMO EVENTO
-                        </small>
-
-                        <p>
-                          {report.next_event_notes}
-                        </p>
-                      </div>
-                    )}
-
-
-                    {report.submitted_by_name && (
-                      <span className="post-event-report-author">
-                        Enviado por{' '}
-                        {report.submitted_by_name}
-                      </span>
+                    {canEdit &&
+                      report.financial_status ===
+                        'expenses' && (
+                      <button
+                        type="button"
+                        className="post-event-return-action"
+                        onClick={() =>
+                          openExpensesEditor(
+                            report
+                          )
+                        }
+                      >
+                        {Number(
+                          expensesFlowTeamId
+                        ) ===
+                        Number(
+                          report.team_id
+                        )
+                          ? 'Editando gastos...'
+                          : 'Corrigir gastos'}
+                      </button>
                     )}
                   </div>
                 )}
 
 
-                {isManagement &&
-                  report.status ===
-                    'submitted' && (
+                {awaitingReview && (
+                  <div className="post-event-submission-notice">
+                    <strong>
+                      📨 Financeiro enviado para revisão
+                    </strong>
+
+                    <span>
+                      A gestão já recebeu esta prestação.
+                      Enquanto estiver em análise, os dados
+                      permanecem bloqueados.
+                    </span>
+                  </div>
+                )}
+
+
+                {approvedByManagement && (
+                  <div className="post-event-approved-notice">
+                    <strong>
+                      ✅ Prestação aprovada pela gestão
+                    </strong>
+
+                    <span>
+                      O financeiro desta equipe foi aprovado
+                      e não pode mais ser alterado.
+                    </span>
+                  </div>
+                )}
+
+                <div
+                  className={[
+                    'post-event-financial-step',
+                    report.financial_status &&
+                    report.financial_status !==
+                      'pending'
+                      ? 'is-complete'
+                      : 'is-pending',
+                  ].join(' ')}
+                >
+                  <div className="post-event-financial-heading">
+                    <div>
+                      <small>
+                        ETAPA 1
+                      </small>
+
+                      <strong>
+                        Situação financeira
+                      </strong>
+                    </div>
+
+                    <span>
+                      {report.financial_status ===
+                      'expenses'
+                        ? '✓ Com gastos'
+                        : report.financial_status ===
+                          'no_expenses'
+                          ? '✓ Sem gastos'
+                          : report.financial_status ===
+                            'donation'
+                            ? '✓ Doação'
+                            : 'Pendente'}
+                    </span>
+                  </div>
+
+                  <p>
+                    Informe como a equipe encerrou
+                    financeiramente sua participação
+                    neste evento.
+                  </p>
+
+                  <div className="post-event-financial-options">
+                    {[
+                      {
+                        value: 'expenses',
+                        label: 'Com gastos',
+                        description:
+                          'Há despesas registradas',
+                      },
+                      {
+                        value: 'no_expenses',
+                        label: 'Sem gastos',
+                        description:
+                          'Nenhuma despesa da equipe',
+                      },
+                      {
+                        value: 'donation',
+                        label: 'Doação',
+                        description:
+                          'Custos foram doados ou absorvidos',
+                      },
+                    ].map((option) => {
+                      const expensesFlowOpen =
+                        Number(
+                          expensesFlowTeamId
+                        ) ===
+                        Number(
+                          report.team_id
+                        )
+
+                      // A situação salva no banco e o fluxo
+                      // atualmente aberto são coisas diferentes.
+                      //
+                      // Exemplo:
+                      // status salvo = Sem gastos
+                      // usuário toca em Com gastos
+                      // → Com gastos ganha destaque enquanto
+                      //   os lançamentos estão sendo preparados.
+                      // → o banco só muda para expenses depois
+                      //   de "Concluir financeiro".
+                      const selected =
+                        option.value ===
+                        'expenses'
+                          ? (
+                              expensesFlowOpen ||
+                              report.financial_status ===
+                                'expenses'
+                            )
+                          : (
+                              !expensesFlowOpen &&
+                              report.financial_status ===
+                                option.value
+                            )
+
+                      const saving =
+                        Number(
+                          completingFinancialTeamId
+                        ) ===
+                        Number(
+                          report.team_id
+                        )
+
+                      return (
+                        <button
+                          type="button"
+                          key={option.value}
+                          className={[
+                            'post-event-financial-option',
+                            selected
+                              ? 'is-selected'
+                              : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          disabled={
+                            !canEdit ||
+                            saving
+                          }
+                          onClick={() => {
+                        
+                            // COM GASTOS
+                            // Abre/reabre o painel operacional.
+                            // Ainda NÃO conclui a etapa.
+                            if (
+                              option.value ===
+                              'expenses'
+                            ) {
+                              openExpensesEditor(
+                                report
+                              )
+
+                              return
+                            }
+
+                            // SEM GASTOS / DOAÇÃO
+                            // Fecha imediatamente qualquer
+                            // painel de lançamentos aberto.
+                            setExpensesFlowTeamId(
+                              null
+                            )
+
+                            const financialConfirmed =
+                              window.confirm(
+                                option.value ===
+                                  'no_expenses'
+                                  ? 'Confirmar que esta equipe não teve gastos?'
+                                  : 'Confirmar que os gastos desta equipe foram tratados como doação?'
+                              )
+
+                            if (!financialConfirmed) {
+                              return
+                            }
+
+
+                            completeFinancialStatus(
+                              report,
+                              option.value
+                            )
+                          }}
+                        >
+                          <strong>
+                            {selected
+                              ? '✓ '
+                              : ''}
+                            {option.label}
+                          </strong>
+
+                          <small>
+                            {option.description}
+                          </small>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {canResetDecision && (
                     <button
                       type="button"
-                      className="post-event-approve-button"
-                      disabled={isLoading}
+                      className="post-event-financial-reset-button"
+                      disabled={
+                        Number(
+                          completingFinancialTeamId
+                        ) ===
+                        Number(
+                          report.team_id
+                        )
+                      }
                       onClick={() =>
-                        handleApprove(
+                        resetFinancialStatus(
                           report
                         )
                       }
                     >
-                      ✅ Aprovar relatório
+                      Alterar decisão
                     </button>
                   )}
+
+                  {Number(
+                    completingFinancialTeamId
+                  ) ===
+                    Number(report.team_id) && (
+                    <small className="post-event-financial-saving">
+                      Salvando situação financeira...
+                    </small>
+                  )}
+
+                  {reportAccess?.expensesClosed && (
+                    <small className="post-event-financial-locked">
+                      O financeiro deste evento já foi finalizado.
+                    </small>
+                  )}
+
+                  {!reportAccess?.expensesClosed &&
+                    !canEdit &&
+                    report.financial_status ===
+                      'pending' && (
+                    <small className="post-event-financial-locked">
+                      Aguardando o responsável
+                      desta equipe.
+                    </small>
+                  )}
+
+                  {canEdit &&
+                    Number(
+                      expensesFlowTeamId
+                    ) ===
+                      Number(
+                        report.team_id
+                      ) && (
+                    <div
+                      id={
+                        `post-event-expenses-${report.team_id}`
+                      }
+                      className="post-event-expenses-embedded"
+                    >
+                      <div className="post-event-expenses-embedded-head">
+                        <div>
+                          <small>
+                            LANÇAMENTOS DA EQUIPE
+                          </small>
+
+                          <strong>
+                            Gastos deste evento
+                          </strong>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpensesFlowTeamId(
+                              null
+                            )
+                          }
+                        >
+                          Fechar
+                        </button>
+                      </div>
+
+                      <AdminExpensesPanel
+                        mode="embedded"
+                        fixedEventId={
+                          selectedEventId
+                        }
+                        fixedTeamId={
+                          report.team_id
+                        }
+                        events={events}
+                        teams={teams}
+                        access={access}
+                      />
+
+                      <button
+                        type="button"
+                        className="post-event-financial-complete-button"
+                        disabled={
+                          Number(
+                            completingFinancialTeamId
+                          ) ===
+                          Number(
+                            report.team_id
+                          )
+                        }
+                        onClick={() =>
+                          completeFinancialStatus(
+                            report,
+                            'expenses'
+                          )
+                        }
+                      >
+                        {returnedForChanges
+                          ? '↻ Reenviar para revisão'
+                          : '✓ Concluir financeiro'}
+                      </button>
+
+                      <small className="post-event-financial-complete-help">
+                        Conclua somente depois de
+                        registrar todos os gastos
+                        desta equipe.
+                      </small>
+                    </div>
+                  )}
+                </div>
+
+
+
               </article>
             )
           }
@@ -576,7 +1276,7 @@ function AdminPostEventTeamReports({
 
       {reports.length === 0 && (
         <p className="post-event-empty">
-          Nenhum relatório de equipe
+          Nenhuma prestação de contas
           disponível para este evento.
         </p>
       )}

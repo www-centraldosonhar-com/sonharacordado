@@ -52,10 +52,31 @@ export default async function handler(
 
   const recordId = Number(id)
 
+  /*
+   * Algumas operações administrativas não atuam
+   * sobre um registro identificado por ID.
+   *
+   * A identidade mensal é identificada por
+   * ano + mês e, portanto, não precisa de recordId.
+   */
+  const actionsWithoutRecordId = [
+    'update-monthly-community',
+  ]
+
+  const requiresRecordId =
+    !actionsWithoutRecordId.includes(
+      action
+    )
+
   if (
     !action ||
-    !Number.isInteger(recordId) ||
-    recordId < 1
+    (
+      requiresRecordId &&
+      (
+        !Number.isInteger(recordId) ||
+        recordId < 1
+      )
+    )
   ) {
     return response.status(400).json({
       error: 'Operação inválida.',
@@ -550,8 +571,20 @@ export default async function handler(
       const eventDate = data.eventDate
       const eventTime = data.eventTime
       const location = cleanText(data.location)
+      const registrationDeadline =
+        data.registrationDeadline ||
+        null
+
+      // Compatibilidade temporária com regras antigas.
       const confirmationDeadline =
-        data.confirmationDeadline
+        registrationDeadline
+
+      const registrationFee =
+        data.registrationFee === '' ||
+        data.registrationFee === null ||
+        data.registrationFee === undefined
+          ? 0
+          : Number(data.registrationFee)
 
       const rawProjectId = data.projectId
       const projectId =
@@ -569,10 +602,21 @@ export default async function handler(
         !eventDate ||
         !eventTime ||
         !location ||
-        !confirmationDeadline ||
         !['specific', 'general'].includes(
           eventType
         ) ||
+        (
+          registrationDeadline &&
+          Number.isNaN(
+            Date.parse(
+              registrationDeadline
+            )
+          )
+        ) ||
+        !Number.isFinite(
+          registrationFee
+        ) ||
+        registrationFee < 0 ||
         (
           projectId !== null &&
           !Number.isInteger(projectId)
@@ -583,18 +627,22 @@ export default async function handler(
         })
       }
 
-      // Evento geral da ONG é exclusivo do Admin Geral.
+      // Evento geral da ONG pode ser administrado pelo
+      // Admin Geral ou pela equipe transversal de Mídias.
       if (
         projectId === null &&
-        !isGlobalAdmin(admin)
+        !isGlobalAdmin(admin) &&
+        !isMediaAdmin(admin)
       ) {
         return forbidden(response)
       }
 
-      // Admin de Projeto/Equipe só pode apontar
-      // o evento para um projeto permitido.
+      // Admin de Projeto continua limitado ao próprio
+      // projeto. Mídias é transversal e pode administrar
+      // eventos vinculados a qualquer projeto.
       if (
         projectId !== null &&
+        !isMediaAdmin(admin) &&
         !adminCanAccessProject(
           admin,
           projectId
@@ -614,7 +662,12 @@ export default async function handler(
           location = ${location},
           confirmation_deadline =
             ${confirmationDeadline},
-          drive_link = ${driveLink || null}
+          registration_deadline =
+            ${registrationDeadline},
+          registration_fee =
+            ${registrationFee},
+          drive_link =
+            ${driveLink || null}
         WHERE id = ${recordId}
         RETURNING id
       `
@@ -680,6 +733,11 @@ export default async function handler(
           ? data.deliveryDeadline
           : null
 
+      const acceptUntil =
+        data.acceptUntil
+          ? data.acceptUntil
+          : null
+
       const teamId =
         data.teamId
           ? Number(data.teamId)
@@ -699,6 +757,18 @@ export default async function handler(
         return response.status(400).json({
           error:
             'A quantidade de vagas é inválida.',
+        })
+      }
+
+      if (
+        acceptUntil &&
+        Number.isNaN(
+          Date.parse(acceptUntil)
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'O prazo para aceitar voluntários é inválido.',
         })
       }
 
@@ -797,6 +867,8 @@ export default async function handler(
             ${requiresDelivery},
           delivery_deadline =
             ${deliveryDeadline},
+          accept_until =
+            ${acceptUntil},
           team_id =
             ${teamId},
           community_visible =
@@ -824,6 +896,81 @@ export default async function handler(
     // de um voluntário em uma atividade como concluída.
     // Se já estiver concluída, a ação desfaz a conclusão.
     // =====================================================
+
+    if (action === 'request-delivery-changes') {
+      const reviewNote =
+        String(
+          data?.reviewNote || ''
+        ).trim()
+
+      if (!reviewNote) {
+        return response.status(400).json({
+          error:
+            'Informe o motivo da correção.',
+        })
+      }
+
+      const activityData = await sql`
+        SELECT
+          c.id,
+          c.photo_submitted_at,
+          er.requires_delivery
+        FROM confirmations c
+        JOIN event_roles er
+          ON c.event_role_id = er.id
+        WHERE c.id = ${recordId}
+          AND c.status = 'confirmed'
+        LIMIT 1
+      `
+
+      const activityParticipation =
+        activityData[0]
+
+      if (!activityParticipation) {
+        return response.status(404).json({
+          error:
+            'Participação na atividade não encontrada.',
+        })
+      }
+
+      if (
+        Number(
+          activityParticipation.requires_delivery
+        ) !== 1
+      ) {
+        return response.status(400).json({
+          error:
+            'Essa atividade não possui entrega para revisar.',
+        })
+      }
+
+      if (!activityParticipation.photo_submitted_at) {
+        return response.status(400).json({
+          error:
+            'Ainda não existe uma entrega para revisar.',
+        })
+      }
+
+      await sql`
+        UPDATE confirmations
+        SET
+          completed_at = NULL,
+          delivery_review_status =
+            'changes_requested',
+          delivery_review_note =
+            ${reviewNote},
+          delivery_reviewed_at =
+            CURRENT_TIMESTAMP
+        WHERE id = ${recordId}
+          AND status = 'confirmed'
+      `
+
+      return response.status(200).json({
+        success: true,
+        message:
+          'Correção solicitada ao fotógrafo. ↩️',
+      })
+    }
 
     if (action === 'toggle-activity-participant') {
       const activityData = await sql`
@@ -863,15 +1010,43 @@ export default async function handler(
 
       const confirmations = await sql`
         UPDATE confirmations
-        SET completed_at =
-          CASE
-            WHEN completed_at IS NULL
-              THEN CURRENT_TIMESTAMP
-            ELSE NULL
-          END
+        SET
+          completed_at =
+            CASE
+              WHEN completed_at IS NULL
+                THEN CURRENT_TIMESTAMP
+              ELSE NULL
+            END,
+
+          delivery_review_status =
+            CASE
+              WHEN completed_at IS NULL
+                THEN 'approved'
+              ELSE NULL
+            END,
+
+          delivery_review_note =
+            CASE
+              WHEN completed_at IS NULL
+                THEN NULL
+              ELSE delivery_review_note
+            END,
+
+          delivery_reviewed_at =
+            CASE
+              WHEN completed_at IS NULL
+                THEN CURRENT_TIMESTAMP
+              ELSE NULL
+            END
+
         WHERE id = ${recordId}
           AND status = 'confirmed'
-        RETURNING id, completed_at
+
+        RETURNING
+          id,
+          completed_at,
+          delivery_review_status,
+          delivery_reviewed_at
       `
 
       if (!confirmations[0]) {

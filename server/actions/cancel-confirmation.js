@@ -38,6 +38,8 @@ export default async function handler(request, response) {
       SELECT
         c.id,
         c.status,
+        c.completed_at,
+        c.delivery_review_status,
         e.confirmation_deadline,
         e.name AS event_name,
         r.name AS role_name
@@ -61,6 +63,18 @@ export default async function handler(request, response) {
     ) {
       return response.status(404).json({
         error: 'Confirmação não encontrada.',
+      })
+    }
+
+    if (
+      confirmation.completed_at ||
+      String(
+        confirmation.delivery_review_status || ''
+      ).toLowerCase() === 'approved'
+    ) {
+      return response.status(400).json({
+        error:
+          'Esta atividade já foi concluída e aprovada. Não é mais possível sair dela.',
       })
     }
 

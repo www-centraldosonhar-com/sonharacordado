@@ -108,12 +108,6 @@ export async function requireVolunteer(request) {
     ORDER BY name
   `
 
-  const mediaTeam =
-    allTeams.find(
-      (team) =>
-        team.code === 'media'
-    ) || null
-
   const primaryTeam =
     userTeams.find(
       (team) =>
@@ -148,19 +142,6 @@ export async function requireVolunteer(request) {
       ...userTeams,
     ]
 
-    // Mídias é aberta para todos.
-    if (
-      mediaTeam &&
-      !availableTeams.some(
-        (team) =>
-          Number(team.id) ===
-          Number(mediaTeam.id)
-      )
-    ) {
-      availableTeams.push(
-        mediaTeam
-      )
-    }
   }
 
   return {

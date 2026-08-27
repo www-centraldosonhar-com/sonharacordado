@@ -10,6 +10,7 @@ import adminExpenseHandler from '../server/actions/admin-expenses.js'
 import postEventHandler from '../server/actions/post-event.js'
 import financeRequestsAdminHandler from '../server/actions/finance-requests-admin.js'
 import adminUserParticipationHandler from '../server/actions/admin-user-participation.js'
+import adminAssistedHandler from '../server/actions/admin-assisted.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -133,6 +134,14 @@ export default async function handler(request, response) {
           'Não foi possível carregar o histórico do voluntário.',
       })
     }
+  }
+
+
+  if (action === 'assisted') {
+    return adminAssistedHandler(
+      request,
+      response
+    )
   }
 
 

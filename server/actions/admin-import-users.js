@@ -231,6 +231,36 @@ export default async function handler(
 
     const errors = []
     const warnings = []
+    const googleConflicts =
+      Array.isArray(
+        row._existing_conflicts
+      )
+        ? row._existing_conflicts
+        : []
+
+
+    for (
+      const conflict
+      of googleConflicts
+    ) {
+      const reasons =
+        Array.isArray(
+          conflict.reasons
+        )
+          ? conflict.reasons
+          : []
+
+      warnings.push(
+        `Possível duplicidade com ${
+          conflict.userName ||
+          'outro cadastro'
+        }: ${
+          reasons.join(', ') ||
+          'dados semelhantes'
+        }.`
+      )
+    }
+
 
 
     // ------------------------------------------------------

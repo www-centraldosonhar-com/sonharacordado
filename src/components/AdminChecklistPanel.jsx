@@ -27,6 +27,11 @@ function AdminChecklistPanel({
     setIsLoading,
   ] = useState(false)
 
+  const [
+    isLocked,
+    setIsLocked,
+  ] = useState(false)
+
 
   const activityParticipants =
     participants.filter(
@@ -77,6 +82,12 @@ function AdminChecklistPanel({
 
         setChecklists(loaded)
 
+        setIsLocked(
+          Boolean(
+            result.locked
+          )
+        )
+
         if (
           loaded[0]
             ?.assigned_user_id
@@ -107,24 +118,34 @@ function AdminChecklistPanel({
   // ASSISTIDOS
   // =====================================================
 
-  if (
+  const isAssistedChecklist =
     activity.role_name ===
-    'Recepção e Check-in de Assistidos'
-  ) {
-    return (
-      <div className="admin-checklist-panel">
-        <h4>
-          🧒 Check-in de Assistidos
-        </h4>
+      'Recepção / Check-in de Assistidos' ||
+    activity.role_name ===
+      'Despedida / Check-out de Assistidos'
 
-        <p className="admin-form-help">
-          A função de check-in está habilitada,
-          mas a lista será conectada ao cadastro
-          de assistidos na próxima etapa.
-        </p>
-      </div>
-    )
-  }
+  const isCheckout =
+    activity.role_name ===
+    'Despedida / Check-out de Assistidos'
+
+  const checklistTitle =
+    isAssistedChecklist
+      ? isCheckout
+        ? '👋 Check-out de Assistidos'
+        : '🧒 Check-in de Assistidos'
+      : '☑️ Recepção / Check-in de Voluntários'
+
+  const checklistDescription =
+    isAssistedChecklist
+      ? 'A lista é formada automaticamente pelos Assistidos ativos do projeto deste evento.'
+      : 'A lista é formada automaticamente pelos voluntários com inscrição confirmada neste evento.'
+
+  const responsibleLabel =
+    isAssistedChecklist
+      ? isCheckout
+        ? 'Responsável pelo check-out'
+        : 'Responsável pelo check-in'
+      : 'Responsável pelo check-in'
 
 
   // =====================================================
@@ -208,14 +229,28 @@ function AdminChecklistPanel({
   return (
     <div className="admin-checklist-panel">
       <h4>
-        ☑️ Check-in de Voluntários
+        {checklistTitle}
       </h4>
 
       <p className="admin-form-help">
-        A lista é formada automaticamente
-        pelos voluntários com inscrição
-        confirmada neste evento.
+        {checklistDescription}
       </p>
+
+      {isLocked && (
+        <div className="admin-checklist-item">
+          <div>
+            <strong>
+              🔒 Checklist encerrada
+            </strong>
+
+            <span>
+              O evento entrou em Pós-Evento.
+              A lista permanece disponível
+              somente como histórico.
+            </span>
+          </div>
+        </div>
+      )}
 
       {activityParticipants.length === 0 ? (
         <div className="admin-checklist-item">
@@ -236,11 +271,12 @@ function AdminChecklistPanel({
           className="admin-checklist-create"
         >
           <label>
-            Responsável pelo check-in
+            {responsibleLabel}
           </label>
 
           <select
             value={assignedUserId}
+            disabled={isLocked}
             onChange={(event) =>
               setAssignedUserId(
                 event.target.value
@@ -272,7 +308,10 @@ function AdminChecklistPanel({
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={
+              isLoading ||
+              isLocked
+            }
           >
             {isLoading
               ? 'Salvando...'
@@ -287,7 +326,7 @@ function AdminChecklistPanel({
         <div className="admin-checklist-item">
           <div>
             <strong>
-              ✅ Check-in preparado
+              ✅ Checklist preparada
             </strong>
 
             <span>

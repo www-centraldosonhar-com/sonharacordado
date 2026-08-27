@@ -1,4 +1,5 @@
 import {
+  getAdminCapabilities,
   getAdminTeamIds,
   isGlobalAdmin,
   isMediaAdmin,
@@ -50,6 +51,9 @@ export default async function handler(request, response) {
     const volunteerTeamAdmin =
       isVolunteerTeamAdmin(admin)
 
+    const capabilities =
+      getAdminCapabilities(admin)
+
     const activitiesTeamAdmin =
       admin.adminScope === 'team' &&
       (admin.teams || []).some(
@@ -66,6 +70,11 @@ export default async function handler(request, response) {
       globalAdmin ||
       projectAdmin ||
       volunteerTeamAdmin
+
+
+    const canManageAssisted =
+      capabilities
+        ?.canManageAssisted === true
 
     const unrestrictedProjects =
       globalAdmin ||
@@ -140,7 +149,18 @@ export default async function handler(request, response) {
               AND ut.active = 1
           ),
           ARRAY[]::text[]
-        ) AS team_names
+        ) AS team_names,
+
+        COALESCE(
+          ARRAY_AGG(
+            DISTINCT t.code
+          ) FILTER (
+            WHERE
+              t.code IS NOT NULL
+              AND ut.active = 1
+          ),
+          ARRAY[]::text[]
+        ) AS team_codes
 
       FROM users u
 
@@ -162,7 +182,7 @@ export default async function handler(request, response) {
         ${globalAdmin}
 
         OR (
-          ${projectAdmin}
+          ${projectAdmin || volunteerTeamAdmin}
           AND u.project_id =
             ${admin.projectId}
         )
@@ -242,6 +262,8 @@ export default async function handler(request, response) {
         e.drive_link,
         e.event_image_path,
         e.active,
+        e.event_status,
+        e.post_event_opened_at,
         p.name AS project
       FROM events e
       LEFT JOIN projects p
@@ -249,8 +271,14 @@ export default async function handler(request, response) {
 
       WHERE
         ${unrestrictedProjects}
+
         OR e.project_id =
           ${admin.projectId}
+
+        -- Eventos gerais pertencem à Central inteira.
+        -- Todos os Admins podem consultá-los, mantendo
+        -- eventos específicos restritos ao próprio projeto.
+        OR e.project_id IS NULL
 
       ORDER BY
         e.event_date DESC,
@@ -366,6 +394,10 @@ export default async function handler(request, response) {
         c.status,
         c.completed_at,
         c.photo_submitted_at,
+        c.delivery_link,
+        c.delivery_review_status,
+        c.delivery_review_note,
+        c.delivery_reviewed_at,
         er.requires_delivery,
         er.delivery_deadline,
         u.name AS user_name,
@@ -384,7 +416,6 @@ export default async function handler(request, response) {
       JOIN events e
         ON er.event_id = e.id
       WHERE c.status = 'confirmed'
-        AND c.completed_at IS NULL
 
         AND (
           ${globalAdmin}
@@ -821,7 +852,10 @@ export default async function handler(request, response) {
         teams:
           admin.teams || [],
 
+        capabilities,
+
         canManageRegistrations,
+        canManageAssisted,
 
         canViewActivitiesOverview,
 

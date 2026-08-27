@@ -126,6 +126,299 @@ function mapHeader(header) {
 }
 
 
+function normalizeDigits(value) {
+  return String(value || '')
+    .replace(/\D/g, '')
+}
+
+
+function looksLikeEmail(value) {
+  const text =
+    String(value || '').trim()
+
+  return (
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      .test(text)
+  )
+}
+
+
+function looksLikePhone(value) {
+  const text =
+    String(value || '').trim()
+
+  // Bloqueia datas e carimbos de data/hora,
+  // por exemplo:
+  // 25/07/2026
+  // 25/07/2026 10:40:11
+  if (
+    /^\d{1,2}\/\d{1,2}\/\d{4}/
+      .test(text)
+  ) {
+    return false
+  }
+
+  // Bloqueia horários isolados.
+  if (
+    /^\d{1,2}:\d{2}(?::\d{2})?$/
+      .test(text)
+  ) {
+    return false
+  }
+
+  const digits =
+    normalizeDigits(text)
+
+  return (
+    digits.length >= 9 &&
+    digits.length <= 15
+  )
+}
+
+
+function looksLikeBirthDate(value) {
+  const text =
+    String(value || '').trim()
+
+  return (
+    /^\d{1,2}\/\d{1,2}\/\d{4}$/
+      .test(text)
+  )
+}
+
+
+function looksLikeProject(value) {
+  const text =
+    String(value || '')
+      .normalize('NFD')
+      .replace(
+        /[\u0300-\u036f]/g,
+        ''
+      )
+      .trim()
+      .toUpperCase()
+
+  return (
+    /\bAPS\b/.test(text) ||
+    /\bPPF\b/.test(text) ||
+    /\bSJ\b/.test(text) ||
+    text.includes('SONHANDO')
+  )
+}
+
+
+function looksLikeFullName(value) {
+  const text =
+    String(value || '')
+      .trim()
+
+  if (
+    !text ||
+    text.includes('@') ||
+    /\d/.test(text)
+  ) {
+    return false
+  }
+
+  const parts =
+    text
+      .split(/\s+/)
+      .filter(Boolean)
+
+  if (parts.length < 2) {
+    return false
+  }
+
+  const meaningfulParts =
+    parts.filter(
+      (part) =>
+        part.length >= 2
+    )
+
+  if (
+    meaningfulParts.length < 2
+  ) {
+    return false
+  }
+
+  const capitalizedParts =
+    meaningfulParts.filter(
+      (part) =>
+        /^[A-ZÁÀÃÂÉÈÊÍÌÎÓÒÕÔÚÙÛÇ]/.test(
+          part
+        )
+    )
+
+  /*
+   * Aceita nomes como:
+   * João da Silva
+   * Maria Eduarda dos Santos
+   *
+   * Portanto não exigimos maiúscula
+   * em "da", "de", "dos" etc.
+   */
+  return (
+    capitalizedParts.length >= 2
+  )
+}
+
+
+function inferColumnType(values) {
+  const samples =
+    values
+      .map(
+        (value) =>
+          String(value || '').trim()
+      )
+      .filter(Boolean)
+      .slice(0, 40)
+
+  if (!samples.length) {
+    return null
+  }
+
+  const score = (matcher) =>
+    samples.filter(matcher).length /
+    samples.length
+
+  const scores = {
+    email:
+      score(looksLikeEmail),
+
+    phone:
+      score(looksLikePhone),
+
+    birth_date:
+      score(looksLikeBirthDate),
+
+    project:
+      score(looksLikeProject),
+
+    full_name:
+      score(looksLikeFullName),
+  }
+
+  const ordered =
+    Object.entries(scores)
+      .sort(
+        (a, b) =>
+          b[1] - a[1]
+      )
+
+  const [
+    bestField,
+    bestScore,
+  ] =
+    ordered[0] || []
+
+  /*
+   * Exigimos pelo menos 60% dos valores
+   * da coluna compatíveis com o tipo.
+   */
+  if (
+    !bestField ||
+    bestScore < 0.60
+  ) {
+    return null
+  }
+
+  return {
+    field:
+      bestField,
+
+    confidence:
+      bestScore,
+
+    scores,
+  }
+}
+
+
+function inferHeadersFromRows(
+  records,
+  existingHeaders
+) {
+  const columnCount =
+    Math.max(
+      ...records.map(
+        (row) =>
+          row.length
+      ),
+      0
+    )
+
+  const inferred =
+    [...existingHeaders]
+
+  const alreadyMapped =
+    new Set(
+      inferred.filter(
+        (header) =>
+          [
+            'full_name',
+            'project',
+            'email',
+            'phone',
+            'birth_date',
+          ].includes(header)
+      )
+    )
+
+  for (
+    let columnIndex = 0;
+    columnIndex < columnCount;
+    columnIndex += 1
+  ) {
+    const currentHeader =
+      inferred[columnIndex]
+
+    if (
+      [
+        'full_name',
+        'project',
+        'email',
+        'phone',
+        'birth_date',
+      ].includes(currentHeader)
+    ) {
+      continue
+    }
+
+    const columnValues =
+      records
+        .slice(1)
+        .map(
+          (row) =>
+            row[columnIndex]
+        )
+
+    const detected =
+      inferColumnType(
+        columnValues
+      )
+
+    if (
+      !detected ||
+      alreadyMapped.has(
+        detected.field
+      )
+    ) {
+      continue
+    }
+
+    inferred[columnIndex] =
+      detected.field
+
+    alreadyMapped.add(
+      detected.field
+    )
+  }
+
+  return inferred
+}
+
+
+
 async function refreshGoogleAccessToken(
   refreshToken
 ) {
@@ -359,7 +652,7 @@ export default async function handler(
   const metadataUrl =
     `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
       spreadsheetId
-    )}?fields=sheets.properties`
+    )}?fields=properties.title,sheets.properties`
 
 
   const metadata =
@@ -367,6 +660,17 @@ export default async function handler(
       metadataUrl,
       accessToken
     )
+
+
+  console.log(
+    'GOOGLE SHEETS SOURCE:',
+    {
+      title:
+        metadata.properties?.title ||
+        'Sem título',
+      spreadsheetId,
+    }
+  )
 
 
   const sheets =
@@ -409,7 +713,7 @@ export default async function handler(
       `'${String(sheetTitle).replace(
         /'/g,
         "''"
-      )}'!A:Z`
+      )}'!A:ZZ`
 
 
     const valuesUrl =
@@ -429,6 +733,80 @@ export default async function handler(
 
     const records =
       valuesData.values || []
+
+    const kaioMatches =
+      records
+        .map((row, index) => ({
+          row,
+          rowNumber:
+            index + 1,
+        }))
+        .filter(({ row }) =>
+          row.some((cell) =>
+            String(cell || '')
+              .toLowerCase()
+              .includes('kaio vinicius')
+          )
+        )
+
+    if (kaioMatches.length > 0) {
+      console.log(
+        'KAIO VINICIUS RAW SHEET MATCH:',
+        {
+          sheet:
+            sheetTitle,
+
+          matches:
+            kaioMatches.map(
+              ({ row, rowNumber }) => ({
+                rowNumber,
+
+                row:
+                  row.map(
+                    (value) => {
+                      const text =
+                        String(value || '')
+                          .trim()
+
+                      if (
+                        text.includes('@')
+                      ) {
+                        const [
+                          local,
+                          domain,
+                        ] =
+                          text.split('@')
+
+                        return `${
+                          local?.slice(0, 2) ||
+                          '**'
+                        }***@${
+                          domain || '***'
+                        }`
+                      }
+
+                      const digits =
+                        text.replace(
+                          /\D/g,
+                          ''
+                        )
+
+                      if (
+                        digits.length >= 9
+                      ) {
+                        return `***${
+                          digits.slice(-4)
+                        }`
+                      }
+
+                      return text
+                    }
+                  ),
+              })
+            ),
+        }
+      )
+    }
 
 
     /*
@@ -455,11 +833,22 @@ export default async function handler(
         normalizeHeader
       )
 
-    const headers =
+    const mappedHeaders =
       normalizedHeaders.map(
         mapHeader
       )
 
+    /*
+     * Primeiro tentamos pelos cabeçalhos.
+     * Depois completamos pelo conteúdo
+     * das colunas, permitindo abas com
+     * perguntas e ordens diferentes.
+     */
+    const headers =
+      inferHeadersFromRows(
+        records,
+        mappedHeaders
+      )
 
     const hasFullName =
       headers.includes(
@@ -998,193 +1387,329 @@ export default async function handler(
   `
 
 
-  const newRows =
-    rows.filter((row) => {
-      const email =
-        normalizeEmail(
-          row.email
+  const kaioRows =
+    rows.filter(
+      (row) =>
+        String(
+          row.full_name || ''
         )
+          .toLowerCase()
+          .includes('kaio')
+    )
 
-      const rowName =
+  if (kaioRows.length) {
+    console.log(
+      'GOOGLE SHEETS KAIO DEBUG:',
+      kaioRows
+    )
+  }
+
+
+  // ========================================================
+  // CLASSIFICA RESPOSTAS CONTRA A CENTRAL
+  //
+  // Regra importante:
+  //
+  // 1. Mesma pessoa com identidade forte
+  //    → já importada.
+  //
+  // 2. Apenas username/e-mail em conflito
+  //    → NÃO desaparece.
+  //    → volta para o Admin revisar.
+  // ========================================================
+
+  const candidateRows = []
+  const alreadyImportedRows = []
+  const existingConflicts = []
+
+
+  for (const row of rows) {
+    const email =
+      normalizeEmail(
+        row.email
+      )
+
+    const rowName =
+      normalizeIdentityText(
+        row.full_name
+      )
+
+    const rowBirthDate =
+      normalizeIdentityBirthDate(
+        row.birth_date
+      )
+
+    const rowPhone =
+      normalizeIdentityPhone(
+        row.phone
+      )
+
+    const usernameBase =
+      createUsernameBase(
+        row.full_name
+      )
+
+
+    let strongExistingMatch = null
+
+    const conflicts = []
+
+
+    for (const user of existingUsers) {
+      const userName =
         normalizeIdentityText(
-          row.full_name
+          user.full_name ||
+          user.name
         )
 
-      const rowBirthDate =
+      const userBirthDate =
         normalizeIdentityBirthDate(
-          row.birth_date
+          user.birth_date
         )
 
-      const rowPhone =
+      const userPhone =
         normalizeIdentityPhone(
-          row.phone
+          user.phone
         )
 
-      const usernameBase =
-        createUsernameBase(
-          row.full_name
+      const userEmail =
+        normalizeEmail(
+          user.email
         )
 
 
-      const alreadyExists =
-        existingUsers.some(
-          (user) => {
-            const userName =
-              normalizeIdentityText(
-                user.full_name ||
-                user.name
-              )
-
-            const userBirthDate =
-              normalizeIdentityBirthDate(
-                user.birth_date
-              )
-
-            const userPhone =
-              normalizeIdentityPhone(
-                user.phone
-              )
-
-            const userEmail =
-              normalizeEmail(
-                user.email
-              )
+      const sameNameAndBirth =
+        Boolean(
+          rowName &&
+          userName &&
+          rowBirthDate &&
+          userBirthDate &&
+          rowName ===
+            userName &&
+          rowBirthDate ===
+            userBirthDate
+        )
 
 
-            /*
-             * REGRA 1
-             * Username exato.
-             *
-             * Bom sinal técnico, mas não depende
-             * de e-mail nem de projeto.
-             */
-            const sameUsername =
-              Boolean(
-                usernameBase &&
-                user.username &&
-                String(
-                  user.username
-                )
-                  .trim()
-                  .toLowerCase() ===
-                usernameBase
-                  .trim()
-                  .toLowerCase()
-              )
+      const sameNameAndPhone =
+        Boolean(
+          rowName &&
+          userName &&
+          rowPhone &&
+          userPhone &&
+          rowName ===
+            userName &&
+          rowPhone ===
+            userPhone
+        )
 
 
-            /*
-             * REGRA 2
-             * Nome completo + nascimento.
-             *
-             * Esse é o principal fallback quando
-             * o telefone não existe ou o e-mail mudou.
-             */
-            const sameNameAndBirth =
-              Boolean(
-                rowName &&
-                userName &&
-                rowBirthDate &&
-                userBirthDate &&
-                rowName ===
-                  userName &&
-                rowBirthDate ===
-                  userBirthDate
-              )
-
-
-            /*
-             * REGRA EXTRA
-             *
-             * Cadastro antigo pode possuir nome abreviado:
-             *
-             * Amanda Leo
-             * Amanda Léo Vieira da Silva Pinto
-             *
-             * Se o nascimento for exatamente o mesmo
-             * e pelo menos 2 partes do nome coincidirem,
-             * consideramos a mesma pessoa.
-             */
-            const rowNameParts =
-              new Set(
-                rowName
-                  .split(' ')
-                  .filter(
-                    (part) =>
-                      part.length >= 2
-                  )
-              )
-
-            const userNameParts =
-              userName
-                .split(' ')
-                .filter(
-                  (part) =>
-                    part.length >= 2
-                )
-
-            const matchingNameParts =
-              userNameParts.filter(
-                (part) =>
-                  rowNameParts.has(part)
-              ).length
-
-            const sameAbbreviatedNameAndBirth =
-              Boolean(
-                rowBirthDate &&
-                userBirthDate &&
-                rowBirthDate ===
-                  userBirthDate &&
-                matchingNameParts >= 2
-              )
-
-
-            /*
-             * REGRA 3
-             * Nome completo + telefone.
-             */
-            const sameNameAndPhone =
-              Boolean(
-                rowName &&
-                userName &&
-                rowPhone &&
-                userPhone &&
-                rowName ===
-                  userName &&
-                rowPhone ===
-                  userPhone
-              )
-
-
-            /*
-             * REGRA 4
-             * E-mail igual.
-             *
-             * Continua sendo um sinal válido,
-             * mas não é a única identidade.
-             */
-            const sameEmail =
-              Boolean(
-                email &&
-                userEmail &&
-                email ===
-                  userEmail
-              )
-
-
-            return (
-              sameUsername ||
-              sameNameAndBirth ||
-              sameAbbreviatedNameAndBirth ||
-              sameNameAndPhone ||
-              sameEmail
+      const rowNameParts =
+        new Set(
+          rowName
+            .split(' ')
+            .filter(
+              (part) =>
+                part.length >= 2
             )
-          }
+        )
+
+      const userNameParts =
+        userName
+          .split(' ')
+          .filter(
+            (part) =>
+              part.length >= 2
+          )
+
+      const matchingNameParts =
+        userNameParts.filter(
+          (part) =>
+            rowNameParts.has(part)
+        ).length
+
+
+      const sameAbbreviatedNameAndBirth =
+        Boolean(
+          rowBirthDate &&
+          userBirthDate &&
+          rowBirthDate ===
+            userBirthDate &&
+          matchingNameParts >= 2
         )
 
 
-      return !alreadyExists
-    })
+      /*
+       * Esses três sinais são suficientemente
+       * fortes para considerar que a pessoa
+       * já existe na Central.
+       */
+      if (
+        sameNameAndBirth ||
+        sameNameAndPhone ||
+        sameAbbreviatedNameAndBirth
+      ) {
+        strongExistingMatch = {
+          id:
+            user.id,
+
+          name:
+            user.full_name ||
+            user.name,
+
+          reason:
+            sameNameAndBirth
+              ? 'Mesmo nome e nascimento'
+              : sameNameAndPhone
+                ? 'Mesmo nome e telefone'
+                : 'Mesmo nascimento e nome compatível',
+        }
+
+        break
+      }
+
+
+      /*
+       * Username ou e-mail iguais, sozinhos,
+       * NÃO eliminam mais a resposta.
+       *
+       * Viram conflito para revisão manual.
+       */
+      const sameUsername =
+        Boolean(
+          usernameBase &&
+          user.username &&
+          String(
+            user.username
+          )
+            .trim()
+            .toLowerCase() ===
+          usernameBase
+            .trim()
+            .toLowerCase()
+        )
+
+
+      const sameEmail =
+        Boolean(
+          email &&
+          userEmail &&
+          email ===
+            userEmail
+        )
+
+
+      if (
+        sameUsername ||
+        sameEmail
+      ) {
+        const existing =
+          conflicts.find(
+            (conflict) =>
+              Number(conflict.userId) ===
+              Number(user.id)
+          )
+
+        const reasons = []
+
+        if (sameUsername) {
+          reasons.push(
+            'username semelhante'
+          )
+        }
+
+        if (sameEmail) {
+          reasons.push(
+            'e-mail já utilizado'
+          )
+        }
+
+
+        if (existing) {
+          existing.reasons = [
+            ...new Set([
+              ...existing.reasons,
+              ...reasons,
+            ]),
+          ]
+        } else {
+          conflicts.push({
+            userId:
+              user.id,
+
+            userName:
+              user.full_name ||
+              user.name,
+
+            userEmail:
+              user.email ||
+              null,
+
+            reasons,
+          })
+        }
+      }
+    }
+
+
+    if (strongExistingMatch) {
+      alreadyImportedRows.push({
+        ...row,
+
+        _existing_match:
+          strongExistingMatch,
+      })
+
+      continue
+    }
+
+
+    const candidate = {
+      ...row,
+
+      _existing_conflicts:
+        conflicts,
+    }
+
+
+    if (conflicts.length) {
+      existingConflicts.push({
+        full_name:
+          row.full_name,
+
+        project:
+          row.project,
+
+        source:
+          row._sheet,
+
+        conflicts,
+      })
+    }
+
+
+    candidateRows.push(
+      candidate
+    )
+  }
+
+
+  console.log(
+    'GOOGLE SHEETS EXISTING USERS:',
+    {
+      sourceRows:
+        rows.length,
+
+      candidates:
+        candidateRows.length,
+
+      alreadyImported:
+        alreadyImportedRows.length,
+
+      conflicts:
+        existingConflicts.length,
+    }
+  )
 
 
   return response.status(200).json({
@@ -1197,11 +1722,13 @@ export default async function handler(
       rows.length,
 
     alreadyImported:
-      rows.length -
-      newRows.length,
+      alreadyImportedRows.length,
 
     newResponses:
-      newRows.length,
+      candidateRows.length,
+
+    conflictResponses:
+      existingConflicts.length,
 
     validSheets,
 
@@ -1212,7 +1739,11 @@ export default async function handler(
     possibleDuplicates:
       possibleDuplicates.length,
 
+    existingConflicts,
+
+    alreadyImportedRows,
+
     rows:
-      newRows,
+      candidateRows,
   })
 }

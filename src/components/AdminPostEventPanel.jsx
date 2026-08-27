@@ -1,7 +1,9 @@
+import PostEventFinancialReview from './PostEventFinancialReview'
 import {
   useEffect,
   useState,
 } from 'react'
+
 
 
 // =========================================================
@@ -90,6 +92,11 @@ function AdminPostEventPanel({
   const [
     isLoading,
     setIsLoading,
+  ] = useState(false)
+
+  const [
+    showFeedbackComments,
+    setShowFeedbackComments,
   ] = useState(false)
 
   const [
@@ -211,6 +218,51 @@ function AdminPostEventPanel({
   // =====================================================
   // OPEN POST EVENT
   // =====================================================
+
+  const selectedEvent =
+    events.find(
+      item =>
+        Number(item.id) ===
+        Number(selectedEventId)
+    ) || null
+
+  const postEventAvailable =
+    (() => {
+      if (!selectedEvent?.event_date) {
+        return false
+      }
+
+      const today =
+        new Date()
+
+      today.setHours(
+        0,
+        0,
+        0,
+        0
+      )
+
+      const eventDateValue =
+        String(
+          selectedEvent.event_date
+        ).slice(
+          0,
+          10
+        )
+
+      const eventDate =
+        new Date(
+          `${eventDateValue}T00:00:00`
+        )
+
+      return (
+        !Number.isNaN(
+          eventDate.getTime()
+        ) &&
+        eventDate <= today
+      )
+    })()
+
 
   async function openPostEvent() {
     const event =
@@ -369,6 +421,82 @@ function AdminPostEventPanel({
 
 
   // =====================================================
+  // CLOSE POST EVENT
+  // =====================================================
+
+  async function closePostEvent() {
+    if (!selectedEventId) {
+      return
+    }
+
+    const confirmed =
+      window.confirm(
+        'Encerrar definitivamente este Pós-Evento?\n\nA prestação financeira ficará congelada. As avaliações dos voluntários continuarão disponíveis para quem teve check-in.'
+      )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsLoading(true)
+    setMessage('')
+
+    try {
+      const response =
+        await fetch(
+          '/api/admin?action=post-event',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                operation:
+                  'close-post-event',
+
+                eventId:
+                  Number(
+                    selectedEventId
+                  ),
+              }),
+          }
+        )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          'Não foi possível encerrar o Pós-Evento.'
+        )
+      }
+
+      setMessage(
+        result.message ||
+        'Pós-Evento encerrado. ✅'
+      )
+
+      await reloadSummary()
+
+      if (onUpdated) {
+        await onUpdated()
+      }
+    } catch (error) {
+      setMessage(
+        error.message
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+
+  // =====================================================
   // EMPTY
   // =====================================================
 
@@ -396,6 +524,131 @@ function AdminPostEventPanel({
       'post_event' &&
     currentStatus !==
       'closed'
+
+
+  // =========================================================
+  // PÓS-EVENTO 2.0 — PROGRESSO DE ENCERRAMENTO
+  // =========================================================
+
+  const postEventOpened =
+    Boolean(
+      summary?.event?.post_event_opened_at ||
+      summary?.post_event_opened_at ||
+      summary?.opened_at
+    )
+
+  const expensesClosed =
+    Number(
+      summary?.closure?.expenses_closed ||
+      0
+    ) === 1
+
+  const approvedTeamReports =
+    teamReports.filter(
+      (report) =>
+        report.status === 'approved'
+    ).length
+
+  const reportsComplete =
+    teamReports.length > 0 &&
+    approvedTeamReports ===
+      teamReports.length
+
+  const postEventClosed =
+    Boolean(
+      summary?.event?.post_event_closed_at ||
+      summary?.post_event_closed_at ||
+      summary?.closure?.post_event_closed_at
+    )
+
+  const closingSteps = [
+    {
+      key: 'opened',
+      label: 'Pós-evento aberto',
+      complete: postEventOpened,
+    },
+    {
+      key: 'expenses',
+      label: 'Gastos finalizados',
+      complete: expensesClosed,
+    },
+    {
+      key: 'reports',
+      label: 'Prestações das equipes',
+      complete: reportsComplete,
+    },
+    {
+      key: 'closed',
+      label: 'Encerramento administrativo',
+      complete: postEventClosed,
+    },
+  ]
+
+  const completedClosingSteps =
+    closingSteps.filter(
+      (step) => step.complete
+    ).length
+
+  const closingProgress =
+    Math.round(
+      (
+        completedClosingSteps /
+        closingSteps.length
+      ) * 100
+    )
+
+  const pendingTeamReports =
+    teamReports.filter(
+      (report) =>
+        report.status !== 'approved'
+    )
+
+  // O fechamento financeiro global só pode
+  // acontecer quando todos os fechamentos das
+  // equipes estiverem aprovados.
+  const allTeamReportsApproved =
+    teamReports.length > 0 &&
+    pendingTeamReports.length === 0
+
+
+  const nextClosingAction =
+    !postEventOpened
+      ? {
+          key: 'opened',
+          label: 'Abrir o Pós-evento',
+          description:
+            'Inicie oficialmente o processo de encerramento deste evento.',
+        }
+      : !expensesClosed
+        ? {
+            key: 'expenses',
+            label: 'Finalizar os gastos',
+            description:
+              'Revise os lançamentos financeiros antes de concluir esta etapa.',
+          }
+        : pendingTeamReports.length > 0
+          ? {
+              key: 'reports',
+              label:
+                pendingTeamReports.length === 1
+                  ? `Concluir prestação de ${pendingTeamReports[0].team_name}`
+                  : `Concluir ${pendingTeamReports.length} prestações de equipe`,
+              description:
+                'As prestações financeiras precisam ser concluídas e aprovadas para avançar.',
+            }
+          : !postEventClosed
+            ? {
+                key: 'closed',
+                label: 'Realizar o encerramento administrativo',
+                description:
+                  'As etapas anteriores estão concluídas. O evento pode ser finalizado.',
+              }
+            : {
+                key: 'complete',
+                label: 'Pós-evento concluído',
+                description:
+                  'Todas as etapas administrativas deste evento foram concluídas.',
+              }
 
 
   return (
@@ -467,7 +720,8 @@ function AdminPostEventPanel({
             type="button"
             className="post-event-open-button"
             disabled={
-              isLoading
+              isLoading ||
+              !postEventAvailable
             }
             onClick={
               openPostEvent
@@ -475,6 +729,13 @@ function AdminPostEventPanel({
           >
             🌙 Iniciar Pós-Evento
           </button>
+        )}
+
+        {canOpen &&
+          !postEventAvailable && (
+          <p className="post-event-open-hint">
+            Disponível a partir da data do evento.
+          </p>
         )}
       </div>
 
@@ -567,6 +828,175 @@ function AdminPostEventPanel({
                 </span>
               </article>
             </div>
+          </div>
+
+
+          {/* ============================================= */}
+          {/* POST-EVENT PROGRESS */}
+          {/* ============================================= */}
+
+          <div className="post-event-progress-card">
+            <div className="post-event-progress-head">
+              <div>
+                <small>
+                  ENCERRAMENTO DO EVENTO
+                </small>
+
+                <strong>
+                  Progresso do Pós-evento
+                </strong>
+
+                <span>
+                  Acompanhe o que ainda precisa
+                  ser concluído.
+                </span>
+              </div>
+
+              <div className="post-event-progress-percentage">
+                <strong>
+                  {closingProgress}%
+                </strong>
+
+                <span>
+                  concluído
+                </span>
+              </div>
+            </div>
+
+            <div className="post-event-progress-track">
+              <div
+                className="post-event-progress-value"
+                style={{
+                  width:
+                    `${closingProgress}%`,
+                }}
+                role="progressbar"
+                aria-valuenow={
+                  closingProgress
+                }
+                aria-valuemin="0"
+                aria-valuemax="100"
+              />
+            </div>
+
+            <div
+              className={`post-event-next-action ${
+                nextClosingAction.key === 'complete'
+                  ? 'is-complete'
+                  : ''
+              }`}
+            >
+              <div className="post-event-next-action-icon">
+                {nextClosingAction.key === 'complete'
+                  ? '✓'
+                  : '→'}
+              </div>
+
+              <div className="post-event-next-action-copy">
+                <small>
+                  {nextClosingAction.key === 'complete'
+                    ? 'ENCERRAMENTO'
+                    : 'PRÓXIMA AÇÃO'}
+                </small>
+
+                <strong>
+                  {nextClosingAction.label}
+                </strong>
+
+                <span>
+                  {nextClosingAction.description}
+                </span>
+              </div>
+            </div>
+
+
+            {nextClosingAction.key ===
+              'closed' && (
+              <button
+                type="button"
+                className="post-event-finalize-button"
+                disabled={isLoading}
+                onClick={closePostEvent}
+              >
+                ✓ Encerrar Pós-Evento
+              </button>
+            )}
+
+
+            <div className="post-event-progress-steps">
+              {closingSteps.map(
+                (step) => (
+                  <div
+                    key={step.key}
+                    className={`post-event-progress-step ${
+                      step.complete
+                        ? 'is-complete'
+                        : 'is-pending'
+                    }`}
+                  >
+                    <span>
+                      {step.complete
+                        ? '✓'
+                        : '○'}
+                    </span>
+
+                    <strong>
+                      {step.label}
+                    </strong>
+
+                    {step.key ===
+                      'reports' && (
+                      <small>
+                        {approvedTeamReports}
+                        {' / '}
+                        {teamReports.length}
+                      </small>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+
+            {pendingTeamReports.length > 0 && (
+              <div className="post-event-progress-pending">
+                <small>
+                  AINDA FALTA
+                </small>
+
+                <div>
+                  {pendingTeamReports.map(
+                    (report) => (
+                      <span key={report.id}>
+                        🤝 {report.team_name}
+                      </span>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
+            {Number(
+              summary?.feedback?.total || 0
+            ) > 0 && (
+              <div className="post-event-progress-feedback">
+                <span>
+                  ♥
+                </span>
+
+                <strong>
+                  {Number(
+                    summary.feedback.average || 0
+                  ).toFixed(1)}
+                  {' / 5'}
+                </strong>
+
+                <small>
+                  {summary.feedback.total}
+                  {' '}
+                  avaliações recebidas
+                </small>
+              </div>
+            )}
           </div>
 
 
@@ -680,40 +1110,6 @@ function AdminPostEventPanel({
             </div>
 
 
-            {financial
-              .expensesByTeam
-              ?.length > 0 && (
-              <div className="post-event-team-expenses">
-                <h4>
-                  Gastos por equipe
-                </h4>
-
-                {financial
-                  .expensesByTeam
-                  .map(
-                    (team) => (
-                      <div
-                        key={
-                          team.team_id
-                        }
-                      >
-                        <span>
-                          {
-                            team.team_name
-                          }
-                        </span>
-
-                        <strong>
-                          {formatCurrency(
-                            team.amount
-                          )}
-                        </strong>
-                      </div>
-                    )
-                  )}
-              </div>
-            )}
-
             <div className="post-event-expense-closing">
               {Number(
                 summary?.closure
@@ -760,12 +1156,45 @@ function AdminPostEventPanel({
                     </span>
                   </div>
 
-                  <button
+                                <div
+                className={[
+                  'post-event-financial-gate',
+                  allTeamReportsApproved
+                    ? 'is-ready'
+                    : 'is-locked',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                <strong>
+                  {approvedTeamReports}
+                  {' de '}
+                  {teamReports.length}
+                  {' '}
+                  {teamReports.length === 1
+                    ? 'prestação aprovada'
+                    : 'prestações aprovadas'}
+                </strong>
+
+                <small>
+                  {allTeamReportsApproved
+                    ? 'Todas as prestações foram concluídas e aprovadas. O financeiro global pode ser finalizado.'
+                    : `${pendingTeamReports.length} ${
+                        pendingTeamReports.length === 1
+                          ? 'equipe ainda precisa'
+                          : 'equipes ainda precisam'
+                      } concluir a aprovação.`}
+                </small>
+              </div>
+
+<button
                     type="button"
-                    disabled={isLoading}
+                    disabled={(isLoading) || !allTeamReportsApproved}
                     onClick={closeExpenses}
                   >
-                    🔒 Finalizar e enviar ao Financeiro
+                    🔒 {allTeamReportsApproved
+                    ? 'Finalizar e enviar ao Financeiro'
+                    : 'Aguardando prestações das equipes'}
                   </button>
                 </>
               )}
@@ -790,7 +1219,7 @@ function AdminPostEventPanel({
                   </small>
 
                   <strong>
-                    Fechamentos
+                    Prestação de contas
                   </strong>
                 </div>
               </div>
@@ -810,36 +1239,20 @@ function AdminPostEventPanel({
               </b>
             </div>
 
-            {teamReports.length === 0 ? (
-              <p className="post-event-empty">
-                Nenhuma equipe precisa de
-                fechamento neste evento.
-              </p>
-            ) : (
-              <div className="post-event-team-list">
-                {teamReports.map(
-                  (report) => (
-                    <div
-                      key={
-                        report.id
-                      }
-                    >
-                      <span>
-                        {
-                          report.team_name
-                        }
-                      </span>
+            
+            <PostEventFinancialReview
+              eventId={
+                selectedEventId
+              }
+              reports={
+                teamReports
+              }
+              onChanged={
+                reloadSummary
+              }
+            />
 
-                      <strong>
-                        {statusLabel(
-                          report.status
-                        )}
-                      </strong>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
+
           </div>
 
 
@@ -847,30 +1260,135 @@ function AdminPostEventPanel({
           {/* FEEDBACK */}
           {/* ============================================= */}
 
-          <div className="post-event-feedback-summary">
-            <span>
-              ⭐ Avaliação do evento
-            </span>
+          <section className="post-event-feedback-card">
+            <div className="post-event-feedback-card-head">
+              <div>
+                <small>
+                  AVALIAÇÃO DO EVENTO
+                </small>
 
-            <strong>
-              {
-                summary.feedback
-                  ?.total > 0
-                  ? `${summary.feedback.average.toFixed(1)} / 5`
-                  : 'Ainda sem avaliações'
-              }
-            </strong>
+                <h3>
+                  Experiência dos voluntários
+                </h3>
+
+                <p>
+                  Avaliações enviadas por quem
+                  teve check-in confirmado.
+                </p>
+              </div>
+
+              {summary.feedback
+                ?.total > 0 && (
+                <span>
+                  {summary.feedback.total}
+                  {' '}
+                  {summary.feedback.total === 1
+                    ? 'avaliação'
+                    : 'avaliações'}
+                </span>
+              )}
+            </div>
+
 
             {summary.feedback
-              ?.total > 0 && (
-              <small>
-                {
-                  summary.feedback
-                    .total
-                } avaliações
-              </small>
+              ?.total > 0 ? (
+              <>
+                <div className="post-event-feedback-score">
+                  <strong>
+                    ♥
+                  </strong>
+
+                  <div>
+                    <b>
+                      {
+                        summary.feedback.average.toFixed(
+                          1
+                        )
+                      }
+                    </b>
+
+                    <span>
+                      de 5 corações
+                    </span>
+                  </div>
+                </div>
+
+
+                {summary.feedback
+                  .comments
+                  ?.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      className="post-event-feedback-toggle"
+                      onClick={() =>
+                        setShowFeedbackComments(
+                          (current) =>
+                            !current
+                        )
+                      }
+                    >
+                      {showFeedbackComments
+                        ? 'Ocultar comentários'
+                        : `Ver comentários (${summary.feedback.comments.length})`}
+                    </button>
+
+
+                    {showFeedbackComments && (
+                      <div className="post-event-feedback-comments">
+                        {summary.feedback.comments.map(
+                          (feedback) => (
+                            <article
+                              key={
+                                feedback.id
+                              }
+                            >
+                              <div>
+                                <strong>
+                                  {
+                                    feedback.userName
+                                  }
+                                </strong>
+
+                                <span>
+                                  {
+                                    '♥'.repeat(
+                                      feedback.rating
+                                    )
+                                  }
+                                </span>
+                              </div>
+
+                              <p>
+                                {
+                                  feedback.comment
+                                }
+                              </p>
+
+                              {feedback.createdAt && (
+                                <small>
+                                  {new Date(
+                                    feedback.createdAt
+                                  ).toLocaleString(
+                                    'pt-BR'
+                                  )}
+                                </small>
+                              )}
+                            </article>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="post-event-feedback-empty">
+                Ainda não há avaliações
+                para este evento.
+              </div>
             )}
-          </div>
+          </section>
         </>
       ) : null}
     </section>

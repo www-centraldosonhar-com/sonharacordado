@@ -270,6 +270,80 @@ export default async function handler(
     }
 
     // ===============================================
+    // DISCARD RECEIPT
+    // ===============================================
+    //
+    // Remove um upload que foi concluído no Storage,
+    // mas cuja inscrição falhou antes de ser gravada.
+    //
+    // Segurança:
+    // - somente o próprio usuário;
+    // - somente o evento informado;
+    // - nunca remove um arquivo já ligado a uma inscrição.
+    // ===============================================
+
+    if (operation === 'discard-receipt') {
+      if (
+        typeof storagePath !== 'string' ||
+        !storagePath.startsWith(
+          `event-${numericEventId}/user-${sessionUser.userId}/`
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Comprovante inválido.',
+        })
+      }
+
+      const linkedRows =
+        await sql`
+          SELECT id
+          FROM event_registrations
+          WHERE
+            event_id =
+              ${numericEventId}
+
+            AND user_id =
+              ${sessionUser.userId}
+
+            AND payment_receipt_path =
+              ${storagePath}
+
+          LIMIT 1
+        `
+
+      // Se o arquivo já está ligado a uma inscrição,
+      // não pode ser apagado pelo cleanup.
+      if (linkedRows[0]) {
+        return response.status(200).json({
+          success: true,
+          discarded: false,
+        })
+      }
+
+      const supabase =
+        getSupabaseAdmin()
+
+      const {
+        error: removeError,
+      } = await supabase.storage
+        .from(RECEIPT_BUCKET)
+        .remove([
+          storagePath,
+        ])
+
+      if (removeError) {
+        throw removeError
+      }
+
+      return response.status(200).json({
+        success: true,
+        discarded: true,
+      })
+    }
+
+
+    // ===============================================
     // SUBMIT REGISTRATION
     // ===============================================
 

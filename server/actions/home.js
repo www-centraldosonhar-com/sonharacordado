@@ -96,8 +96,14 @@ export default async function handler(request, response) {
     const myConfirmations = await sql`
       SELECT
         confirmations.id,
+        confirmations.event_role_id,
+        confirmations.status,
         confirmations.photo_submitted_at,
         confirmations.completed_at,
+        confirmations.delivery_link,
+        confirmations.delivery_review_status,
+        confirmations.delivery_review_note,
+        confirmations.delivery_reviewed_at,
         event_roles.requires_delivery,
         event_roles.delivery_deadline,
         event_roles.community_visible,
@@ -119,7 +125,6 @@ export default async function handler(request, response) {
         ON event_roles.event_id = events.id
       WHERE confirmations.user_id = ${currentUser.id}
         AND confirmations.status = 'confirmed'
-        AND confirmations.completed_at IS NULL
       ORDER BY
         events.event_date,
         roles.name
@@ -141,6 +146,7 @@ export default async function handler(request, response) {
         events.registration_fee,
         events.registration_deadline,
         events.registrations_open,
+        events.active,
         (
           SELECT COUNT(*)::int
           FROM event_registrations er_count
@@ -274,6 +280,36 @@ export default async function handler(request, response) {
     const communityActivities = await sql`
       SELECT
         event_roles.id,
+
+        (
+          SELECT COUNT(*)::int
+          FROM confirmations activity_count
+          WHERE activity_count.event_role_id =
+            event_roles.id
+            AND activity_count.status = 'confirmed'
+        ) AS real_confirmed_count,
+
+        EXISTS (
+          SELECT 1
+          FROM confirmations my_activity
+          WHERE my_activity.event_role_id =
+            event_roles.id
+            AND my_activity.user_id =
+              ${currentUser.id}
+            AND my_activity.status = 'confirmed'
+        ) AS user_joined,
+
+        (
+          SELECT my_activity.id
+          FROM confirmations my_activity
+          WHERE my_activity.event_role_id =
+            event_roles.id
+            AND my_activity.user_id =
+              ${currentUser.id}
+            AND my_activity.status = 'confirmed'
+          ORDER BY my_activity.id DESC
+          LIMIT 1
+        ) AS user_confirmation_id,
         event_roles.event_id,
         event_roles.role_id,
         event_roles.team_id,
@@ -309,6 +345,12 @@ export default async function handler(request, response) {
         ON events.project_id = projects.id
 
       WHERE event_roles.community_visible = TRUE
+        AND event_roles.active = 1
+        AND events.active = 1
+        AND events.event_date >= CURRENT_DATE
+        AND LOWER(
+          COALESCE(teams.code, '')
+        ) = 'media'
 
       ORDER BY
         events.event_date ASC,
@@ -373,6 +415,67 @@ export default async function handler(request, response) {
         events.event_date DESC,
         events.event_time DESC
       LIMIT 8
+    `
+
+    // =====================================================
+    // APPROVED PHOTO MEMORIES
+    // Evento + fotógrafo aprovado + link oficial do Drive
+    // =====================================================
+
+    const approvedPhotoMemories = await sql`
+      SELECT
+        events.id AS event_id,
+        events.name AS event_name,
+        events.event_date,
+        events.drive_link,
+
+        projects.name AS project,
+
+        users.id AS photographer_id,
+        users.name AS photographer_name,
+        users.username AS photographer_username,
+
+        confirmations.photo_submitted_at,
+        confirmations.completed_at
+
+      FROM confirmations
+
+      JOIN users
+        ON users.id = confirmations.user_id
+
+      JOIN event_roles
+        ON event_roles.id =
+          confirmations.event_role_id
+
+      JOIN roles
+        ON roles.id =
+          event_roles.role_id
+
+      JOIN events
+        ON events.id =
+          event_roles.event_id
+
+      LEFT JOIN projects
+        ON projects.id =
+          events.project_id
+
+      WHERE confirmations.status = 'confirmed'
+
+        AND confirmations.photo_submitted_at
+          IS NOT NULL
+
+        AND confirmations.completed_at
+          IS NOT NULL
+
+        AND events.drive_link IS NOT NULL
+
+        AND TRIM(events.drive_link) <> ''
+
+        AND roles.name ILIKE '%fot%'
+
+      ORDER BY
+        events.event_date DESC,
+        confirmations.completed_at DESC
     `
 
     // =====================================================
@@ -459,6 +562,7 @@ export default async function handler(request, response) {
       monthlyBirthdays,
       monthlyCommunity,
       pastEvents,
+      approvedPhotoMemories,
       announcements,
     })
   } catch (error) {

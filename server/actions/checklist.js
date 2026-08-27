@@ -38,6 +38,7 @@ async function getChecklistAccess(
 
       e.name AS event_name,
       e.event_date,
+      e.event_status,
 
       r.name AS activity_name,
 
@@ -101,6 +102,7 @@ async function getChecklistAccess(
     session,
     checklist,
     admin,
+    assigned,
   }
 }
 
@@ -117,6 +119,69 @@ async function getChecklistAccess(
 async function syncChecklist(
   checklist
 ) {
+  if (
+    checklist.source_type ===
+    'assisted_people'
+  ) {
+    const isCheckout =
+      checklist.activity_name ===
+      'Despedida / Check-out de Assistidos'
+
+    await sql`
+      INSERT INTO activity_checklist_items (
+        checklist_id,
+        assisted_person_id,
+        checked
+      )
+
+      SELECT
+        ${checklist.id},
+        assisted.id,
+        0
+
+      FROM assisted_people assisted
+
+      JOIN events event
+        ON event.id =
+          ${checklist.event_id}
+
+      WHERE
+        assisted.active = 1
+        AND event.project_id IS NOT NULL
+        AND assisted.project_id =
+          event.project_id
+
+        AND (
+          ${!isCheckout}
+          OR EXISTS (
+            SELECT 1
+            FROM activity_checklists checkin
+            JOIN event_roles checkin_role
+              ON checkin_role.id = checkin.event_role_id
+            JOIN roles checkin_activity
+              ON checkin_activity.id = checkin_role.role_id
+            JOIN activity_checklist_items checkin_item
+              ON checkin_item.checklist_id = checkin.id
+            WHERE checkin_role.event_id = event.id
+              AND checkin.active = 1
+              AND checkin.source_type = 'assisted_people'
+              AND checkin_activity.name = 'Recepção / Check-in de Assistidos'
+              AND checkin_item.assisted_person_id = assisted.id
+              AND checkin_item.checked = 1
+          )
+        )
+
+      ON CONFLICT (
+        checklist_id,
+        assisted_person_id
+      )
+      WHERE assisted_person_id IS NOT NULL
+      DO NOTHING
+    `
+
+    return
+  }
+
   await sql`
     INSERT INTO activity_checklist_items (
       checklist_id,
@@ -225,10 +290,17 @@ export default async function handler(
       const checklistRows = await sql`
         SELECT
           ac.id,
-          er.event_id
+          er.event_id,
+          ac.source_type,
+          r.name AS activity_name,
+          e.event_status
         FROM activity_checklists ac
         JOIN event_roles er
           ON er.id = ac.event_role_id
+        JOIN events e
+          ON e.id = er.event_id
+        JOIN roles r
+          ON r.id = er.role_id
         WHERE
           ac.event_role_id =
             ${numericEventRoleId}
@@ -239,9 +311,16 @@ export default async function handler(
         const checklist
         of checklistRows
       ) {
-        await syncChecklist(
-          checklist
-        )
+        if (
+          checklist.event_status !==
+            'post_event' &&
+          checklist.event_status !==
+            'closed'
+        ) {
+          await syncChecklist(
+            checklist
+          )
+        }
       }
 
       const rows = await sql`
@@ -295,6 +374,14 @@ export default async function handler(
 
       return response.status(200).json({
         checklists: rows,
+        locked:
+          checklistRows.some(
+            checklist =>
+              checklist.event_status ===
+                'post_event' ||
+              checklist.event_status ===
+                'closed'
+          ),
       })
     }
 
@@ -350,10 +437,14 @@ export default async function handler(
           er.id,
           er.event_id,
           r.name AS role_name,
-          r.allows_checklist
+          r.allows_checklist,
+          e.project_id,
+          e.event_status
         FROM event_roles er
         JOIN roles r
           ON r.id = er.role_id
+        JOIN events e
+          ON e.id = er.event_id
         WHERE er.id =
           ${numericEventRoleId}
         LIMIT 1
@@ -374,15 +465,42 @@ export default async function handler(
         })
       }
 
-      // Nesta versão, somente o check-in de voluntários
-      // utiliza event_registrations.
+      const assistedChecklist =
+        activity.role_name ===
+          'Recepção / Check-in de Assistidos' ||
+        activity.role_name ===
+          'Despedida / Check-out de Assistidos'
+
       if (
         activity.role_name !==
-        'Recepção e Check-in de Voluntários'
+          'Recepção / Check-in de Voluntários' &&
+        !assistedChecklist
       ) {
         return response.status(400).json({
           error:
-            'O check-in de assistidos será configurado na etapa de Assistidos.',
+            'Essa atividade não utiliza checklist operacional.',
+        })
+      }
+
+      if (
+        activity.event_status ===
+          'post_event' ||
+        activity.event_status ===
+          'closed'
+      ) {
+        return response.status(409).json({
+          error:
+            'A checklist está bloqueada porque o evento foi encerrado operacionalmente.',
+        })
+      }
+
+      if (
+        assistedChecklist &&
+        activity.project_id === null
+      ) {
+        return response.status(400).json({
+          error:
+            'Eventos gerais não possuem projeto para definir a base de Assistidos.',
         })
       }
 
@@ -426,9 +544,13 @@ export default async function handler(
           UPDATE activity_checklists
           SET
             title =
-              'Check-in de Voluntários',
+              ${activity.role_name},
             source_type =
-              'event_registrations',
+              ${
+                assistedChecklist
+                  ? 'assisted_people'
+                  : 'event_registrations'
+              },
             assigned_user_id =
               ${numericAssignedUserId}
           WHERE id =
@@ -449,8 +571,12 @@ export default async function handler(
           )
           VALUES (
             ${numericEventRoleId},
-            'Check-in de Voluntários',
-            'event_registrations',
+            ${activity.role_name},
+            ${
+              assistedChecklist
+                ? 'assisted_people'
+                : 'event_registrations'
+            },
             ${numericAssignedUserId},
             1
           )
@@ -465,6 +591,8 @@ export default async function handler(
         ...checklist,
         event_id:
           activity.event_id,
+        activity_name:
+          activity.role_name,
       })
 
       return response.status(200).json({
@@ -607,14 +735,23 @@ export default async function handler(
       const assignedChecklists =
         await sql`
           SELECT
-            ac.id,
-            er.event_id
+          ac.id,
+          er.event_id,
+          ac.source_type
+          ,r.name AS activity_name
 
           FROM activity_checklists ac
 
           JOIN event_roles er
             ON er.id =
               ac.event_role_id
+
+          JOIN events e
+            ON e.id =
+              er.event_id
+
+          JOIN roles r
+            ON r.id = er.role_id
 
           WHERE
             ac.assigned_user_id =
@@ -623,6 +760,12 @@ export default async function handler(
             AND ac.active = 1
 
             AND er.active = 1
+
+            AND e.event_status
+              NOT IN (
+                'post_event',
+                'closed'
+              )
         `
 
       for (
@@ -683,6 +826,12 @@ export default async function handler(
 
           AND er.active = 1
 
+          AND e.event_status
+            NOT IN (
+              'post_event',
+              'closed'
+            )
+
         GROUP BY
           ac.id,
           ac.title,
@@ -726,11 +875,83 @@ export default async function handler(
         })
       }
 
-      await syncChecklist(
-        access.checklist
-      )
+      if (
+        access.checklist.event_status !==
+          'post_event' &&
+        access.checklist.event_status !==
+          'closed'
+      ) {
+        await syncChecklist(
+          access.checklist
+        )
+      }
 
-      const items = await sql`
+      const items =
+        access.checklist.source_type ===
+        'assisted_people'
+          ? await sql`
+        SELECT
+          aci.id,
+          aci.assisted_person_id,
+          aci.checked,
+          aci.checked_at,
+          aci.notes,
+          aci.updated_at,
+
+          assisted.full_name AS user_name,
+          project.name AS project_name,
+          assisted.birth_date,
+          assisted.allergies,
+          assisted.notes AS assisted_notes,
+          assisted.guardian_name,
+          assisted.guardian_phone,
+          assisted.departure_method,
+
+          checked_user.name
+            AS checked_by_name
+
+        FROM activity_checklist_items aci
+
+        JOIN assisted_people assisted
+          ON assisted.id =
+            aci.assisted_person_id
+
+        JOIN projects project
+          ON project.id =
+            assisted.project_id
+
+        LEFT JOIN users checked_user
+          ON checked_user.id =
+            aci.checked_by
+
+        WHERE
+          aci.checklist_id =
+            ${numericChecklistId}
+
+          AND (
+            ${access.checklist.activity_name !== 'Despedida / Check-out de Assistidos'}
+            OR EXISTS (
+              SELECT 1
+              FROM activity_checklists checkin
+              JOIN event_roles checkin_role
+                ON checkin_role.id = checkin.event_role_id
+              JOIN roles checkin_activity
+                ON checkin_activity.id = checkin_role.role_id
+              JOIN activity_checklist_items checkin_item
+                ON checkin_item.checklist_id = checkin.id
+              WHERE checkin_role.event_id = ${access.checklist.event_id}
+                AND checkin.active = 1
+                AND checkin.source_type = 'assisted_people'
+                AND checkin_activity.name = 'Recepção / Check-in de Assistidos'
+                AND checkin_item.assisted_person_id = aci.assisted_person_id
+                AND checkin_item.checked = 1
+            )
+          )
+
+        ORDER BY
+          assisted.full_name
+      `
+          : await sql`
         SELECT
           aci.id,
           aci.registration_id,
@@ -812,10 +1033,110 @@ export default async function handler(
         })
       }
 
+      if (
+        access.checklist.event_status ===
+          'post_event' ||
+        access.checklist.event_status ===
+          'closed'
+      ) {
+        return response.status(409).json({
+          error:
+            'A checklist está bloqueada porque o evento foi encerrado operacionalmente.',
+        })
+      }
+
+      if (
+        access.checklist.source_type ===
+          'assisted_people' &&
+        !access.assigned
+      ) {
+        return response.status(403).json({
+          error:
+            'Somente o responsável desta atividade pode operar a checklist de Assistidos.',
+        })
+      }
+
       const checkedValue =
         Number(checked) === 1
           ? 1
           : 0
+
+      if (
+        access.checklist.source_type ===
+          'assisted_people'
+      ) {
+        const isCheckin =
+          access.checklist.activity_name ===
+          'Recepção / Check-in de Assistidos'
+
+        const isCheckout =
+          access.checklist.activity_name ===
+          'Despedida / Check-out de Assistidos'
+
+        if (isCheckin && checkedValue === 0) {
+          const checkoutRows = await sql`
+            SELECT 1
+            FROM activity_checklist_items checkout_item
+            JOIN activity_checklists checkout
+              ON checkout.id = checkout_item.checklist_id
+            JOIN event_roles checkout_role
+              ON checkout_role.id = checkout.event_role_id
+            JOIN roles checkout_activity
+              ON checkout_activity.id = checkout_role.role_id
+            WHERE checkout_role.event_id = ${access.checklist.event_id}
+              AND checkout.active = 1
+              AND checkout.source_type = 'assisted_people'
+              AND checkout_activity.name = 'Despedida / Check-out de Assistidos'
+              AND checkout_item.assisted_person_id = (
+                SELECT assisted_person_id
+                FROM activity_checklist_items
+                WHERE id = ${numericItemId}
+                  AND checklist_id = ${numericChecklistId}
+              )
+              AND checkout_item.checked = 1
+            LIMIT 1
+          `
+
+          if (checkoutRows[0]) {
+            return response.status(409).json({
+              error:
+                'Não é possível desfazer o check-in enquanto o check-out estiver marcado.',
+            })
+          }
+        }
+
+        if (isCheckout && checkedValue === 1) {
+          const checkinRows = await sql`
+            SELECT 1
+            FROM activity_checklist_items checkin_item
+            JOIN activity_checklists checkin
+              ON checkin.id = checkin_item.checklist_id
+            JOIN event_roles checkin_role
+              ON checkin_role.id = checkin.event_role_id
+            JOIN roles checkin_activity
+              ON checkin_activity.id = checkin_role.role_id
+            WHERE checkin_role.event_id = ${access.checklist.event_id}
+              AND checkin.active = 1
+              AND checkin.source_type = 'assisted_people'
+              AND checkin_activity.name = 'Recepção / Check-in de Assistidos'
+              AND checkin_item.assisted_person_id = (
+                SELECT assisted_person_id
+                FROM activity_checklist_items
+                WHERE id = ${numericItemId}
+                  AND checklist_id = ${numericChecklistId}
+              )
+              AND checkin_item.checked = 1
+            LIMIT 1
+          `
+
+          if (!checkinRows[0]) {
+            return response.status(409).json({
+              error:
+                'Não é possível fazer check-out sem check-in confirmado.',
+            })
+          }
+        }
+      }
 
       const updated = await sql`
         UPDATE activity_checklist_items
@@ -886,6 +1207,29 @@ export default async function handler(
         return response.status(403).json({
           error:
             'Checklist não disponível.',
+        })
+      }
+
+      if (
+        access.checklist.event_status ===
+          'post_event' ||
+        access.checklist.event_status ===
+          'closed'
+      ) {
+        return response.status(409).json({
+          error:
+            'A checklist está bloqueada porque o evento foi encerrado operacionalmente.',
+        })
+      }
+
+      if (
+        access.checklist.source_type ===
+          'assisted_people' &&
+        !access.assigned
+      ) {
+        return response.status(403).json({
+          error:
+            'Somente o responsável desta atividade pode operar a checklist de Assistidos.',
         })
       }
 
