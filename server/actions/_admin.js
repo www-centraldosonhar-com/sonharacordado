@@ -194,6 +194,12 @@ export function getAdminCapabilities(admin) {
       'assisted'
     )
 
+  const foodAdmin =
+    teamAdmin &&
+    teamCodes.includes(
+      'food'
+    )
+
   // =======================================================
   // CONTEXT / SCOPES
   // =======================================================
@@ -361,6 +367,12 @@ export function getAdminCapabilities(admin) {
     canManageAssisted:
       managementAdmin ||
       assistedAdmin,
+
+    // Consulta operacional de alergias e
+    // restrições alimentares dos Assistidos.
+    canViewFoodRestrictions:
+      managementAdmin ||
+      foodAdmin,
 
     // O backend já restringe Admins de Equipe às
     // atividades pertencentes às próprias equipes.

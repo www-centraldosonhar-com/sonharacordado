@@ -9,6 +9,7 @@ import AdminChecklistPanel from '../components/AdminChecklistPanel'
 import AdminAssistedEventOverview from '../components/AdminAssistedEventOverview'
 import AdminRegistrationsPanel from '../components/AdminRegistrationsPanel'
 import AdminAssistedPanel from '../components/AdminAssistedPanel'
+import AdminFoodRestrictionsPanel from '../components/AdminFoodRestrictionsPanel'
 import AdminVolunteerOverview from '../components/AdminVolunteerOverview'
 import AdminExpensesPanel from '../components/AdminExpensesPanel'
 import AdminPostEventPanel from '../components/AdminPostEventPanel'
@@ -1906,6 +1907,42 @@ function AdminPage({
                   projects={data.projects || []}
                   access={data.adminAccess}
                 />
+              </div>
+            </details>
+          </section>
+        )}
+
+        {data.adminAccess
+          ?.canViewFoodRestrictions && (
+          <section
+            id="alimentacao"
+            className="admin-section admin-section-collapsible"
+          >
+            <details className="admin-collapsible">
+              <summary className="admin-collapsible-summary">
+                <div className="admin-collapsible-title">
+                  <span className="admin-collapsible-icon">
+                    🍎
+                  </span>
+
+                  <div>
+                    <small>
+                      CUIDADO NO EVENTO
+                    </small>
+
+                    <strong>
+                      Alimentação
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="admin-collapsible-count">
+                  Alergias
+                </span>
+              </summary>
+
+              <div className="admin-collapsible-body">
+                <AdminFoodRestrictionsPanel />
               </div>
             </details>
           </section>

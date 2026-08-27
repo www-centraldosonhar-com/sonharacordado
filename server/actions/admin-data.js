@@ -76,6 +76,10 @@ export default async function handler(request, response) {
       capabilities
         ?.canManageAssisted === true
 
+    const canViewFoodRestrictions =
+      capabilities
+        ?.canViewFoodRestrictions === true
+
     const unrestrictedProjects =
       globalAdmin ||
       mediaAdmin
@@ -856,6 +860,7 @@ export default async function handler(request, response) {
 
         canManageRegistrations,
         canManageAssisted,
+        canViewFoodRestrictions,
 
         canViewActivitiesOverview,
 

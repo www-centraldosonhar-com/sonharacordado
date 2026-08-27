@@ -11,6 +11,7 @@ import postEventHandler from '../server/actions/post-event.js'
 import financeRequestsAdminHandler from '../server/actions/finance-requests-admin.js'
 import adminUserParticipationHandler from '../server/actions/admin-user-participation.js'
 import adminAssistedHandler from '../server/actions/admin-assisted.js'
+import adminFoodHandler from '../server/actions/admin-food.js'
 
 export default async function handler(request, response) {
   const action = request.query?.action
@@ -139,6 +140,13 @@ export default async function handler(request, response) {
 
   if (action === 'assisted') {
     return adminAssistedHandler(
+      request,
+      response
+    )
+  }
+
+  if (action === 'food') {
+    return adminFoodHandler(
       request,
       response
     )

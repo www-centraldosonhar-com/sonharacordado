@@ -17872,3 +17872,180 @@ small {
     display: grid;
   }
 }
+
+
+/* =========================================================
+   ALIMENTAÇÃO — ALERGIAS
+   ========================================================= */
+
+.food-restrictions-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.food-restrictions-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.food-restrictions-head h3 {
+  margin: 3px 0 5px;
+}
+
+.food-restrictions-head p {
+  margin: 0;
+  max-width: 560px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  opacity: 0.62;
+}
+
+.food-restrictions-count {
+  display: grid;
+  justify-items: center;
+  min-width: 82px;
+  padding: 10px 13px;
+  border-radius: 15px;
+  background:
+    rgba(232, 132, 74, 0.08);
+}
+
+.food-restrictions-count strong {
+  font-size: 1.3rem;
+}
+
+.food-restrictions-count span {
+  font-size: 0.65rem;
+  opacity: 0.55;
+}
+
+.food-restrictions-search {
+  display: grid;
+  gap: 6px;
+}
+
+.food-restrictions-search > span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  opacity: 0.55;
+}
+
+.food-restrictions-search input {
+  min-height: 44px;
+  padding: 0 13px;
+  border:
+    1px solid
+    rgba(30, 41, 59, 0.1);
+  border-radius: 13px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.food-restrictions-list {
+  display: grid;
+  gap: 9px;
+}
+
+.food-restriction-card {
+  display: grid;
+  grid-template-columns:
+    42px
+    minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border:
+    1px solid
+    rgba(213, 112, 62, 0.11);
+  border-radius: 16px;
+  background:
+    rgba(255, 251, 247, 0.82);
+}
+
+.food-restriction-avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background:
+    rgba(225, 117, 66, 0.11);
+  color: #c85f37;
+  font-weight: 900;
+}
+
+.food-restriction-main {
+  display: grid;
+  gap: 9px;
+}
+
+.food-restriction-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.food-restriction-title span {
+  font-size: 0.7rem;
+  opacity: 0.48;
+}
+
+.food-restriction-alert {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background:
+    rgba(219, 102, 63, 0.06);
+}
+
+.food-restriction-alert small {
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  opacity: 0.55;
+}
+
+.food-restriction-alert p {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.food-restrictions-empty {
+  display: grid;
+  gap: 4px;
+  padding: 25px;
+  text-align: center;
+  border:
+    1px dashed
+    rgba(30, 41, 59, 0.11);
+  border-radius: 16px;
+}
+
+.food-restrictions-empty span {
+  font-size: 0.76rem;
+  opacity: 0.55;
+}
+
+.food-restrictions-error {
+  color: #9a3232;
+  font-size: 0.8rem;
+}
+
+@media (
+  max-width: 620px
+) {
+  .food-restrictions-head {
+    display: grid;
+  }
+
+  .food-restrictions-count {
+    justify-self: start;
+  }
+
+  .food-restriction-title {
+    display: grid;
+  }
+}
