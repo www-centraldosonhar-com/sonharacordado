@@ -316,6 +316,11 @@ export default async function handler(
 
         isDreamerAdmin:
           currentUser.isDreamerAdmin,
+
+        canChooseDreamerTeam:
+          !currentUser.permissions.includes(
+            'volunteer'
+          ),
       },
 
       campaign,

@@ -9,6 +9,7 @@ import AdminPage from './pages/AdminPage'
 import FinancePage from './pages/FinancePage'
 import DreamerPage from './pages/DreamerPage'
 import DreamerAdminPage from './pages/DreamerAdminPage'
+import DreamerOlympiadPage from './pages/DreamerOlympiadPage'
 import SpaceSelectorPage from './pages/SpaceSelectorPage'
 import LoginWelcome from './components/LoginWelcome'
 
@@ -200,6 +201,30 @@ function App() {
         onOpenAdmin={() =>
           setCurrentPage(
             'dreamer-admin'
+          )
+        }
+        onOpenOlympiad={() =>
+          setCurrentPage(
+            'dreamer-olympiad'
+          )
+        }
+        onLogout={
+          handleLogout
+        }
+      />
+    )
+  }
+
+  if (
+    currentPage ===
+      'dreamer-olympiad'
+  ) {
+    return (
+      <DreamerOlympiadPage
+        user={user}
+        onBack={() =>
+          setCurrentPage(
+            'dreamer'
           )
         }
         onLogout={

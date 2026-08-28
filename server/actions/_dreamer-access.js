@@ -54,18 +54,6 @@ export async function requireDreamerUser(
       item => item.permission
     )
 
-  const allowed =
-    permissionNames.includes(
-      'volunteer'
-    ) ||
-    permissionNames.includes(
-      'dreamer'
-    )
-
-  if (!allowed) {
-    return null
-  }
-
   const dreamerRoles = await sql`
     SELECT role_code
     FROM dreamer_roles
@@ -73,6 +61,26 @@ export async function requireDreamerUser(
       user_id = ${user.id}
       AND active = 1
   `
+
+  const isDreamerAdmin =
+    dreamerRoles.some(
+      item =>
+        item.role_code ===
+        'dreamer_admin'
+    )
+
+  const allowed =
+    permissionNames.includes(
+      'volunteer'
+    ) ||
+    permissionNames.includes(
+      'dreamer'
+    ) ||
+    isDreamerAdmin
+
+  if (!allowed) {
+    return null
+  }
 
   const profiles = await sql`
     SELECT
@@ -104,11 +112,6 @@ export async function requireDreamerUser(
         item => item.role_code
       ),
 
-    isDreamerAdmin:
-      dreamerRoles.some(
-        item =>
-          item.role_code ===
-          'dreamer_admin'
-      ),
+    isDreamerAdmin,
   }
 }

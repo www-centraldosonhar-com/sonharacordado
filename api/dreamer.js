@@ -1,5 +1,7 @@
 import dreamerHomeHandler from '../server/actions/dreamer-home.js'
 import dreamerFrequencyHandler from '../server/actions/dreamer-frequency.js'
+import dreamerTeamHandler from '../server/actions/dreamer-team.js'
+import dreamerFundraisingHandler from '../server/actions/dreamer-fundraising.js'
 
 export default async function handler(
   request,
@@ -7,6 +9,20 @@ export default async function handler(
 ) {
   const action =
     request.query?.action
+
+  if (action === 'team') {
+    return dreamerTeamHandler(
+      request,
+      response
+    )
+  }
+
+  if (action === 'fundraising') {
+    return dreamerFundraisingHandler(
+      request,
+      response
+    )
+  }
 
   if (action === 'frequency') {
     return dreamerFrequencyHandler(

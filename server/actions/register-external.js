@@ -172,6 +172,28 @@ export default async function handler(
       )
     `
 
+    // A escolha feita no cadastro externo também vira a
+    // identidade oficial do Sócio Sonhador. O project_id do
+    // usuário continua existindo apenas para compatibilidade
+    // com o login atual da Central.
+    await sql`
+      INSERT INTO dreamer_profiles (
+        user_id,
+        preferred_project_id,
+        active
+      )
+      VALUES (
+        ${userId},
+        ${projectId},
+        1
+      )
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        preferred_project_id = EXCLUDED.preferred_project_id,
+        active = 1,
+        updated_at = CURRENT_TIMESTAMP
+    `
+
     return response.status(201).json({
       success: true,
       message:

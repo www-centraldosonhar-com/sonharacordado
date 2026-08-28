@@ -3,6 +3,7 @@ import {
 } from 'react'
 
 import DreamerAttendanceAdminPanel from '../components/DreamerAttendanceAdminPanel'
+import DreamerFundraisingAdminPanel from '../components/DreamerFundraisingAdminPanel'
 import '../styles/dreamer.css'
 
 const ADMIN_SECTIONS = [
@@ -20,7 +21,6 @@ const ADMIN_SECTIONS = [
     id: 'fundraising',
     label: 'Arrecadações',
     icon: '↗',
-    future: true,
   },
   {
     id: 'missions',
@@ -98,14 +98,17 @@ function DreamerAdminPage({
             <b>Disponível agora →</b>
           </button>
 
-          <article>
+          <button
+            type="button"
+            onClick={() => setSection('fundraising')}
+          >
             <span>02</span>
             <strong>Arrecadações</strong>
             <small>
               Validação de comprovantes, custos, duplicidades e valores líquidos.
             </small>
-            <b>Próxima etapa</b>
-          </article>
+            <b>Disponível agora →</b>
+          </button>
 
           <article>
             <span>03</span>
@@ -216,6 +219,10 @@ function DreamerAdminPage({
 
           {section === 'frequency' ? (
             <DreamerAttendanceAdminPanel />
+          ) : null}
+
+          {section === 'fundraising' ? (
+            <DreamerFundraisingAdminPanel />
           ) : null}
         </div>
       </section>
