@@ -1,0 +1,809 @@
+.dreamer-page {
+  min-height: 100vh;
+  padding: 34px 20px 64px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 189, 203, 0.28), transparent 34%),
+    radial-gradient(circle at top left, rgba(255, 222, 168, 0.26), transparent 30%),
+    #fffaf6;
+}
+
+.dreamer-page__shell {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+}
+
+.dreamer-page__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.dreamer-eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  color: #9b5f68;
+}
+
+.dreamer-page__hero h1,
+.dreamer-admin-heading h2,
+.dreamer-admin-section-title h3 {
+  margin: 0;
+  color: #2b2526;
+}
+
+.dreamer-page__hero h1 {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  letter-spacing: -0.045em;
+}
+
+.dreamer-page__hero p {
+  max-width: 620px;
+  margin: 10px 0 0;
+  line-height: 1.65;
+  color: #6e6264;
+}
+
+.dreamer-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dreamer-page__actions button {
+  border: 1px solid rgba(89, 63, 68, 0.14);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #4b3f41;
+  cursor: pointer;
+}
+
+.dreamer-admin-card {
+  border: 1px solid rgba(111, 78, 84, 0.11);
+  border-radius: 28px;
+  padding: clamp(20px, 4vw, 32px);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 24px 70px rgba(96, 64, 69, 0.09);
+  backdrop-filter: blur(14px);
+}
+
+.dreamer-admin-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.dreamer-admin-heading h2 {
+  font-size: clamp(1.45rem, 3vw, 2.05rem);
+  letter-spacing: -0.035em;
+}
+
+.dreamer-admin-heading p,
+.dreamer-admin-section-title p {
+  margin: 8px 0 0;
+  line-height: 1.55;
+  color: #75696b;
+}
+
+.dreamer-admin-summary {
+  min-width: 126px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #32292b;
+  color: #fff;
+  text-align: center;
+}
+
+.dreamer-admin-summary strong {
+  display: block;
+  font-size: 1.9rem;
+}
+
+.dreamer-admin-summary span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.73rem;
+  opacity: 0.72;
+}
+
+.dreamer-frequency-status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.dreamer-frequency-status-grid > div {
+  padding: 14px 16px;
+  border: 1px solid rgba(70, 52, 55, 0.08);
+  border-radius: 18px;
+  background: #fffaf8;
+}
+
+.dreamer-frequency-status-grid span,
+.dreamer-frequency-status-grid strong {
+  display: block;
+}
+
+.dreamer-frequency-status-grid span {
+  font-size: 0.72rem;
+  color: #887a7c;
+}
+
+.dreamer-frequency-status-grid strong {
+  margin-top: 4px;
+  font-size: 1.35rem;
+  color: #352d2f;
+}
+
+.dreamer-admin-message {
+  margin: 0 0 22px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+}
+
+.dreamer-admin-message--success {
+  background: #eef8f0;
+  color: #2f6840;
+}
+
+.dreamer-admin-message--error {
+  background: #fff0f0;
+  color: #9a3f46;
+}
+
+.dreamer-admin-section-title {
+  margin: 8px 0 14px;
+}
+
+.dreamer-admin-section-title h3 {
+  font-size: 1.08rem;
+}
+
+.dreamer-admin-events {
+  display: grid;
+  gap: 10px;
+}
+
+.dreamer-admin-event {
+  --event-accent: #a8989b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 16px 16px 18px;
+  border: 1px solid rgba(67, 50, 53, 0.09);
+  border-left: 4px solid var(--event-accent);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.dreamer-admin-event--aps {
+  --event-accent: #d74f58;
+}
+
+.dreamer-admin-event--ppf {
+  --event-accent: #3779c7;
+}
+
+.dreamer-admin-event--sj {
+  --event-accent: #dc8738;
+}
+
+.dreamer-admin-event__content {
+  min-width: 0;
+}
+
+.dreamer-admin-event__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 5px;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: var(--event-accent);
+}
+
+.dreamer-admin-event h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #332a2c;
+}
+
+.dreamer-admin-event p {
+  margin: 5px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #85787a;
+}
+
+.dreamer-event-toggle {
+  flex: 0 0 auto;
+  min-width: 104px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: #f1ebea;
+  color: #67595c;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.dreamer-event-toggle:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.dreamer-event-toggle.is-selected {
+  background: #33292b;
+  color: #fff;
+}
+
+.dreamer-event-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.dreamer-admin-history {
+  margin-top: 20px;
+  border-top: 1px solid rgba(69, 50, 53, 0.08);
+  padding-top: 16px;
+}
+
+.dreamer-admin-history summary {
+  cursor: pointer;
+  color: #77696c;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.dreamer-admin-events--history {
+  margin-top: 12px;
+  opacity: 0.78;
+}
+
+.dreamer-admin-empty,
+.dreamer-admin-loading {
+  margin: 0;
+  padding: 22px 0;
+  color: #7d7072;
+}
+
+@media (max-width: 720px) {
+  .dreamer-page {
+    padding: 24px 14px 48px;
+  }
+
+  .dreamer-page__hero,
+  .dreamer-admin-heading {
+    flex-direction: column;
+  }
+
+  .dreamer-page__actions {
+    width: 100%;
+  }
+
+  .dreamer-admin-summary {
+    min-width: 0;
+    width: 100%;
+    text-align: left;
+  }
+
+  .dreamer-frequency-status-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dreamer-admin-event {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dreamer-event-toggle {
+    width: 100%;
+  }
+}
+
+/* =====================================================
+   ADMIN SÓCIO SONHADOR
+   Área administrativa independente da Central.
+   ===================================================== */
+
+.dreamer-admin-entry {
+  background: #34292c !important;
+  color: #fff !important;
+  border-color: #34292c !important;
+  box-shadow: 0 12px 28px rgba(52, 41, 44, 0.14);
+}
+
+.dreamer-member-preview {
+  border: 1px solid rgba(87, 55, 60, 0.08);
+  border-radius: 28px;
+  padding: clamp(28px, 5vw, 54px);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 24px 70px rgba(87, 55, 60, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.dreamer-member-preview h2 {
+  max-width: 620px;
+  margin: 9px 0 8px;
+  font-size: clamp(1.7rem, 4vw, 2.7rem);
+  line-height: 1.05;
+  color: #32282a;
+}
+
+.dreamer-member-preview > p {
+  max-width: 680px;
+  margin: 0;
+  line-height: 1.65;
+  color: #766a6c;
+}
+
+.dreamer-member-preview__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.dreamer-member-preview__grid article {
+  display: grid;
+  gap: 7px;
+  min-height: 155px;
+  align-content: start;
+  padding: 20px;
+  border: 1px solid rgba(87, 55, 60, 0.07);
+  border-radius: 20px;
+  background: rgba(255, 250, 248, 0.68);
+}
+
+.dreamer-member-preview__grid article > span {
+  font-size: 1.35rem;
+}
+
+.dreamer-member-preview__grid strong {
+  color: #372c2f;
+}
+
+.dreamer-member-preview__grid small {
+  line-height: 1.5;
+  color: #887a7d;
+}
+
+.dreamer-admin-page {
+  --dreamer-admin-ink: #302528;
+  --dreamer-admin-muted: #847679;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 258px minmax(0, 1fr);
+  background:
+    radial-gradient(circle at 92% 5%, rgba(226, 112, 122, 0.09), transparent 26%),
+    radial-gradient(circle at 12% 92%, rgba(236, 177, 107, 0.1), transparent 25%),
+    #faf8f7;
+  color: var(--dreamer-admin-ink);
+}
+
+.dreamer-admin-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 18px 20px;
+  border-right: 1px solid rgba(70, 48, 52, 0.08);
+  background: rgba(255, 255, 255, 0.83);
+  backdrop-filter: blur(20px);
+}
+
+.dreamer-admin-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 26px;
+}
+
+.dreamer-admin-sidebar__mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #4b373c, #2f2427);
+  color: #fff;
+  font-size: 1.05rem;
+  box-shadow: 0 11px 24px rgba(52, 37, 41, 0.17);
+}
+
+.dreamer-admin-sidebar__brand div {
+  display: grid;
+  gap: 2px;
+}
+
+.dreamer-admin-sidebar__brand strong {
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.dreamer-admin-sidebar__brand small {
+  color: #a15f68;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.dreamer-admin-sidebar__nav {
+  display: grid;
+  gap: 6px;
+}
+
+.dreamer-admin-sidebar__nav button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 13px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: #796c6f;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.dreamer-admin-sidebar__nav button:hover:not(:disabled) {
+  transform: translateX(2px);
+  background: rgba(91, 65, 70, 0.055);
+  color: #3c3033;
+}
+
+.dreamer-admin-sidebar__nav button.is-active {
+  background: #382d30;
+  color: #fff;
+  box-shadow: 0 9px 22px rgba(56, 45, 48, 0.12);
+}
+
+.dreamer-admin-sidebar__nav button > span {
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+}
+
+.dreamer-admin-sidebar__nav button > strong {
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.dreamer-admin-sidebar__nav button > small {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #b6aaac;
+}
+
+.dreamer-admin-sidebar__nav button:disabled {
+  cursor: default;
+  opacity: 0.52;
+}
+
+.dreamer-admin-sidebar__footer {
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(70, 48, 52, 0.07);
+}
+
+.dreamer-admin-sidebar__footer button {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #75686b;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dreamer-admin-sidebar__footer button:hover {
+  background: rgba(91, 65, 70, 0.055);
+  color: #352a2d;
+}
+
+.dreamer-admin-workspace {
+  min-width: 0;
+}
+
+.dreamer-admin-topbar {
+  min-height: 92px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px clamp(24px, 4vw, 58px);
+  border-bottom: 1px solid rgba(70, 48, 52, 0.07);
+  background: rgba(250, 248, 247, 0.78);
+  backdrop-filter: blur(18px);
+}
+
+.dreamer-admin-topbar > div:first-child > span {
+  color: #a0646c;
+  font-size: 0.63rem;
+  font-weight: 850;
+  letter-spacing: 0.17em;
+}
+
+.dreamer-admin-topbar h1 {
+  margin: 3px 0 0;
+  font-size: clamp(1.3rem, 2.2vw, 1.9rem);
+  letter-spacing: -0.035em;
+}
+
+.dreamer-admin-topbar__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dreamer-admin-topbar__user > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #eadfe0;
+  color: #573d42;
+  font-weight: 850;
+}
+
+.dreamer-admin-topbar__user > div {
+  display: grid;
+  gap: 2px;
+}
+
+.dreamer-admin-topbar__user strong {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.dreamer-admin-topbar__user small {
+  color: #9a8c8f;
+  font-size: 0.65rem;
+}
+
+.dreamer-admin-workspace__content {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 42px 0 72px;
+}
+
+.dreamer-admin-workspace__content .dreamer-admin-card {
+  max-width: none;
+  margin: 0;
+}
+
+.dreamer-admin-dashboard {
+  display: grid;
+  gap: 24px;
+}
+
+.dreamer-admin-dashboard__welcome {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  align-items: end;
+  padding: clamp(26px, 4vw, 42px);
+  border: 1px solid rgba(81, 56, 61, 0.08);
+  border-radius: 26px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(253, 246, 243, 0.88));
+  box-shadow: 0 22px 60px rgba(79, 55, 60, 0.06);
+}
+
+.dreamer-admin-dashboard__welcome h2 {
+  margin: 8px 0 8px;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.dreamer-admin-dashboard__welcome p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--dreamer-admin-muted);
+  line-height: 1.6;
+}
+
+.dreamer-admin-dashboard__primary {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 13px 18px;
+  background: #382d30;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-admin-dashboard__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dreamer-admin-dashboard__cards article,
+.dreamer-admin-dashboard__cards button {
+  min-height: 195px;
+  box-sizing: border-box;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 24px;
+  border: 1px solid rgba(81, 56, 61, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.76);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.dreamer-admin-dashboard__cards button {
+  cursor: pointer;
+  transition: transform 170ms ease, box-shadow 170ms ease;
+}
+
+.dreamer-admin-dashboard__cards button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(73, 50, 55, 0.08);
+}
+
+.dreamer-admin-dashboard__cards span {
+  color: #b67a82;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.dreamer-admin-dashboard__cards strong {
+  margin-top: 8px;
+  font-size: 1.05rem;
+  color: #3b2f32;
+}
+
+.dreamer-admin-dashboard__cards small {
+  max-width: 430px;
+  color: #887b7e;
+  line-height: 1.55;
+}
+
+.dreamer-admin-dashboard__cards b {
+  align-self: end;
+  margin-top: auto;
+  color: #9f626b;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 920px) {
+  .dreamer-admin-page {
+    grid-template-columns: 82px minmax(0, 1fr);
+  }
+
+  .dreamer-admin-sidebar {
+    padding-inline: 12px;
+  }
+
+  .dreamer-admin-sidebar__brand {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .dreamer-admin-sidebar__brand > div,
+  .dreamer-admin-sidebar__nav button > strong,
+  .dreamer-admin-sidebar__nav button > small,
+  .dreamer-admin-sidebar__footer button {
+    font-size: 0;
+  }
+
+  .dreamer-admin-sidebar__nav button {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 13px 8px;
+  }
+
+  .dreamer-admin-sidebar__nav button > span {
+    font-size: 0.95rem;
+  }
+
+  .dreamer-admin-sidebar__footer button::first-letter {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .dreamer-member-preview__grid,
+  .dreamer-admin-dashboard__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-admin-page {
+    display: block;
+    padding-bottom: 82px;
+  }
+
+  .dreamer-admin-sidebar {
+    position: fixed;
+    z-index: 20;
+    top: auto;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    height: auto;
+    display: block;
+    padding: 8px;
+    border: 1px solid rgba(70, 48, 52, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 16px 48px rgba(60, 42, 46, 0.18);
+  }
+
+  .dreamer-admin-sidebar__brand,
+  .dreamer-admin-sidebar__footer,
+  .dreamer-admin-sidebar__nav button:disabled {
+    display: none;
+  }
+
+  .dreamer-admin-sidebar__nav {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+
+  .dreamer-admin-sidebar__nav button {
+    grid-template-columns: 22px auto;
+    justify-content: center;
+    padding: 11px 8px;
+  }
+
+  .dreamer-admin-sidebar__nav button > strong {
+    display: block;
+    font-size: 0.72rem;
+  }
+
+  .dreamer-admin-topbar {
+    min-height: 78px;
+    padding: 16px 18px;
+  }
+
+  .dreamer-admin-topbar__user > div {
+    display: none;
+  }
+
+  .dreamer-admin-workspace__content {
+    width: calc(100% - 28px);
+    padding: 24px 0 44px;
+  }
+
+  .dreamer-admin-dashboard__welcome {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dreamer-admin-dashboard__primary {
+    width: 100%;
+  }
+}

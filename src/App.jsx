@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage'
 import AdminPage from './pages/AdminPage'
 import FinancePage from './pages/FinancePage'
 import DreamerPage from './pages/DreamerPage'
+import DreamerAdminPage from './pages/DreamerAdminPage'
 import SpaceSelectorPage from './pages/SpaceSelectorPage'
 import LoginWelcome from './components/LoginWelcome'
 
@@ -47,7 +48,21 @@ function App() {
           data.user
         ) {
           setUser(data.user)
-          setCurrentPage('select')
+
+          const permissions =
+            data.user.permissions || []
+
+          const dreamerOnly =
+            permissions.includes('dreamer') &&
+            !permissions.includes('volunteer') &&
+            !permissions.includes('admin') &&
+            !permissions.includes('finance')
+
+          setCurrentPage(
+            dreamerOnly
+              ? 'dreamer'
+              : 'select'
+          )
         }
       })
       .catch((error) => {
@@ -85,7 +100,22 @@ function App() {
     loggedUser
   ) {
     setUser(loggedUser)
-    setCurrentPage('select')
+
+    const permissions =
+      loggedUser?.permissions || []
+
+    const dreamerOnly =
+      permissions.includes('dreamer') &&
+      !permissions.includes('volunteer') &&
+      !permissions.includes('admin') &&
+      !permissions.includes('finance')
+
+    setCurrentPage(
+      dreamerOnly
+        ? 'dreamer'
+        : 'select'
+    )
+
     setShowLoginWelcome(true)
 
     window.setTimeout(
@@ -166,6 +196,30 @@ function App() {
         user={user}
         onBack={() =>
           setCurrentPage('select')
+        }
+        onOpenAdmin={() =>
+          setCurrentPage(
+            'dreamer-admin'
+          )
+        }
+        onLogout={
+          handleLogout
+        }
+      />
+    )
+  }
+
+  if (
+    currentPage ===
+      'dreamer-admin'
+  ) {
+    return (
+      <DreamerAdminPage
+        user={user}
+        onBack={() =>
+          setCurrentPage(
+            'dreamer'
+          )
         }
         onLogout={
           handleLogout

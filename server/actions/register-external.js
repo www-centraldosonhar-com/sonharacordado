@@ -78,11 +78,11 @@ export default async function handler(
 
     if (
       typeof password !== 'string' ||
-      password.length < 4
+      !/^\d{4}$/.test(password)
     ) {
       return response.status(400).json({
         error:
-          'A senha precisa ter pelo menos 4 caracteres.',
+          'O PIN precisa ter exatamente 4 números.',
       })
     }
 
