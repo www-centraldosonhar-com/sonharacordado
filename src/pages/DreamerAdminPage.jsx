@@ -4,6 +4,11 @@ import {
 
 import DreamerAttendanceAdminPanel from '../components/DreamerAttendanceAdminPanel'
 import DreamerFundraisingAdminPanel from '../components/DreamerFundraisingAdminPanel'
+import DreamerMissionsAdminPanel from '../components/DreamerMissionsAdminPanel'
+import DreamerReferralsAdminPanel from '../components/DreamerReferralsAdminPanel'
+import DreamerCommunityAdminPanel from '../components/DreamerCommunityAdminPanel'
+import DreamerContributionsAdminPanel from '../components/DreamerContributionsAdminPanel'
+import DreamerClosureAdminPanel from '../components/DreamerClosureAdminPanel'
 import '../styles/dreamer.css'
 
 const ADMIN_SECTIONS = [
@@ -26,19 +31,26 @@ const ADMIN_SECTIONS = [
     id: 'missions',
     label: 'Missões',
     icon: '◆',
-    future: true,
   },
   {
     id: 'referrals',
     label: 'Indicações',
     icon: '◎',
-    future: true,
+  },
+  {
+    id: 'contributions',
+    label: 'Doações',
+    icon: '♡',
+  },
+  {
+    id: 'community',
+    label: 'Ações & parceiros',
+    icon: '♥',
   },
   {
     id: 'closure',
     label: 'Fechamento',
     icon: '▣',
-    future: true,
   },
 ]
 
@@ -110,23 +122,65 @@ function DreamerAdminPage({
             <b>Disponível agora →</b>
           </button>
 
-          <article>
+          <button
+            type="button"
+            onClick={() => setSection('missions')}
+          >
             <span>03</span>
-            <strong>Missões e indicações</strong>
+            <strong>Missões especiais</strong>
             <small>
-              Pontuação configurável, desafios especiais e indicações qualificadas.
+              Crie desafios, configure critérios e lance os pontos de APS, PPF e SJ.
             </small>
-            <b>Em breve</b>
-          </article>
+            <b>Disponível agora →</b>
+          </button>
 
-          <article>
+          <button
+            type="button"
+            onClick={() => setSection('referrals')}
+          >
             <span>04</span>
+            <strong>Indicações qualificadas</strong>
+            <small>
+              Acompanhe convites, qualificações e a pontuação automática por equipe.
+            </small>
+            <b>Disponível agora →</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSection('contributions')}
+          >
+            <span>05</span>
+            <strong>Doações diretas</strong>
+            <small>
+              Acompanhe intenções de apoio e prepare a futura confirmação via gateway.
+            </small>
+            <b>Disponível agora →</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSection('community')}
+          >
+            <span>06</span>
+            <strong>Ações & parceiros</strong>
+            <small>
+              Publique necessidades reais e dê visibilidade a parceiros, patrocinadores e apoiadores.
+            </small>
+            <b>Disponível agora →</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSection('closure')}
+          >
+            <span>07</span>
             <strong>Fechamento</strong>
             <small>
               Consolidação oficial da campanha para encaminhamento ao Financeiro.
             </small>
-            <b>Em breve</b>
-          </article>
+            <b>Disponível agora →</b>
+          </button>
         </section>
       </div>
     )
@@ -193,6 +247,13 @@ function DreamerAdminPage({
       <section className="dreamer-admin-workspace">
         <header className="dreamer-admin-topbar">
           <div>
+            <button
+              type="button"
+              className="dreamer-admin-topbar__back"
+              onClick={onBack}
+            >
+              ← Sócio Sonhador
+            </button>
             <span>PAINEL ADMINISTRATIVO</span>
             <h1>
               {ADMIN_SECTIONS.find(
@@ -223,6 +284,26 @@ function DreamerAdminPage({
 
           {section === 'fundraising' ? (
             <DreamerFundraisingAdminPanel />
+          ) : null}
+
+          {section === 'missions' ? (
+            <DreamerMissionsAdminPanel />
+          ) : null}
+
+          {section === 'referrals' ? (
+            <DreamerReferralsAdminPanel />
+          ) : null}
+
+          {section === 'contributions' ? (
+            <DreamerContributionsAdminPanel />
+          ) : null}
+
+          {section === 'community' ? (
+            <DreamerCommunityAdminPanel />
+          ) : null}
+
+          {section === 'closure' ? (
+            <DreamerClosureAdminPanel />
           ) : null}
         </div>
       </section>

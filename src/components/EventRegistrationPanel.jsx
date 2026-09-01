@@ -100,6 +100,11 @@ const [coupon, setCoupon] =
   const status =
     registration?.status
 
+  const isFreeEvent =
+    Number(
+      event.registration_fee || 0
+    ) <= 0
+
   const deadlineOpen =
     event.registration_deadline &&
     new Date(
@@ -247,7 +252,10 @@ const [coupon, setCoupon] =
 
       let storagePath = null
 
-      if (!usingCoupon) {
+      if (
+        !usingCoupon &&
+        !isFreeEvent
+      ) {
         setMessage(
           '☁️ Enviando comprovante...'
         )
@@ -283,7 +291,9 @@ const [coupon, setCoupon] =
                 team:
                   registrationTeam,
                 couponCode:
-                  coupon,
+                  isFreeEvent
+                    ? ''
+                    : coupon,
                 storagePath,
               }),
           }
@@ -485,31 +495,49 @@ const [coupon, setCoupon] =
       </div>
 
       <div className="registration-payment-box">
-        <strong>
-          💙 Ajuda de custo
-        </strong>
+        {isFreeEvent ? (
+          <>
+            <strong>
+              💙 Evento gratuito
+            </strong>
 
-        <span>
-          R$ {Number(
-            event.registration_fee || 0
-          ).toFixed(2).replace('.', ',')}
-        </span>
+            <span>
+              R$ 0,00
+            </span>
 
-        <p>
-          PIX — Associação Sonhos de Criança
-        </p>
+            <p>
+              Nenhum pagamento ou comprovante é necessário para esta inscrição.
+            </p>
+          </>
+        ) : (
+          <>
+            <strong>
+              💙 Ajuda de custo
+            </strong>
 
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={copyPix}
-        >
-          📋 Copiar CNPJ PIX
-        </button>
+            <span>
+              R$ {Number(
+                event.registration_fee || 0
+              ).toFixed(2).replace('.', ',')}
+            </span>
 
-        <small>
-          {PIX_DISPLAY}
-        </small>
+            <p>
+              PIX — Associação Sonhos de Criança
+            </p>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={copyPix}
+            >
+              📋 Copiar CNPJ PIX
+            </button>
+
+            <small>
+              {PIX_DISPLAY}
+            </small>
+          </>
+        )}
       </div>
 
       <form
@@ -559,48 +587,52 @@ const [coupon, setCoupon] =
           </small>
         </div>
 
-        <div className="registration-divider">
-          <span>
-            PAGAMENTO OU GRATUIDADE
-          </span>
-        </div>
-
-        <label>
-          Cupom de gratuidade
-          <small>
-            {' '}
-            (se possuir)
-          </small>
-        </label>
-
-        <input
-          value={coupon}
-          onChange={(e) =>
-            setCoupon(
-              e.target.value
-                .toUpperCase()
-            )
-          }
-          placeholder="Ex.: SONHADOR2026"
-        />
-
-        {!coupon.trim() && (
+        {!isFreeEvent && (
           <>
+            <div className="registration-divider">
+              <span>
+                PAGAMENTO OU GRATUIDADE
+              </span>
+            </div>
+
             <label>
-              Comprovante do PIX
+              Cupom de gratuidade
+              <small>
+                {' '}
+                (se possuir)
+              </small>
             </label>
 
             <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
+              value={coupon}
               onChange={(e) =>
-                setReceipt(
-                  e.target.files?.[0] ||
-                  null
+                setCoupon(
+                  e.target.value
+                    .toUpperCase()
                 )
               }
-              required
+              placeholder="Ex.: SONHADOR2026"
             />
+
+            {!coupon.trim() && (
+              <>
+                <label>
+                  Comprovante do PIX
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(e) =>
+                    setReceipt(
+                      e.target.files?.[0] ||
+                      null
+                    )
+                  }
+                  required
+                />
+              </>
+            )}
           </>
         )}
 

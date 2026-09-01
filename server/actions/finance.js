@@ -421,6 +421,72 @@ export default async function handler(
 
 
     // =====================================================
+    // SÓCIO SONHADOR — CAMPAIGN CLOSURES
+    // =====================================================
+
+    if (operation === 'dreamer-closures') {
+      const rows = await sql`
+        SELECT
+          closure.id,
+          closure.campaign_id,
+          campaign.name AS campaign_name,
+          closure.status,
+          closure.gross_total,
+          closure.cost_total,
+          closure.net_total,
+          closure.snapshot_data,
+          closure.closure_notes,
+          closure.closed_at,
+          closure.sent_to_finance_at,
+          closure.finance_notes,
+          closure.finance_received_at,
+          COALESCE(NULLIF(sender.full_name, ''), sender.name, sender.username) AS sent_by_name,
+          COALESCE(NULLIF(receiver.full_name, ''), receiver.name, receiver.username) AS received_by_name
+        FROM dreamer_campaign_closures closure
+        JOIN dreamer_campaigns campaign ON campaign.id = closure.campaign_id
+        LEFT JOIN users sender ON sender.id = closure.sent_to_finance_by
+        LEFT JOIN users receiver ON receiver.id = closure.finance_received_by
+        WHERE closure.status IN ('sent_to_finance', 'finance_received')
+        ORDER BY closure.sent_to_finance_at DESC NULLS LAST, closure.id DESC
+      `
+
+      return response.status(200).json({ closures: rows })
+    }
+
+    if (operation === 'dreamer-closure-received') {
+      if (request.method !== 'POST') {
+        return response.status(405).json({ error: 'Método não permitido.' })
+      }
+
+      const closureId = Number(body.closureId)
+      if (!Number.isInteger(closureId) || closureId <= 0) {
+        return response.status(400).json({ error: 'Fechamento inválido.' })
+      }
+
+      const rows = await sql`
+        UPDATE dreamer_campaign_closures
+        SET status = 'finance_received',
+            finance_received_at = CURRENT_TIMESTAMP,
+            finance_received_by = ${user.id},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${closureId}
+          AND status = 'sent_to_finance'
+        RETURNING id
+      `
+
+      if (!rows[0]) {
+        return response.status(409).json({
+          error: 'Este fechamento não está aguardando recebimento do Financeiro.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message: 'Recebimento do fechamento confirmado.',
+      })
+    }
+
+    // =====================================================
     // SUMMARY
     // =====================================================
 

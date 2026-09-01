@@ -4,6 +4,7 @@ import AppHeader from '../components/AppHeader'
 import VolunteerAreaSelector from '../components/VolunteerAreaSelector'
 
 import '../styles/home.css'
+import '../styles/home-no-sidebar.css'
 import CommunityHome from '../components/home/CommunityHome'
 import MyTeamHome from '../components/home/MyTeamHome'
 
@@ -27,6 +28,7 @@ async function fetchHomeData() {
 
 function HomePage({
   user,
+  onBack,
   onLogout,
   onOpenAdmin,
 }) {
@@ -402,58 +404,12 @@ function HomePage({
     <>
       <AppHeader
         user={currentUser}
+        onBack={onBack}
         onLogout={onLogout}
         onOpenAdmin={onOpenAdmin}
       />
 
-      <div className="home-layout">
-        <aside className="home-sidebar">
-          <div className="home-sidebar-card">
-            <nav
-              className="sidebar-nav"
-              aria-label="Navegação da Central"
-            >
-              <a href="#inicio">
-                🏠 Início
-              </a>
-
-              {isGeneralView ? (
-                <>
-                  <a href="#community-events">
-                    📅 Eventos
-                  </a>
-
-                  <a href="#community-media">
-                    🎥 Mídias
-                  </a>
-
-                  <a href="#community-photos">
-                    📸 Memórias
-                  </a>
-
-                  <a href="#community-birthdays">
-                    🎂 Aniversariantes
-                  </a>
-                </>
-              ) : (
-                <>
-                  <a href="#team-events">
-                    📅 Encontros
-                  </a>
-
-                  <a href="#pos-evento">
-                    📸 Pós-evento
-                  </a>
-
-                  <a href="#mural">
-                    📢 Mural
-                  </a>
-                </>
-              )}
-            </nav>
-          </div>
-        </aside>
-
+      <div className="home-layout home-layout--no-sidebar">
         <main
           className={`app-shell home-main project-theme-${String(
             currentUser?.project || ''
@@ -574,49 +530,6 @@ function HomePage({
         </main>
       </div>
 
-      <nav className="mobile-bottom-nav">
-        <a href="#inicio">
-          <span>🏠</span>
-          <small>Início</small>
-        </a>
-
-        <a href="#eventos">
-          <span>📅</span>
-          <small>Eventos</small>
-        </a>
-
-        {isGeneralView && (
-          <>
-            
-
-            <a href="#mural">
-              <span>📢</span>
-              <small>Mural</small>
-            </a>
-
-            <a href="#memorias">
-              <span>📸</span>
-              <small>Memórias</small>
-            </a>
-          </>
-        )}
-
-        {isTeamView && (
-          <>
-            <a href="#combinados">
-              <span>🤝</span>
-              <small>Combinados</small>
-            </a>
-
-            
-
-            <a href="#mural">
-              <span>📢</span>
-              <small>Mural</small>
-            </a>
-          </>
-        )}
-      </nav>
     </>
   )
 }

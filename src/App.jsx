@@ -13,7 +13,40 @@ import DreamerOlympiadPage from './pages/DreamerOlympiadPage'
 import SpaceSelectorPage from './pages/SpaceSelectorPage'
 import LoginWelcome from './components/LoginWelcome'
 
+const LAST_PAGE_KEY = 'central-sonhar:last-page'
+
+const RESTORABLE_PAGES = new Set([
+  'select',
+  'home',
+  'admin',
+  'finance',
+  'dreamer',
+  'dreamer-admin',
+  'dreamer-olympiad',
+])
+
+function getSavedPage() {
+  if (typeof window === 'undefined') {
+    return 'select'
+  }
+
+  const savedPage =
+    window.localStorage.getItem(
+      LAST_PAGE_KEY
+    )
+
+  return RESTORABLE_PAGES.has(
+    savedPage
+  )
+    ? savedPage
+    : 'select'
+}
+
 function App() {
+  const referralCode =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('ref') || ''
+      : ''
   const [user, setUser] =
     useState(null)
 
@@ -60,9 +93,11 @@ function App() {
             !permissions.includes('finance')
 
           setCurrentPage(
-            dreamerOnly
-              ? 'dreamer'
-              : 'select'
+            referralCode
+              ? 'dreamer-olympiad'
+              : dreamerOnly
+                ? 'dreamer'
+                : getSavedPage()
           )
         }
       })
@@ -81,7 +116,26 @@ function App() {
     return () => {
       active = false
     }
-  }, [])
+  }, [referralCode])
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      isCheckingSession ||
+      !user
+    ) {
+      return
+    }
+
+    window.localStorage.setItem(
+      LAST_PAGE_KEY,
+      currentPage
+    )
+  }, [
+    currentPage,
+    isCheckingSession,
+    user,
+  ])
 
   async function handleLogout() {
     try {
@@ -92,6 +146,14 @@ function App() {
         }
       )
     } finally {
+      if (
+        typeof window !== 'undefined'
+      ) {
+        window.localStorage.removeItem(
+          LAST_PAGE_KEY
+        )
+      }
+
       setUser(null)
       setCurrentPage('select')
     }
@@ -112,9 +174,11 @@ function App() {
       !permissions.includes('finance')
 
     setCurrentPage(
-      dreamerOnly
-        ? 'dreamer'
-        : 'select'
+      referralCode
+        ? 'dreamer-olympiad'
+        : dreamerOnly
+          ? 'dreamer'
+          : 'select'
     )
 
     setShowLoginWelcome(true)
@@ -263,6 +327,11 @@ function App() {
     return (
       <HomePage
         user={user}
+        onBack={() =>
+          setCurrentPage(
+            'select'
+          )
+        }
         onLogout={
           handleLogout
         }

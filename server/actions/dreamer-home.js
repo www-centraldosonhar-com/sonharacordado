@@ -9,6 +9,10 @@ import {
   calculateAttendanceFrequency,
 } from './_dreamer-frequency.js'
 
+import {
+  referralPointsByProject,
+} from './dreamer-referrals.js'
+
 const sql =
   neon(process.env.DATABASE_URL)
 
@@ -67,6 +71,9 @@ export default async function handler(
         },
       })
     }
+
+    const referralPointsMap =
+      await referralPointsByProject(campaign.id)
 
     const teamRows = await sql`
       SELECT
@@ -181,6 +188,13 @@ export default async function handler(
               team.adjustment_points || 0
             )
 
+          const referralPoints =
+            Number(
+              referralPointsMap.get(
+                Number(team.project_id)
+              ) || 0
+            )
+
           const netTotal =
             directTotal +
             externalTotal
@@ -194,6 +208,7 @@ export default async function handler(
           const totalPoints =
             fundraisingPoints +
             missionPoints +
+            referralPoints +
             adjustmentPoints
 
           return {
@@ -219,6 +234,7 @@ export default async function handler(
               ),
 
             missionPoints,
+            referralPoints,
             adjustmentPoints,
 
             totalPoints:

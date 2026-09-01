@@ -4,7 +4,28 @@ import {
   useState,
 } from 'react'
 
+import DreamerContributionsPanel from '../components/DreamerContributionsPanel'
+import DreamerAchievementsPanel from '../components/DreamerAchievementsPanel'
 import '../styles/dreamer.css'
+
+import '../styles/dreamer-impact-transparency-v2.css'
+const PARTNER_META = {
+  sponsor: {
+    label: 'Patrocinador',
+    icon: '★',
+    className: 'is-sponsor',
+  },
+  partner: {
+    label: 'Parceiro',
+    icon: '♥',
+    className: 'is-partner',
+  },
+  supporter: {
+    label: 'Apoiador',
+    icon: '✦',
+    className: 'is-supporter',
+  },
+}
 
 const PROJECT_META = {
   APS: {
@@ -40,6 +61,13 @@ function getProjectMeta(project) {
       className: '',
       icon: '♥',
     }
+  )
+}
+
+function getPartnerMeta(type) {
+  return (
+    PARTNER_META[String(type || '').toLowerCase()] ||
+    PARTNER_META.partner
   )
 }
 
@@ -91,6 +119,10 @@ function DreamerPage({
     useState(() => getCountdown(VOLUNTEER_REGISTRATION_OPENS_AT))
   const [teamSaving, setTeamSaving] = useState('')
   const [teamMessage, setTeamMessage] = useState('')
+  const [communityData, setCommunityData] = useState({
+    actions: [],
+    partners: [],
+  })
 
   useEffect(() => {
     let active = true
@@ -123,6 +155,34 @@ function DreamerPage({
         if (active) {
           setLoading(false)
         }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    fetch('/api/dreamer?action=community&scope=public')
+      .then(async response => {
+        const payload = await response.json()
+        if (!response.ok) {
+          throw new Error(payload?.error || 'Não foi possível carregar ações e parceiros.')
+        }
+        return payload
+      })
+      .then(payload => {
+        if (active) {
+          setCommunityData({
+            actions: payload?.actions || [],
+            partners: payload?.partners || [],
+          })
+        }
+      })
+      .catch(fetchError => {
+        console.warn('Dreamer community:', fetchError.message)
       })
 
     return () => {
@@ -184,6 +244,40 @@ function DreamerPage({
   const campaign = homeData?.campaign
   const totalRaised =
     Number(homeData?.totals?.raised || 0)
+
+  const supportActions = communityData.actions || []
+  const partners = communityData.partners || []
+
+  const publishedSupportActions = supportActions.filter(
+    action => action.status === 'published'
+  ).length
+  const activePartners = partners.filter(partner => partner.active).length
+  const attendanceEvents = Number(homeData?.frequency?.events?.length || 0)
+  const featuredPartner =
+    partners.find(partner => partner.featured) || null
+
+  const partnerCounts = partners.reduce(
+    (accumulator, partner) => {
+      const type = String(
+        partner.partner_type || 'partner'
+      ).toLowerCase()
+
+      if (type === 'sponsor') {
+        accumulator.sponsors += 1
+      } else if (type === 'supporter') {
+        accumulator.supporters += 1
+      } else {
+        accumulator.partners += 1
+      }
+
+      return accumulator
+    },
+    {
+      sponsors: 0,
+      partners: 0,
+      supporters: 0,
+    }
+  )
 
   const maxPoints = Math.max(
     ...teams.map(team => Number(team.totalPoints || 0)),
@@ -448,13 +542,13 @@ function DreamerPage({
               <span>♥</span>
               <strong>Doação livre</strong>
               <p>Contribua com qualquer valor quando o coração pedir e acompanhe o impacto das campanhas.</p>
-              <b>Em breve</b>
+              <button type="button" onClick={() => document.getElementById('dreamer-direct-support')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Preparar apoio →</button>
             </article>
             <article>
               <span>✦</span>
               <strong>Apoie uma ação</strong>
               <p>Ajude necessidades específicas como alimentação, transporte, materiais, presentes ou estrutura de eventos.</p>
-              <b>Em breve</b>
+              <b>{supportActions.length ? `${supportActions.length} ${supportActions.length === 1 ? 'ação aberta' : 'ações abertas'}` : 'Em breve'}</b>
             </article>
             <article>
               <span>↗</span>
@@ -471,23 +565,162 @@ function DreamerPage({
           </div>
         </section>
 
+        <DreamerContributionsPanel mode="general" />
+
+        <DreamerAchievementsPanel
+          firstName={firstName}
+          fullName={homeData?.currentUser?.name || firstName}
+          avatarUrl={homeData?.currentUser?.avatar_path || null}
+          project={
+            homeData?.currentUser?.dreamerProfile?.preferred_project ||
+            homeData?.currentUser?.project ||
+            null
+          }
+        />
+
+        {supportActions.length ? (
+          <section className="dreamer-open-actions">
+            <div className="dreamer-open-actions__heading">
+              <div>
+                <span className="dreamer-section-label">AÇÕES QUE PRECISAM DE APOIO</span>
+                <h2>Tem uma forma concreta de ajudar hoje.</h2>
+              </div>
+              <small>{supportActions.length} {supportActions.length === 1 ? 'ação publicada' : 'ações publicadas'}</small>
+            </div>
+
+            <div className="dreamer-open-actions__grid">
+              {supportActions.slice(0, 6).map(action => {
+                const meta = action.project ? getProjectMeta(action.project) : null
+                const supportLabel = {
+                  money: 'Apoio financeiro',
+                  product: 'Produtos',
+                  service: 'Serviços',
+                  mixed: 'Várias formas',
+                }[action.support_kind] || 'Apoio'
+
+                return (
+                  <article className={`${meta?.className || ''} ${action.featured ? 'is-featured' : ''}`} key={action.id}>
+                    <div className="dreamer-open-actions__top">
+                      <span>{action.project || 'SONHAR SP'}</span>
+                      {action.featured ? <b>★ Destaque</b> : null}
+                    </div>
+                    <h3>{action.title}</h3>
+                    <p>{action.summary || action.description || 'Uma necessidade real da nossa comunidade.'}</p>
+                    <div className="dreamer-open-actions__meta">
+                      <span>{supportLabel}</span>
+                      {action.need_label ? <strong>{action.need_label}</strong> : null}
+                    </div>
+                    {action.contact_url ? (
+                      <a href={action.contact_url} target="_blank" rel="noreferrer">Quero ajudar <span>→</span></a>
+                    ) : (
+                      <button type="button" disabled>Contato em breve</button>
+                    )}
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        ) : null}
+
         <section className="dreamer-partners">
           <div className="dreamer-partners__copy">
             <span className="dreamer-section-label">PARCEIROS E PATROCINADORES</span>
-            <h2>Grandes sonhos também são construídos em parceria.</h2>
+            <h2>Quem sonha com a gente</h2>
             <p>
               Empresas, marcas e profissionais podem apoiar festas e projetos com recursos financeiros, produtos, alimentação, transporte, espaços, serviços e conhecimento.
             </p>
-            <button type="button" disabled>Quero ser parceiro · em breve</button>
+
+            {partners.length ? (
+              <div className="dreamer-partners__counts" aria-label="Rede de parceiros">
+                <span><strong>{partnerCounts.sponsors}</strong> patrocinadores</span>
+                <span><strong>{partnerCounts.partners}</strong> parceiros</span>
+                <span><strong>{partnerCounts.supporters}</strong> apoiadores</span>
+              </div>
+            ) : null}
+
+            <button type="button" disabled>Quero apoiar o Sonhar · em breve</button>
           </div>
+
           <div className="dreamer-partners__showcase">
-            <span>Seu apoio pode aparecer aqui</span>
-            <strong>Parceiros que fazem o sonho acontecer.</strong>
-            <div>
-              <i>PARCEIRO</i>
-              <i>PATROCINADOR</i>
-              <i>APOIADOR</i>
-            </div>
+            {partners.length ? (
+              <>
+                <span>Quem sonha junto</span>
+                <strong>Uma rede que transforma apoio em experiências reais.</strong>
+
+                {featuredPartner ? (() => {
+                  const meta = getPartnerMeta(featuredPartner.partner_type)
+
+                  return (
+                    <article className={`dreamer-partners__featured ${meta.className}`}>
+                      <div className="dreamer-partners__featured-logo">
+                        {featuredPartner.logo_url ? (
+                          <img src={featuredPartner.logo_url} alt={featuredPartner.name} />
+                        ) : (
+                          <span>{featuredPartner.name.slice(0, 1).toUpperCase()}</span>
+                        )}
+                      </div>
+
+                      <div className="dreamer-partners__featured-copy">
+                        <small>{meta.icon} {meta.label} em destaque</small>
+                        <h3>{featuredPartner.name}</h3>
+                        <p>
+                          {featuredPartner.support_summary ||
+                            featuredPartner.description ||
+                            'Apoio que ajuda o Sonhar Acordado a transformar boas ideias em experiências reais.'}
+                        </p>
+
+                        {featuredPartner.website_url ? (
+                          <a href={featuredPartner.website_url} target="_blank" rel="noreferrer">
+                            Conhecer parceiro <span>↗</span>
+                          </a>
+                        ) : null}
+                      </div>
+                    </article>
+                  )
+                })() : null}
+
+                <div className="dreamer-partners__logos">
+                  {partners.slice(0, 12).map(partner => {
+                    const meta = getPartnerMeta(partner.partner_type)
+
+                    const content = (
+                      <>
+                        <div className="dreamer-partners__logo-mark">
+                          {partner.logo_url ? (
+                            <img src={partner.logo_url} alt={partner.name} />
+                          ) : (
+                            <span>{partner.name.slice(0, 1).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <small>{partner.name}</small>
+                        <b className={meta.className}>{meta.icon} {meta.label}</b>
+                        {partner.support_summary ? <p>{partner.support_summary}</p> : null}
+                      </>
+                    )
+
+                    return partner.website_url ? (
+                      <a href={partner.website_url} target="_blank" rel="noreferrer" key={partner.id} title={partner.name}>
+                        {content}
+                      </a>
+                    ) : (
+                      <div key={partner.id} title={partner.name}>
+                        {content}
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <span>Seu apoio pode aparecer aqui</span>
+                <strong>Parceiros que fazem o sonho acontecer.</strong>
+                <div className="dreamer-partners__empty">
+                  <i>★ PATROCINADOR</i>
+                  <i>♥ PARCEIRO</i>
+                  <i>✦ APOIADOR</i>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
@@ -540,16 +773,42 @@ function DreamerPage({
             )}
           </article>
 
-          <article className="dreamer-next-mission">
+          <article className="dreamer-next-mission dreamer-impact-transparency-v2">
             <div className="dreamer-next-mission__top">
-              <span className="dreamer-section-label">HISTÓRIAS E IMPACTO</span>
+              <span className="dreamer-section-label">IMPACTO & TRANSPARÊNCIA</span>
               <span className="dreamer-next-mission__icon">✦</span>
             </div>
-            <h3>O que a comunidade ajuda a tornar possível.</h3>
-            <p>Depois de cada ação, este espaço poderá mostrar resultados, histórias, registros e conquistas construídas em conjunto.</p>
-            <div className="dreamer-next-mission__placeholder">
-              <span>Impacto acumulado</span>
-              <strong>{formatCurrency(totalRaised)} registrado</strong>
+            <h3>O que estamos tornando possível juntos.</h3>
+            <p>
+              Um retrato simples do que a Central já consegue acompanhar — sem contar valores pendentes como resultado.
+            </p>
+
+            <div className="dreamer-impact-transparency-v2__grid">
+              <div className="is-money">
+                <small>Apoio confirmado</small>
+                <strong>{formatCurrency(totalRaised)}</strong>
+                <span>Somente valores já validados.</span>
+              </div>
+              <div>
+                <small>Rede de apoio</small>
+                <strong>{activePartners}</strong>
+                <span>{activePartners === 1 ? 'parceiro publicado' : 'parceiros publicados'}</span>
+              </div>
+              <div>
+                <small>Ações abertas</small>
+                <strong>{publishedSupportActions}</strong>
+                <span>{publishedSupportActions === 1 ? 'forma de ajudar disponível' : 'formas de ajudar disponíveis'}</span>
+              </div>
+              <div>
+                <small>Eventos acompanhados</small>
+                <strong>{attendanceEvents}</strong>
+                <span>Eventos considerados na frequência.</span>
+              </div>
+            </div>
+
+            <div className="dreamer-impact-transparency-v2__note">
+              <span>♡</span>
+              <p>Transparência é mostrar apenas aquilo que o sistema realmente conhece e consegue comprovar.</p>
             </div>
           </article>
         </section>

@@ -1,0 +1,16 @@
+/* Central do Voluntário — layout sem sidebar
+   Mantém Comunidade e Sala de Projeto intactas e apenas libera a área lateral. */
+.home-layout.home-layout--no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.home-layout--no-sidebar .home-main {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .home-layout.home-layout--no-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

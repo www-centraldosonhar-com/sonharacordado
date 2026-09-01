@@ -5316,3 +5316,32 @@
     width: 100%;
   }
 }
+
+/* Sócio Sonhador — fechamentos recebidos pelo Financeiro */
+.finance-dreamer-closures { margin: 22px 0; padding: 24px; border: 1px solid rgba(89, 70, 110, .12); border-radius: 24px; background: linear-gradient(145deg, #fff, #fbf8ff); box-shadow: 0 16px 44px rgba(55, 39, 69, .06); }
+.finance-dreamer-closures__heading span { color: #805ab2; font-size: 11px; font-weight: 900; letter-spacing: .12em; }
+.finance-dreamer-closures__heading h3 { margin: 5px 0 6px; color: #30283a; font-size: 22px; }
+.finance-dreamer-closures__heading p { margin: 0; color: #82798a; line-height: 1.55; }
+.finance-dreamer-closures__notice { margin-top: 14px; padding: 12px 14px; border-radius: 14px; font-weight: 700; }
+.finance-dreamer-closures__notice.is-error { background: #fff0f0; color: #983c3c; }
+.finance-dreamer-closures__notice.is-success { background: #eefbf3; color: #2e744d; }
+.finance-dreamer-closures__list { display: grid; gap: 12px; margin-top: 18px; }
+.finance-dreamer-closures__list article { padding: 18px; border: 1px solid #ece7f0; border-radius: 18px; background: #fff; }
+.finance-dreamer-closures__title { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.finance-dreamer-closures__title > div { display: grid; gap: 4px; }
+.finance-dreamer-closures__title small { color: #7d5dac; font-weight: 800; }
+.finance-dreamer-closures__title strong { color: #30283a; font-size: 18px; }
+.finance-dreamer-closures__title span { color: #8b828f; font-size: 12px; }
+.finance-dreamer-closures__title button { border: 0; border-radius: 12px; padding: 11px 14px; background: #32273d; color: #fff; font-weight: 800; cursor: pointer; }
+.finance-dreamer-closures__title button:disabled { opacity: .5; }
+.finance-dreamer-closures__totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 14px; }
+.finance-dreamer-closures__totals span { padding: 11px; border-radius: 12px; background: #f8f5fa; }
+.finance-dreamer-closures__totals small { display: block; color: #908794; margin-bottom: 3px; }
+.finance-dreamer-closures__totals b { color: #3a303f; }
+.finance-dreamer-closures__notes { margin: 11px 0 0; color: #756d7a; font-size: 13px; }
+.finance-dreamer-closures__empty { margin-top: 16px; padding: 18px; border-radius: 16px; background: #f8f6f9; color: #8a818e; }
+@media (max-width: 700px) {
+  .finance-dreamer-closures { padding: 18px; }
+  .finance-dreamer-closures__title { flex-direction: column; }
+  .finance-dreamer-closures__totals { grid-template-columns: 1fr; }
+}

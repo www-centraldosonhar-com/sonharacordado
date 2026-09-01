@@ -5,6 +5,9 @@ import {
 } from 'react'
 
 import DreamerFundraisingPanel from '../components/DreamerFundraisingPanel'
+import DreamerMissionsPanel from '../components/DreamerMissionsPanel'
+import DreamerReferralsPanel from '../components/DreamerReferralsPanel'
+import DreamerContributionsPanel from '../components/DreamerContributionsPanel'
 import '../styles/dreamer.css'
 
 const PROJECT_META = {
@@ -311,6 +314,10 @@ function DreamerOlympiadPage({
                           <small>Missões</small>
                           <strong>{Number(team.missionPoints || 0).toFixed(2)} pts</strong>
                         </span>
+                        <span>
+                          <small>Indicações</small>
+                          <strong>{Number(team.referralPoints || 0).toFixed(2)} pts</strong>
+                        </span>
                       </div>
                     </article>
                   )
@@ -353,7 +360,7 @@ function DreamerOlympiadPage({
                   <span>04</span>
                   <strong>Indicações</strong>
                   <p>
-                    Indicações qualificadas poderão gerar pontuação quando a missão automatizada for ativada.
+                    Convites qualificados geram pontos automaticamente nas faixas de 5, 20 e 45 indicações.
                   </p>
                 </article>
               </div>
@@ -370,6 +377,12 @@ function DreamerOlympiadPage({
               <div className="dreamer-olympiad-actions__buttons">
                 <button
                   type="button"
+                  onClick={() => document.getElementById('dreamer-direct-support-olympiad')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  Apoiar diretamente ↘
+                </button>
+                <button
+                  type="button"
                   onClick={() =>
                     document
                       .getElementById('dreamer-fundraising')
@@ -381,9 +394,40 @@ function DreamerOlympiadPage({
                 >
                   Registrar arrecadação ↘
                 </button>
-                <button type="button" disabled>Ver missões · em breve</button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById('dreamer-missions')
+                      ?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      })
+                  }
+                >
+                  Ver missões ↘
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById('dreamer-referrals')
+                      ?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      })
+                  }
+                >
+                  Indicar amigos ↘
+                </button>
               </div>
             </section>
+
+            <DreamerContributionsPanel mode="olympiad" preferredProject={preferredProject} />
+
+            <DreamerMissionsPanel />
+
+            <DreamerReferralsPanel />
 
             <DreamerFundraisingPanel
               preferredProject={preferredProject}

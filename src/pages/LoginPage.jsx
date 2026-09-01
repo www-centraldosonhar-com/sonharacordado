@@ -2,10 +2,15 @@ import { useState } from 'react'
 import '../styles/login.css'
 
 function LoginPage({ onLogin }) {
+  const referralCode =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('ref') || ''
+      : ''
+
   const [
     showRegister,
     setShowRegister,
-  ] = useState(false)
+  ] = useState(Boolean(referralCode))
 
   const [
     registerData,
@@ -22,8 +27,14 @@ function LoginPage({ onLogin }) {
   })
 
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [messageType, setMessageType] = useState('')
+  const [message, setMessage] = useState(
+    referralCode
+      ? 'Convite do Sócio Sonhador detectado. Crie sua conta para registrar a indicação. ❤️'
+      : ''
+  )
+  const [messageType, setMessageType] = useState(
+    referralCode ? 'success' : ''
+  )
 
   async function handleRegister(event) {
     event.preventDefault()
@@ -45,7 +56,10 @@ function LoginPage({ onLogin }) {
 
           body:
             JSON.stringify(
-              registerData
+              {
+                ...registerData,
+                referralCode: referralCode || undefined,
+              }
             ),
         }
       )

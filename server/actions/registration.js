@@ -401,12 +401,21 @@ export default async function handler(
         })
       }
 
+      const freeEvent =
+        Number(
+          event.registration_fee || 0
+        ) <= 0
+
       const coupon =
-        normalizeCoupon(couponCode)
+        freeEvent
+          ? ''
+          : normalizeCoupon(couponCode)
 
       let couponId = null
       let status =
-        'pending_payment_review'
+        freeEvent
+          ? 'confirmed'
+          : 'pending_payment_review'
 
       if (coupon) {
         const coupons = await sql`
@@ -476,7 +485,7 @@ export default async function handler(
 
         status =
           'pending_coupon_review'
-      } else {
+      } else if (!freeEvent) {
         if (
           typeof storagePath !== 'string' ||
           !storagePath.startsWith(
@@ -500,7 +509,7 @@ export default async function handler(
             status = ${status},
             payment_receipt_path =
               ${
-                coupon
+                freeEvent || coupon
                   ? null
                   : storagePath
               },
@@ -531,7 +540,7 @@ export default async function handler(
             ${team},
             ${status},
             ${
-              coupon
+              freeEvent || coupon
                 ? null
                 : storagePath
             },
@@ -543,9 +552,11 @@ export default async function handler(
       return response.status(200).json({
         success: true,
         message:
-          coupon
-            ? 'Cupom enviado para aprovação! 🎟️'
-            : 'Comprovante enviado para conferência! 💙',
+          freeEvent
+            ? 'Inscrição confirmada! Este evento é gratuito. ❤️'
+            : coupon
+              ? 'Cupom enviado para aprovação! 🎟️'
+              : 'Comprovante enviado para conferência! 💙',
       })
     }
 

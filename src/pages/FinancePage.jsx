@@ -7,6 +7,7 @@ import '../styles/admin.css'
 import FinanceExpensesPanel from '../components/FinanceExpensesPanel.jsx'
 import FinanceBalancePanel from '../components/FinanceBalancePanel.jsx'
 import FinanceRequestsPanel from '../components/FinanceRequestsPanel.jsx'
+import FinanceDreamerClosurePanel from '../components/FinanceDreamerClosurePanel.jsx'
 
 
 function formatMoney(
@@ -408,6 +409,8 @@ function FinancePage({
             </>
           )}
         </section>
+
+        <FinanceDreamerClosurePanel />
 
         <FinanceBalancePanel
           events={events}

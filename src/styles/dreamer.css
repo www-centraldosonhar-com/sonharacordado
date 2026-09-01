@@ -2679,6 +2679,108 @@
 .dreamer-partners__showcase div { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 22px; }
 .dreamer-partners__showcase i { padding: 9px 11px; border-radius: 12px; background: rgba(255,255,255,.08); color: rgba(255,255,255,.54); font-size: .64rem; font-style: normal; letter-spacing: .08em; }
 
+.dreamer-partners__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.dreamer-partners__counts span {
+  padding: 9px 11px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+  color: rgba(255,255,255,.72);
+  font-size: .72rem;
+}
+
+.dreamer-partners__counts strong {
+  color: white;
+}
+
+.dreamer-partners__featured {
+  --partner-accent: #e4bd7b;
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-top: 20px;
+  padding: 17px;
+  border: 1px solid color-mix(in srgb, var(--partner-accent) 34%, transparent);
+  border-radius: 21px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--partner-accent) 16%, transparent), transparent 45%),
+    rgba(255,255,255,.075);
+}
+
+.dreamer-partners__featured.is-partner { --partner-accent: #ef9baa; }
+.dreamer-partners__featured.is-supporter { --partner-accent: #9fc1f1; }
+
+.dreamer-partners__featured-logo {
+  display: grid;
+  width: 84px;
+  height: 84px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 19px;
+  background: rgba(255,255,255,.94);
+}
+
+.dreamer-partners__featured-logo img {
+  width: 68px;
+  height: 58px;
+  object-fit: contain;
+}
+
+.dreamer-partners__featured-logo > span {
+  color: #3f3436;
+  font-size: 1.8rem;
+  font-weight: 950;
+}
+
+.dreamer-partners__featured-copy {
+  min-width: 0;
+}
+
+.dreamer-partners__featured-copy small {
+  color: var(--partner-accent);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.dreamer-partners__featured-copy h3 {
+  margin: 5px 0 4px;
+  color: white;
+  font-size: 1.08rem;
+}
+
+.dreamer-partners__featured-copy p {
+  margin: 0;
+  color: rgba(255,255,255,.66);
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.dreamer-partners__featured-copy a {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 9px;
+  color: white;
+  font-size: .72rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.dreamer-partners__empty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 22px;
+}
+
 .dreamer-home-columns--impact { margin-top: 22px; }
 
 @media (max-width: 860px) {
@@ -3511,5 +3613,2317 @@
 
   .dreamer-admin-fundraising__hero {
     padding: 18px;
+  }
+}
+
+/* =========================================================
+   DREAMER MISSIONS
+   ========================================================= */
+
+.dreamer-admin-missions,
+.dreamer-missions-public {
+  display: grid;
+  gap: 24px;
+}
+
+.dreamer-admin-missions__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid rgba(18, 24, 40, 0.08);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 50px rgba(20, 26, 45, 0.06);
+}
+
+.dreamer-admin-missions__hero h2,
+.dreamer-admin-mission-list__heading h3,
+.dreamer-admin-mission-form__heading h3 {
+  margin: 6px 0 8px;
+  color: #1d2230;
+}
+
+.dreamer-admin-missions__hero p,
+.dreamer-admin-mission-card p,
+.dreamer-admin-mission-form small {
+  color: #707789;
+}
+
+.dreamer-admin-missions__metric {
+  min-width: 150px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: #171b28;
+  color: #fff;
+}
+
+.dreamer-admin-missions__metric small,
+.dreamer-admin-missions__metric strong {
+  display: block;
+}
+
+.dreamer-admin-missions__metric small {
+  opacity: 0.65;
+}
+
+.dreamer-admin-missions__metric strong {
+  margin-top: 4px;
+  font-size: 2rem;
+}
+
+.dreamer-admin-missions__alert {
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.dreamer-admin-missions__alert.is-success {
+  background: rgba(27, 150, 93, 0.1);
+  color: #147649;
+}
+
+.dreamer-admin-missions__alert.is-error,
+.dreamer-missions-public--state.is-error {
+  background: rgba(204, 62, 62, 0.08);
+  color: #a72d2d;
+}
+
+.dreamer-admin-mission-form,
+.dreamer-admin-mission-card {
+  padding: 26px;
+  border: 1px solid rgba(18, 24, 40, 0.08);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(20, 26, 45, 0.05);
+}
+
+.dreamer-admin-mission-form__heading,
+.dreamer-admin-mission-card__top,
+.dreamer-admin-mission-list__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.dreamer-admin-mission-form__heading span,
+.dreamer-admin-mission-list__heading > span,
+.dreamer-admin-mission-card__top > div > span {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  font-weight: 800;
+  color: #8b91a1;
+}
+
+.dreamer-admin-mission-form__heading button,
+.dreamer-admin-mission-card__top > button {
+  border: 0;
+  background: #f0f2f6;
+  color: #495064;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-admin-mission-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.dreamer-admin-mission-form__grid label,
+.dreamer-admin-mission-score label {
+  display: grid;
+  gap: 7px;
+}
+
+.dreamer-admin-mission-form__grid label > span,
+.dreamer-admin-mission-score label > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #6d7485;
+}
+
+.dreamer-admin-mission-form__grid .is-wide {
+  grid-column: 1 / -1;
+}
+
+.dreamer-admin-mission-form input,
+.dreamer-admin-mission-form select,
+.dreamer-admin-mission-form textarea,
+.dreamer-admin-mission-score input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(25, 31, 48, 0.12);
+  border-radius: 14px;
+  background: #fbfbfd;
+  padding: 12px 14px;
+  color: #232839;
+  font: inherit;
+}
+
+.dreamer-admin-mission-form textarea {
+  resize: vertical;
+}
+
+.dreamer-admin-mission-form__toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 12px !important;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #f7f8fb;
+}
+
+.dreamer-admin-mission-form__toggle input {
+  width: 20px;
+  height: 20px;
+}
+
+.dreamer-admin-mission-form__toggle > span {
+  display: grid;
+  gap: 2px;
+}
+
+.dreamer-admin-mission-form__submit {
+  margin-top: 18px;
+  border: 0;
+  border-radius: 14px;
+  background: #171b28;
+  color: #fff;
+  padding: 13px 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-admin-mission-list {
+  display: grid;
+  gap: 16px;
+}
+
+.dreamer-admin-mission-card__top h4 {
+  margin: 5px 0 7px;
+  color: #202537;
+  font-size: 1.2rem;
+}
+
+.dreamer-admin-mission-card__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.dreamer-admin-mission-card__meta span {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #f7f8fb;
+}
+
+.dreamer-admin-mission-card__meta small,
+.dreamer-admin-mission-card__meta strong {
+  display: block;
+}
+
+.dreamer-admin-mission-card__meta small {
+  color: #8b91a1;
+  margin-bottom: 3px;
+}
+
+.dreamer-admin-mission-card__rules {
+  padding: 16px;
+  border-radius: 18px;
+  background: #fcf8ef;
+}
+
+.dreamer-admin-mission-card__rules strong {
+  color: #715c25;
+}
+
+.dreamer-admin-mission-card__rules p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+.dreamer-admin-mission-score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.dreamer-admin-mission-score {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #f7f8fb;
+  border-top: 3px solid #c8ccd5;
+}
+
+.dreamer-admin-mission-score.is-aps {
+  border-top-color: #e55656;
+}
+
+.dreamer-admin-mission-score.is-ppf {
+  border-top-color: #4d74d9;
+}
+
+.dreamer-admin-mission-score.is-sj {
+  border-top-color: #ee9b42;
+}
+
+.dreamer-admin-mission-score > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dreamer-admin-mission-score > div span {
+  font-weight: 900;
+}
+
+.dreamer-admin-mission-score button {
+  border: 0;
+  border-radius: 12px;
+  background: #222738;
+  color: #fff;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-admin-missions-state {
+  padding: 28px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #737a8c;
+  text-align: center;
+}
+
+.dreamer-missions-public {
+  padding: 8px 0 18px;
+}
+
+.dreamer-missions-public__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dreamer-mission-public-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 28px;
+  border: 1px solid rgba(27, 34, 53, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(135, 94, 255, 0.12), transparent 36%),
+    #fff;
+  box-shadow: 0 20px 54px rgba(28, 34, 53, 0.07);
+}
+
+.dreamer-mission-public-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dreamer-mission-public-card__top > span {
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #1f2434;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.dreamer-mission-public-card__top > strong {
+  color: #6c7282;
+  font-size: 0.78rem;
+}
+
+.dreamer-mission-public-card h3 {
+  margin: 20px 0 7px;
+  font-size: 1.35rem;
+  color: #202536;
+}
+
+.dreamer-mission-public-card > p,
+.dreamer-mission-public-card__rules p {
+  color: #72798b;
+  line-height: 1.6;
+}
+
+.dreamer-mission-public-card__rules {
+  margin-top: 18px;
+  padding: 15px 16px;
+  border-radius: 18px;
+  background: #f7f5ff;
+}
+
+.dreamer-mission-public-card__rules small {
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #765fc2;
+}
+
+.dreamer-mission-public-card__rules p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+.dreamer-mission-public-card__period {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 16px;
+  color: #747b8d;
+}
+
+.dreamer-mission-public-card__period span {
+  font-size: 0.78rem;
+}
+
+.dreamer-mission-public-card__scores {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.dreamer-mission-public-card__scores > span {
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: #f6f7fa;
+  border-bottom: 3px solid #c9cdd6;
+}
+
+.dreamer-mission-public-card__scores > span.is-aps {
+  border-bottom-color: #e55656;
+}
+
+.dreamer-mission-public-card__scores > span.is-ppf {
+  border-bottom-color: #4d74d9;
+}
+
+.dreamer-mission-public-card__scores > span.is-sj {
+  border-bottom-color: #ee9b42;
+}
+
+.dreamer-mission-public-card__scores small,
+.dreamer-mission-public-card__scores strong {
+  display: block;
+}
+
+.dreamer-mission-public-card__scores small {
+  font-weight: 900;
+  color: #7b8293;
+}
+
+.dreamer-mission-public-card__scores strong {
+  margin-top: 2px;
+  color: #252a3b;
+}
+
+@media (max-width: 900px) {
+  .dreamer-admin-mission-score-grid,
+  .dreamer-admin-mission-card__meta,
+  .dreamer-missions-public__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dreamer-admin-missions__hero,
+  .dreamer-admin-mission-form__heading,
+  .dreamer-admin-mission-card__top {
+    flex-direction: column;
+  }
+
+  .dreamer-admin-missions__metric {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .dreamer-admin-mission-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-admin-mission-form__grid .is-wide {
+    grid-column: auto;
+  }
+
+  .dreamer-mission-public-card__top,
+  .dreamer-mission-public-card__period {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* =========================================================
+   DREAMER — INDICAÇÕES QUALIFICADAS
+   ========================================================= */
+
+.dreamer-referrals {
+  margin-top: 28px;
+  padding: clamp(24px, 4vw, 42px);
+  border: 1px solid rgba(24, 33, 56, 0.08);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 194, 91, 0.12), transparent 34%),
+    #fff;
+  box-shadow: 0 22px 70px rgba(23, 31, 51, 0.07);
+}
+
+.dreamer-referrals--state {
+  text-align: center;
+  color: #667085;
+}
+
+.dreamer-referrals__alert {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.dreamer-referrals__alert.is-error {
+  background: #fff1f2;
+  color: #b42318;
+}
+
+.dreamer-referrals__alert.is-success {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.dreamer-referrals__incoming {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 22px 0;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #1e293b, #334155);
+  color: #fff;
+}
+
+.dreamer-referrals__incoming div {
+  display: grid;
+  gap: 4px;
+}
+
+.dreamer-referrals__incoming span,
+.dreamer-referrals__incoming small {
+  opacity: 0.75;
+}
+
+.dreamer-referrals__incoming button,
+.dreamer-referrals__create,
+.dreamer-referrals__invite-actions button,
+.dreamer-referrals__accept-manual button {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-referrals__incoming button {
+  background: #fff;
+  color: #1e293b;
+}
+
+.dreamer-referrals__grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.dreamer-referrals__invite-card,
+.dreamer-referrals__progress-card {
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(24, 33, 56, 0.08);
+  background: #fbfcff;
+}
+
+.dreamer-referrals__invite-card > span,
+.dreamer-referrals__progress-card > span {
+  font-size: 0.72rem;
+  letter-spacing: 0.13em;
+  font-weight: 900;
+  color: #667085;
+}
+
+.dreamer-referrals__invite-card h3 {
+  margin: 8px 0 8px;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+}
+
+.dreamer-referrals__invite-card p,
+.dreamer-referrals__progress-card p {
+  color: #667085;
+  line-height: 1.65;
+}
+
+.dreamer-referrals__code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px dashed rgba(24, 33, 56, 0.18);
+}
+
+.dreamer-referrals__code strong {
+  letter-spacing: 0.08em;
+}
+
+.dreamer-referrals__invite-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.dreamer-referrals__invite-actions button:first-child,
+.dreamer-referrals__create,
+.dreamer-referrals__accept-manual button {
+  background: #172033;
+  color: #fff;
+}
+
+.dreamer-referrals__invite-actions button:last-child {
+  background: #eef2f7;
+  color: #344054;
+}
+
+.dreamer-referrals__big-number {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+
+.dreamer-referrals__big-number strong {
+  font-size: 3.6rem;
+  line-height: 0.9;
+}
+
+.dreamer-referrals__big-number small {
+  color: #667085;
+}
+
+.dreamer-referrals__progress-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8edf4;
+}
+
+.dreamer-referrals__progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff7b5f, #f5b942);
+}
+
+.dreamer-referrals__progress-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dreamer-referrals__progress-meta span {
+  display: grid;
+  gap: 2px;
+}
+
+.dreamer-referrals__progress-meta small {
+  color: #98a2b3;
+}
+
+.dreamer-referrals__accept-manual {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-top: 18px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: #f7f8fb;
+}
+
+.dreamer-referrals__accept-manual > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.dreamer-referrals__accept-manual small {
+  color: #667085;
+}
+
+.dreamer-referrals__accept-manual > div:last-child {
+  display: flex;
+  gap: 8px;
+  min-width: min(100%, 390px);
+}
+
+.dreamer-referrals__accept-manual input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #d0d5dd;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.dreamer-referrals__people {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(24, 33, 56, 0.08);
+}
+
+.dreamer-referrals__people-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dreamer-referrals__people-heading small {
+  color: #667085;
+}
+
+.dreamer-referrals__people-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dreamer-referrals__people-list > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.dreamer-referrals__people-list small {
+  color: #98a2b3;
+}
+
+.dreamer-referrals__people-list small.is-qualified {
+  color: #027a48;
+  font-weight: 800;
+}
+
+.dreamer-admin-referrals {
+  display: grid;
+  gap: 22px;
+}
+
+.dreamer-admin-referrals__hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 28px;
+  border-radius: 26px;
+  background: #fff;
+  border: 1px solid rgba(24, 33, 56, 0.08);
+}
+
+.dreamer-admin-referrals__hero h2 {
+  margin: 6px 0;
+  font-size: 2rem;
+}
+
+.dreamer-admin-referrals__hero p {
+  max-width: 680px;
+  color: #667085;
+}
+
+.dreamer-admin-referrals__totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  min-width: 330px;
+}
+
+.dreamer-admin-referrals__totals span {
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f7f8fb;
+}
+
+.dreamer-admin-referrals__totals small {
+  color: #667085;
+}
+
+.dreamer-admin-referrals__totals strong {
+  font-size: 1.55rem;
+}
+
+.dreamer-admin-referrals__teams {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.dreamer-admin-referrals__teams article {
+  display: grid;
+  gap: 5px;
+  padding: 20px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(24, 33, 56, 0.08);
+}
+
+.dreamer-admin-referrals__teams article.is-aps {
+  box-shadow: inset 4px 0 #ef4444;
+}
+
+.dreamer-admin-referrals__teams article.is-ppf {
+  box-shadow: inset 4px 0 #3b82f6;
+}
+
+.dreamer-admin-referrals__teams article.is-sj {
+  box-shadow: inset 4px 0 #f59e0b;
+}
+
+.dreamer-admin-referrals__teams strong {
+  font-size: 1.8rem;
+}
+
+.dreamer-admin-referrals__teams small {
+  color: #667085;
+}
+
+.dreamer-admin-referrals__rules,
+.dreamer-admin-referrals__ranking {
+  padding: 24px;
+  border-radius: 24px;
+  background: #fff;
+  border: 1px solid rgba(24, 33, 56, 0.08);
+}
+
+.dreamer-admin-referrals__rules > p {
+  max-width: 900px;
+  color: #667085;
+  line-height: 1.6;
+}
+
+.dreamer-admin-referrals__rules > div {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dreamer-admin-referrals__rules > div span {
+  display: grid;
+  gap: 2px;
+  min-width: 130px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f7f8fb;
+}
+
+.dreamer-admin-referrals__rules b {
+  font-size: 1.4rem;
+}
+
+.dreamer-admin-referrals__rules small {
+  color: #667085;
+}
+
+.dreamer-admin-referrals__ranking-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.dreamer-admin-referrals__ranking-heading span {
+  color: #667085;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  font-weight: 900;
+}
+
+.dreamer-admin-referrals__ranking-heading h3 {
+  margin: 4px 0 0;
+}
+
+.dreamer-admin-referrals__ranking-heading > small {
+  max-width: 430px;
+  color: #667085;
+  text-align: right;
+}
+
+.dreamer-admin-referrals__table {
+  display: grid;
+  gap: 8px;
+}
+
+.dreamer-admin-referrals__table > div {
+  display: grid;
+  grid-template-columns: 42px minmax(150px, 1.2fr) 80px minmax(180px, 1fr) 70px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.dreamer-admin-referrals__table > div > span {
+  color: #98a2b3;
+  font-weight: 900;
+}
+
+.dreamer-admin-referrals__table b {
+  justify-self: start;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eef2f7;
+}
+
+.dreamer-admin-referrals__table b.is-aps { color: #c62828; }
+.dreamer-admin-referrals__table b.is-ppf { color: #2458b8; }
+.dreamer-admin-referrals__table b.is-sj { color: #b86a06; }
+
+.dreamer-admin-referrals__table small {
+  color: #667085;
+}
+
+.dreamer-admin-referrals__table em {
+  justify-self: end;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.dreamer-admin-referrals__empty,
+.dreamer-admin-referrals-state {
+  padding: 28px;
+  border-radius: 20px;
+  background: #fff;
+  color: #667085;
+}
+
+.dreamer-admin-referrals-state.is-error {
+  color: #b42318;
+}
+
+@media (max-width: 860px) {
+  .dreamer-referrals__grid,
+  .dreamer-admin-referrals__teams {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-referrals__incoming,
+  .dreamer-referrals__accept-manual,
+  .dreamer-admin-referrals__hero,
+  .dreamer-admin-referrals__ranking-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dreamer-referrals__accept-manual > div:last-child,
+  .dreamer-admin-referrals__totals {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .dreamer-referrals__people-list {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-admin-referrals__ranking-heading > small {
+    text-align: left;
+  }
+
+  .dreamer-admin-referrals__table > div {
+    grid-template-columns: 34px 1fr auto;
+  }
+
+  .dreamer-admin-referrals__table > div > small {
+    grid-column: 2 / -1;
+  }
+
+  .dreamer-admin-referrals__table > div > em {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 560px) {
+  .dreamer-referrals {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .dreamer-referrals__invite-actions,
+  .dreamer-referrals__accept-manual > div:last-child,
+  .dreamer-admin-referrals__rules > div {
+    flex-direction: column;
+  }
+
+  .dreamer-referrals__progress-meta,
+  .dreamer-admin-referrals__totals {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-referrals__people-list > span {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* =========================================================
+   DREAMER COMMUNITY HUB — ACTIONS / PARTNERS
+   ========================================================= */
+
+.dreamer-open-actions {
+  margin-top: 26px;
+  padding: 28px;
+  border: 1px solid rgba(20, 38, 70, 0.08);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 50px rgba(33, 52, 88, 0.07);
+}
+
+.dreamer-open-actions__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.dreamer-open-actions__heading h2 {
+  margin: 6px 0 0;
+  font-size: clamp(1.65rem, 2.8vw, 2.45rem);
+  line-height: 1.05;
+}
+
+.dreamer-open-actions__heading > small {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f3f5f9;
+  color: #667085;
+  font-weight: 700;
+}
+
+.dreamer-open-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dreamer-open-actions__grid article {
+  position: relative;
+  display: flex;
+  min-height: 275px;
+  flex-direction: column;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 38, 70, 0.08);
+  border-radius: 22px;
+  background: linear-gradient(150deg, #ffffff 0%, #f8f9fc 100%);
+}
+
+.dreamer-open-actions__grid article::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: #bdc4d1;
+  content: '';
+}
+
+.dreamer-open-actions__grid article.is-aps::before { background: #d94b57; }
+.dreamer-open-actions__grid article.is-ppf::before { background: #3e6fd8; }
+.dreamer-open-actions__grid article.is-sj::before { background: #e88a3c; }
+
+.dreamer-open-actions__grid article.is-featured {
+  box-shadow: 0 16px 36px rgba(38, 58, 94, 0.11);
+}
+
+.dreamer-open-actions__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #7b8497;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.dreamer-open-actions__top b {
+  color: #c27c18;
+}
+
+.dreamer-open-actions__grid h3 {
+  margin: 20px 0 10px;
+  color: #182033;
+  font-size: 1.25rem;
+}
+
+.dreamer-open-actions__grid p {
+  margin: 0 0 18px;
+  color: #687187;
+  line-height: 1.6;
+}
+
+.dreamer-open-actions__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.dreamer-open-actions__meta span {
+  color: #8a92a3;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dreamer-open-actions__meta strong {
+  color: #26324b;
+}
+
+.dreamer-open-actions__grid a,
+.dreamer-open-actions__grid button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: #182033;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dreamer-open-actions__grid button:disabled {
+  background: #eef1f5;
+  color: #98a0ae;
+  cursor: default;
+}
+
+.dreamer-partners__logos {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.dreamer-partners__logos > a,
+.dreamer-partners__logos > div {
+  display: flex;
+  min-height: 154px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 13px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 18px;
+  background: rgba(255,255,255,.08);
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.dreamer-partners__logos > a:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.24);
+  background: rgba(255,255,255,.11);
+}
+
+.dreamer-partners__logo-mark {
+  display: grid !important;
+  width: 66px;
+  height: 48px;
+  place-items: center;
+  margin-top: 0 !important;
+  overflow: hidden;
+  border-radius: 13px;
+  background: rgba(255,255,255,.94);
+}
+
+.dreamer-partners__logo-mark img {
+  width: 54px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.dreamer-partners__logo-mark > span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #44383b;
+  font-size: 1.05rem;
+  font-weight: 950;
+}
+
+.dreamer-partners__logos small {
+  width: 100%;
+  overflow: hidden;
+  color: rgba(255,255,255,.88);
+  font-size: .72rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dreamer-partners__logos b {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  color: #e8b5be;
+  font-size: .58rem;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.dreamer-partners__logos b.is-sponsor { color: #efcb89; }
+.dreamer-partners__logos b.is-supporter { color: #a9cdf8; }
+
+.dreamer-partners__logos p {
+  display: -webkit-box;
+  width: 100%;
+  margin: 1px 0 0;
+  overflow: hidden;
+  color: rgba(255,255,255,.5);
+  font-size: .64rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.dreamer-community-admin {
+  display: grid;
+  gap: 22px;
+}
+
+.dreamer-community-admin__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 28px;
+  border: 1px solid rgba(20, 38, 70, 0.08);
+  border-radius: 24px;
+  background: #fff;
+}
+
+.dreamer-community-admin__hero h2 {
+  margin: 7px 0 8px;
+  color: #192237;
+  font-size: clamp(1.55rem, 2.4vw, 2.2rem);
+}
+
+.dreamer-community-admin__hero p {
+  max-width: 680px;
+  margin: 0;
+  color: #70798b;
+  line-height: 1.55;
+}
+
+.dreamer-community-admin__stats {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.dreamer-community-admin__stats span {
+  min-width: 118px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f6f7fa;
+  text-align: center;
+}
+
+.dreamer-community-admin__stats strong,
+.dreamer-community-admin__stats small {
+  display: block;
+}
+
+.dreamer-community-admin__stats strong {
+  color: #202a40;
+  font-size: 1.35rem;
+}
+
+.dreamer-community-admin__stats small {
+  margin-top: 2px;
+  color: #8a92a3;
+}
+
+.dreamer-community-admin__tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.dreamer-community-admin__tabs button {
+  padding: 11px 16px;
+  border: 1px solid rgba(20, 38, 70, 0.08);
+  border-radius: 14px;
+  background: #fff;
+  color: #687187;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-community-admin__tabs button.is-active {
+  background: #202a40;
+  color: #fff;
+}
+
+.dreamer-community-admin__notice {
+  padding: 12px 15px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.dreamer-community-admin__notice.is-success { background: #edf9f2; color: #29754b; }
+.dreamer-community-admin__notice.is-error { background: #fff0f1; color: #b23b48; }
+
+.dreamer-community-form {
+  padding: 24px;
+  border: 1px solid rgba(20, 38, 70, 0.08);
+  border-radius: 24px;
+  background: #fff;
+}
+
+.dreamer-community-form__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.dreamer-community-form__heading span {
+  color: #8b94a7;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.dreamer-community-form__heading h3 {
+  margin: 5px 0 0;
+  color: #1c263b;
+}
+
+.dreamer-community-form__heading > button {
+  border: 0;
+  background: transparent;
+  color: #6d7688;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dreamer-community-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dreamer-community-form__grid label {
+  display: grid;
+  gap: 7px;
+  color: #555f74;
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.dreamer-community-form__grid label.is-wide {
+  grid-column: 1 / -1;
+}
+
+.dreamer-community-form__grid input,
+.dreamer-community-form__grid select,
+.dreamer-community-form__grid textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #e1e5ec;
+  border-radius: 13px;
+  outline: 0;
+  background: #fbfcfe;
+  color: #222c41;
+  font: inherit;
+  font-weight: 500;
+}
+
+.dreamer-community-form__grid textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.dreamer-community-form__check {
+  display: flex !important;
+  align-items: center;
+  align-self: end;
+  gap: 9px !important;
+  min-height: 46px;
+}
+
+.dreamer-community-form__check input {
+  width: 17px !important;
+  height: 17px;
+}
+
+.dreamer-community-form__submit {
+  margin-top: 18px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: #202a40;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.dreamer-community-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dreamer-community-list article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 19px;
+  border: 1px solid rgba(20, 38, 70, 0.08);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.dreamer-community-list article > div:first-child {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+
+.dreamer-community-list article span {
+  color: #8b94a7;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.dreamer-community-list article strong { color: #202a40; }
+.dreamer-community-list article small { color: #788194; }
+
+.dreamer-community-list__meta {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.dreamer-community-list__meta b {
+  color: #7c8597;
+  font-size: .75rem;
+}
+
+.dreamer-community-list__meta button {
+  padding: 9px 12px;
+  border: 1px solid #e1e5ec;
+  border-radius: 11px;
+  background: #f8f9fb;
+  color: #39445a;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-community-list--partners article {
+  justify-content: flex-start;
+}
+
+.dreamer-community-list--partners article > div:nth-child(2) {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+
+.dreamer-community-list__logo {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #f2f4f8;
+  color: #445069 !important;
+  font-size: 1rem !important;
+}
+
+.dreamer-community-list__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dreamer-community-list__empty {
+  padding: 26px;
+  border: 1px dashed #d9dee7;
+  border-radius: 18px;
+  color: #8a92a3;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .dreamer-open-actions__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dreamer-community-admin__hero { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 640px) {
+  .dreamer-open-actions { padding: 20px; border-radius: 22px; }
+  .dreamer-open-actions__heading { align-items: flex-start; flex-direction: column; }
+  .dreamer-open-actions__grid { grid-template-columns: 1fr; }
+  .dreamer-open-actions__grid article { min-height: 0; }
+  .dreamer-partners__logos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dreamer-partners__featured { grid-template-columns: 64px 1fr; padding: 14px; }
+  .dreamer-partners__featured-logo { width: 64px; height: 64px; border-radius: 16px; }
+  .dreamer-partners__featured-logo img { width: 52px; height: 44px; }
+  .dreamer-community-admin__stats { width: 100%; }
+  .dreamer-community-admin__stats span { flex: 1; min-width: 0; }
+  .dreamer-community-form__grid { grid-template-columns: 1fr; }
+  .dreamer-community-form__grid label.is-wide { grid-column: auto; }
+  .dreamer-community-list article { align-items: flex-start; flex-direction: column; }
+  .dreamer-community-list__meta { width: 100%; justify-content: space-between; }
+}
+
+/* Direct contributions */
+.dreamer-direct-support { display:grid; grid-template-columns:minmax(0, .9fr) minmax(0, 1.1fr); gap:28px; margin-top:28px; padding:30px; border:1px solid rgba(20,38,70,.08); border-radius:28px; background:linear-gradient(135deg,#fff 0%,#f8f9fc 100%); }
+.dreamer-direct-support__intro h2 { margin:8px 0 10px; color:#202a40; font-size:clamp(1.7rem,3vw,2.5rem); }
+.dreamer-direct-support__intro p { color:#697287; line-height:1.7; }
+.dreamer-direct-support__safety,.dreamer-contributions-admin__guard { margin-top:18px; padding:12px 14px; border-radius:14px; background:#eef7f2; color:#317454; font-weight:800; font-size:.82rem; }
+.dreamer-direct-support__form { display:grid; grid-template-columns:1fr 1fr; gap:13px; padding:22px; border-radius:22px; background:#fff; box-shadow:0 16px 42px rgba(24,35,60,.08); }
+.dreamer-direct-support__form label { display:grid; gap:7px; color:#596378; font-size:.8rem; font-weight:800; }
+.dreamer-direct-support__form label.is-wide,.dreamer-direct-support__amounts,.dreamer-direct-support__notice,.dreamer-direct-support__submit,.dreamer-direct-support__form>small { grid-column:1/-1; }
+.dreamer-direct-support__form input,.dreamer-direct-support__form select,.dreamer-direct-support__form textarea { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid #e1e5ec; border-radius:13px; background:#fbfcfe; font:inherit; }
+.dreamer-direct-support__form textarea { min-height:86px; resize:vertical; }
+.dreamer-direct-support__amounts { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.dreamer-direct-support__amounts button { padding:11px 8px; border:1px solid #e0e5ec; border-radius:12px; background:#f8f9fb; color:#4b566d; font:inherit; font-weight:900; cursor:pointer; }
+.dreamer-direct-support__amounts button.is-active { border-color:#202a40; background:#202a40; color:#fff; }
+.dreamer-direct-support__submit { padding:13px 18px; border:0; border-radius:14px; background:#202a40; color:#fff; font:inherit; font-weight:900; cursor:pointer; }
+.dreamer-direct-support__form>small { color:#9299a8; line-height:1.5; }
+.dreamer-direct-support__notice { padding:11px 13px; border-radius:12px; font-weight:700; }
+.dreamer-direct-support__notice.is-error { background:#fff0f1; color:#b23b48; }
+.dreamer-direct-support__notice.is-success { background:#edf9f2; color:#29754b; }
+.dreamer-direct-support__history { grid-column:1/-1; display:grid; gap:9px; }
+.dreamer-direct-support__history article { display:flex; align-items:center; gap:12px; padding:13px 15px; border:1px solid #eaedf2; border-radius:15px; background:#fff; }
+.dreamer-direct-support__history article>div { display:grid; flex:1; gap:2px; }
+.dreamer-direct-support__history small { color:#838c9e; }
+.dreamer-direct-support__history code { color:#788194; font-size:.72rem; }
+.dreamer-direct-support__history button { border:0; background:transparent; color:#a34a55; font:inherit; font-weight:800; cursor:pointer; }
+.dreamer-help__grid article>button { margin-top:auto; padding:0; border:0; background:transparent; color:#202a40; text-align:left; font:inherit; font-weight:900; cursor:pointer; }
+.dreamer-contributions-admin { display:grid; gap:18px; }
+
+@media (max-width: 760px) {
+  .dreamer-direct-support { grid-template-columns:1fr; padding:20px; border-radius:22px; }
+  .dreamer-direct-support__form { grid-template-columns:1fr; padding:17px; }
+  .dreamer-direct-support__form label.is-wide,.dreamer-direct-support__amounts,.dreamer-direct-support__notice,.dreamer-direct-support__submit,.dreamer-direct-support__form>small { grid-column:auto; }
+  .dreamer-direct-support__history { grid-column:auto; }
+  .dreamer-direct-support__history article { align-items:flex-start; flex-direction:column; }
+  .dreamer-direct-support__amounts { grid-template-columns:repeat(2,1fr); }
+}
+
+/* =========================================================
+   DREAMER — CAMPAIGN CLOSURE
+   ========================================================= */
+.dreamer-closure-admin { display: grid; gap: 22px; }
+.dreamer-closure-state { padding: 36px; border-radius: 24px; background: #fff; color: #667085; }
+.dreamer-closure-admin__hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 30px; border-radius: 28px; background: linear-gradient(135deg, #17131f 0%, #292035 100%); color: #fff; box-shadow: 0 22px 60px rgba(33, 24, 42, .14); }
+.dreamer-closure-admin__hero h2 { margin: 7px 0 8px; font-size: clamp(26px, 3vw, 40px); }
+.dreamer-closure-admin__hero p { max-width: 720px; margin: 0; color: rgba(255,255,255,.72); line-height: 1.65; }
+.dreamer-closure-admin__status { flex: 0 0 auto; padding: 10px 14px; border-radius: 999px; background: rgba(255,255,255,.1); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.dreamer-closure-admin__status.is-closed { background: rgba(95, 211, 147, .14); color: #baf1d2; }
+.dreamer-closure-notice { padding: 14px 18px; border-radius: 16px; font-weight: 700; }
+.dreamer-closure-notice.is-error { background: #fff0f0; color: #a93838; border: 1px solid #ffd4d4; }
+.dreamer-closure-notice.is-success { background: #eefbf3; color: #277348; border: 1px solid #ccefd9; }
+.dreamer-closure-admin__totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.dreamer-closure-admin__totals article { padding: 22px; border: 1px solid #ece8ef; border-radius: 22px; background: #fff; }
+.dreamer-closure-admin__totals small { display: block; color: #8b8490; margin-bottom: 8px; }
+.dreamer-closure-admin__totals strong { font-size: 25px; color: #2c2530; }
+.dreamer-closure-admin__totals article.is-highlight { background: #f6f0ff; border-color: #e4d5fb; }
+.dreamer-closure-admin__section { padding: 26px; border: 1px solid #ece8ef; border-radius: 26px; background: #fff; }
+.dreamer-closure-admin__heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; margin-bottom: 18px; }
+.dreamer-closure-admin__heading span { color: #8e6ac8; font-size: 11px; font-weight: 900; letter-spacing: .12em; }
+.dreamer-closure-admin__heading h3 { margin: 4px 0 0; font-size: 22px; color: #2d2631; }
+.dreamer-closure-admin__heading > small { color: #8e8794; }
+.dreamer-closure-ranking { display: grid; gap: 12px; }
+.dreamer-closure-ranking article { padding: 20px; border-radius: 20px; background: #faf9fb; border-left: 5px solid #b8b2bd; }
+.dreamer-closure-ranking article.project-aps { border-left-color: #e55353; }
+.dreamer-closure-ranking article.project-ppf { border-left-color: #4f78e8; }
+.dreamer-closure-ranking article.project-sj { border-left-color: #ef9a45; }
+.dreamer-closure-ranking__title { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+.dreamer-closure-ranking__title > span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #6f6575; font-weight: 900; }
+.dreamer-closure-ranking__title > strong { font-size: 19px; color: #2d2631; }
+.dreamer-closure-ranking__title > b { color: #6e4aa9; }
+.dreamer-closure-ranking__money { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+.dreamer-closure-ranking__money span { padding: 12px; border-radius: 14px; background: #fff; }
+.dreamer-closure-ranking__money small { display: block; color: #948d99; margin-bottom: 4px; }
+.dreamer-closure-ranking__money strong { color: #38303c; }
+.dreamer-closure-ranking__points { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.dreamer-closure-ranking__points span { padding: 7px 10px; border-radius: 999px; background: #f0edf3; color: #6c6570; font-size: 12px; }
+.dreamer-closure-ranking__points b { color: #2f2734; }
+.dreamer-closure-checklist { padding: 18px; border-radius: 18px; margin-top: 12px; }
+.dreamer-closure-checklist strong { display: block; margin-bottom: 8px; }
+.dreamer-closure-checklist p { margin: 5px 0; line-height: 1.5; }
+.dreamer-closure-checklist.is-blocked { background: #fff1f1; color: #8e3535; }
+.dreamer-closure-checklist.is-warning { background: #fff9e9; color: #7c641c; }
+.dreamer-closure-checklist.is-ready { background: #eefbf3; color: #2a7149; }
+.dreamer-closure-admin__confirm { display: grid; gap: 14px; margin-top: 20px; }
+.dreamer-closure-admin__confirm label { display: grid; gap: 7px; color: #5e5662; font-size: 13px; font-weight: 700; }
+.dreamer-closure-admin__confirm input, .dreamer-closure-admin__confirm textarea { width: 100%; box-sizing: border-box; border: 1px solid #ded8e2; border-radius: 14px; padding: 13px 14px; background: #fff; color: #302934; font: inherit; }
+.dreamer-closure-admin__confirm textarea { min-height: 92px; resize: vertical; }
+.dreamer-closure-admin__confirm button { justify-self: start; border: 0; border-radius: 14px; padding: 13px 18px; background: #33283d; color: #fff; font-weight: 850; cursor: pointer; }
+.dreamer-closure-admin__confirm button:disabled { opacity: .42; cursor: not-allowed; }
+.dreamer-closure-admin__frozen { background: linear-gradient(135deg, #f7f2ff, #fff); }
+.dreamer-closure-admin__frozen > span { color: #7750b2; font-size: 11px; font-weight: 900; letter-spacing: .1em; }
+.dreamer-closure-admin__frozen h3 { margin: 8px 0; color: #302739; }
+.dreamer-closure-admin__frozen p { color: #746c79; }
+.dreamer-closure-admin__frozen blockquote { margin: 16px 0 0; padding: 14px 16px; border-left: 3px solid #8e6ac8; background: rgba(255,255,255,.72); color: #5d5363; }
+@media (max-width: 760px) {
+  .dreamer-closure-admin__hero { flex-direction: column; padding: 22px; }
+  .dreamer-closure-admin__totals { grid-template-columns: 1fr; }
+  .dreamer-closure-admin__section { padding: 18px; }
+  .dreamer-closure-admin__heading { align-items: flex-start; flex-direction: column; }
+  .dreamer-closure-ranking__money { grid-template-columns: 1fr; }
+  .dreamer-closure-ranking__title { grid-template-columns: auto 1fr; }
+  .dreamer-closure-ranking__title > b { grid-column: 2; }
+}
+
+/* =========================================================
+   DREAMER — ACHIEVEMENTS, COSMETICS & IMPACT
+   ========================================================= */
+.dreamer-journey {
+  display: grid;
+  gap: 26px;
+  margin-top: 34px;
+  padding: 34px;
+  border: 1px solid rgba(34, 44, 66, .08);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(111, 85, 185, .09), transparent 32%),
+    linear-gradient(145deg, #ffffff 0%, #faf9fd 100%);
+  box-shadow: 0 22px 70px rgba(30, 36, 55, .07);
+}
+.dreamer-journey--state {
+  color: #747d90;
+  font-weight: 800;
+}
+.dreamer-journey--state.is-error {
+  background: #fff3f4;
+  color: #a44955;
+}
+.dreamer-journey__heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+}
+.dreamer-journey__heading h2 {
+  margin: 7px 0 9px;
+  color: #20293e;
+  font-size: clamp(1.85rem, 3.3vw, 2.8rem);
+}
+.dreamer-journey__heading p {
+  max-width: 760px;
+  margin: 0;
+  color: #70798c;
+  line-height: 1.7;
+}
+.dreamer-journey__counter {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 6px;
+  min-width: 132px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: #20293e;
+  color: #fff;
+}
+.dreamer-journey__counter strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+.dreamer-journey__counter span {
+  color: rgba(255,255,255,.66);
+  font-size: .85rem;
+  font-weight: 800;
+}
+.dreamer-journey__counter small {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  color: rgba(255,255,255,.55);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.dreamer-journey__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+  gap: 22px;
+}
+.dreamer-journey__achievements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.dreamer-achievement-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 19px;
+  border: 1px solid #ececf2;
+  border-radius: 22px;
+  background: rgba(255,255,255,.92);
+}
+.dreamer-achievement-card.is-locked {
+  background: #f8f8fb;
+}
+.dreamer-achievement-card__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  background: #242c41;
+  color: #fff;
+  font-size: 1.2rem;
+  box-shadow: 0 9px 24px rgba(28, 36, 57, .14);
+}
+.dreamer-achievement-card.is-locked .dreamer-achievement-card__icon {
+  background: #e5e7ed;
+  color: #9a9fab;
+  box-shadow: none;
+}
+.dreamer-achievement-card__body {
+  min-width: 0;
+}
+.dreamer-achievement-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dreamer-achievement-card__top strong {
+  color: #293147;
+  font-size: .98rem;
+}
+.dreamer-achievement-card__top span {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #edf8f2;
+  color: #3f7c5c;
+  font-size: .64rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.dreamer-achievement-card.is-locked .dreamer-achievement-card__top span {
+  background: #eff0f4;
+  color: #8a909d;
+}
+.dreamer-achievement-card p {
+  margin: 7px 0 12px;
+  color: #727b8e;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+.dreamer-achievement-card__progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.dreamer-achievement-card__progress i {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eceef3;
+}
+.dreamer-achievement-card__progress i span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7b68b8, #b26b9a);
+}
+.dreamer-achievement-card__progress small {
+  color: #8a91a0;
+  font-size: .69rem;
+  font-weight: 800;
+}
+.dreamer-achievement-card__date {
+  display: block;
+  margin-top: 8px;
+  color: #a1a6b0;
+  font-size: .68rem;
+}
+.dreamer-cosmetics {
+  display: grid;
+  align-content: start;
+  gap: 17px;
+  padding: 20px;
+  border-radius: 26px;
+  background: #21293d;
+  color: #fff;
+}
+.dreamer-cosmetics__preview {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  min-height: 230px;
+  padding: 28px 18px 24px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 21px;
+  background:
+    radial-gradient(circle at 80% 10%, rgba(255,255,255,.12), transparent 28%),
+    linear-gradient(145deg, #303a54, #20283b);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.05),
+    0 18px 38px rgba(8, 13, 25, .18);
+  text-align: center;
+  transition:
+    background .35s ease,
+    border-color .35s ease,
+    box-shadow .35s ease,
+    transform .35s ease;
+}
+
+.dreamer-cosmetics__preview::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 150px;
+  height: 150px;
+  top: -88px;
+  right: -60px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* Banner — Coração em movimento */
+.dreamer-cosmetics__preview.has-banner-coracao-em-movimento {
+  border-color: rgba(247, 183, 198, .22);
+  background:
+    radial-gradient(circle at 78% 0%, rgba(255, 183, 199, .36), transparent 35%),
+    radial-gradient(circle at 4% 100%, rgba(166, 125, 190, .22), transparent 34%),
+    linear-gradient(145deg, #452a40 0%, #302b47 48%, #20283b 100%);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.08),
+    0 18px 42px rgba(47, 23, 48, .25);
+}
+
+/* Accent — Conector de sonhos */
+.dreamer-cosmetics__preview.has-accent-conector {
+  border-color: rgba(177, 154, 255, .28);
+}
+
+.dreamer-cosmetics__preview.has-accent-conector::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  z-index: 2;
+  border: 1px solid rgba(177, 154, 255, .52);
+  border-radius: 17px;
+  box-shadow:
+    inset 0 0 24px rgba(154, 125, 255, .07),
+    0 0 22px rgba(154, 125, 255, .05);
+  pointer-events: none;
+}
+
+.dreamer-cosmetics__preview-kicker {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 15px;
+  color: rgba(255,255,255,.55);
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.dreamer-cosmetics__avatar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 13px;
+  border: 3px solid rgba(255,255,255,.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.15), rgba(255,255,255,.07));
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+  font-size: 1.6rem;
+  font-weight: 900;
+  transition:
+    border-color .3s ease,
+    box-shadow .3s ease,
+    transform .3s ease;
+}
+
+/* Moldura — Mobilizador de sonhos */
+.dreamer-cosmetics__preview.has-frame-mobilizador .dreamer-cosmetics__avatar {
+  border-color: #f0c46d;
+  background:
+    linear-gradient(145deg, rgba(240,196,109,.2), rgba(255,255,255,.08));
+  box-shadow:
+    0 0 0 4px rgba(240,196,109,.11),
+    0 0 0 7px rgba(240,196,109,.045),
+    0 13px 32px rgba(0,0,0,.23),
+    inset 0 1px rgba(255,255,255,.28);
+  transform: translateY(-2px);
+}
+
+.dreamer-cosmetics__preview.has-frame-mobilizador .dreamer-cosmetics__avatar::after {
+  content: '✦';
+  position: absolute;
+  right: -8px;
+  bottom: -7px;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 2px solid #283047;
+  border-radius: 50%;
+  background: #f0c46d;
+  color: #453516;
+  box-shadow: 0 5px 12px rgba(0,0,0,.22);
+  font-size: .65rem;
+  line-height: 1;
+}
+
+.dreamer-cosmetics__preview > strong,
+.dreamer-cosmetics__preview > small,
+.dreamer-cosmetics__preview > b {
+  position: relative;
+  z-index: 1;
+}
+
+.dreamer-cosmetics__preview > strong {
+  font-size: 1.15rem;
+  letter-spacing: -.015em;
+}
+
+.dreamer-cosmetics__preview > small {
+  margin-top: 3px;
+  color: rgba(255,255,255,.55);
+}
+
+.dreamer-cosmetics__preview > b {
+  margin-top: 13px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+  color: #f5d9e0;
+  box-shadow: inset 0 1px rgba(255,255,255,.06);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .015em;
+}
+
+/* Badge — Primeiro passo */
+.dreamer-cosmetics__preview.has-badge-primeiro-passo > b {
+  border-color: rgba(174, 220, 255, .27);
+  background:
+    linear-gradient(135deg, rgba(107, 178, 230, .24), rgba(124, 135, 222, .18));
+  color: #e2f3ff;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.1),
+    0 6px 18px rgba(61, 105, 162, .13);
+}
+
+.dreamer-cosmetics__preview.has-badge-primeiro-passo > b::before {
+  content: '✦';
+  margin-right: 5px;
+  color: #aeddff;
+}
+.dreamer-cosmetics__copy h3 {
+  margin: 6px 0 7px;
+  font-size: 1.15rem;
+}
+.dreamer-cosmetics__copy p {
+  margin: 0;
+  color: rgba(255,255,255,.6);
+  font-size: .8rem;
+  line-height: 1.6;
+}
+.dreamer-cosmetics__list {
+  display: grid;
+  gap: 9px;
+}
+.dreamer-cosmetics__list article {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,.045);
+}
+.dreamer-cosmetics__list article > div {
+  display: grid;
+  gap: 2px;
+}
+.dreamer-cosmetics__list span,
+.dreamer-cosmetics__list small {
+  color: rgba(255,255,255,.5);
+  font-size: .65rem;
+}
+.dreamer-cosmetics__list strong {
+  font-size: .78rem;
+}
+.dreamer-cosmetics__list button {
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #273046;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+.dreamer-cosmetics__list button.is-equipped {
+  background: #b8efd0;
+  color: #24563b;
+}
+.dreamer-cosmetics__list button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+.dreamer-cosmetics__empty {
+  margin: 0;
+  padding: 12px;
+  border-radius: 13px;
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.55);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+.dreamer-cosmetics__notice {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.78);
+  font-size: .74rem;
+  font-weight: 800;
+}
+.dreamer-impact-history {
+  padding-top: 4px;
+}
+.dreamer-impact-history__heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 13px;
+}
+.dreamer-impact-history__heading h3 {
+  margin: 5px 0 0;
+  color: #2a3146;
+  font-size: 1.3rem;
+}
+.dreamer-impact-history__heading > small {
+  color: #969cab;
+  font-weight: 800;
+}
+.dreamer-impact-history__list {
+  display: grid;
+  gap: 8px;
+}
+.dreamer-impact-history__list article {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border: 1px solid #eceef3;
+  border-radius: 16px;
+  background: rgba(255,255,255,.88);
+}
+.dreamer-impact-history__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: #f1eef8;
+  color: #6f58a6;
+}
+.dreamer-impact-history__list article > div {
+  min-width: 0;
+}
+.dreamer-impact-history__list strong {
+  color: #31384c;
+  font-size: .83rem;
+}
+.dreamer-impact-history__list p {
+  margin: 2px 0;
+  color: #7d8596;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+.dreamer-impact-history__list small {
+  color: #a0a5af;
+  font-size: .66rem;
+}
+.dreamer-impact-history__list b {
+  color: #42506b;
+  font-size: .78rem;
+}
+.dreamer-impact-history__empty {
+  padding: 18px;
+  border: 1px dashed #dfe2e9;
+  border-radius: 16px;
+  color: #8b92a0;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .dreamer-journey__layout {
+    grid-template-columns: 1fr;
+  }
+  .dreamer-cosmetics {
+    grid-template-columns: minmax(220px, .75fr) minmax(0, 1.25fr);
+  }
+  .dreamer-cosmetics__preview {
+    grid-row: 1 / span 3;
+  }
+}
+
+@media (max-width: 760px) {
+  .dreamer-journey {
+    padding: 21px;
+    border-radius: 24px;
+  }
+  .dreamer-journey__heading,
+  .dreamer-impact-history__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .dreamer-journey__counter {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .dreamer-journey__achievements {
+    grid-template-columns: 1fr;
+  }
+  .dreamer-achievement-card {
+    padding: 15px;
+  }
+  .dreamer-achievement-card__top {
+    flex-direction: column;
+  }
+  .dreamer-cosmetics {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .dreamer-cosmetics__preview {
+    grid-row: auto;
+  }
+  .dreamer-impact-history__list article {
+    grid-template-columns: auto 1fr;
+  }
+  .dreamer-impact-history__list b {
+    grid-column: 2;
+  }
+}
+
+/* =========================================================
+   PERFIL DO SONHADOR — BLOCO 16
+   ========================================================= */
+
+.dreamer-cosmetics__preview {
+  position: relative;
+}
+
+.dreamer-cosmetics__preview::after {
+  transition:
+    border-color .3s ease,
+    box-shadow .3s ease,
+    opacity .3s ease;
+}
+
+.dreamer-cosmetics__preview.has-banner-coracao-em-movimento {
+  min-height: 240px;
+}
+
+.dreamer-cosmetics__preview.has-frame-mobilizador .dreamer-cosmetics__avatar {
+  position: relative;
+}
+
+.dreamer-cosmetics__preview.has-badge-primeiro-passo > b {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dreamer-cosmetics__preview.has-accent-conector > strong {
+  text-shadow: 0 0 18px rgba(177, 154, 255, .24);
+}
+
+.dreamer-profile-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.78);
+  font-size: .68rem;
+  font-weight: 800;
+}
+
+.dreamer-profile-project[data-project="APS"] {
+  border-color: rgba(238, 102, 112, .24);
+  background: rgba(238, 102, 112, .11);
+}
+
+.dreamer-profile-project[data-project="PPF"] {
+  border-color: rgba(92, 158, 232, .25);
+  background: rgba(92, 158, 232, .11);
+}
+
+.dreamer-profile-project[data-project="SJ"] {
+  border-color: rgba(237, 161, 74, .27);
+  background: rgba(237, 161, 74, .11);
+}
+
+.dreamer-profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+@media (max-width: 760px) {
+  .dreamer-cosmetics__preview {
+    min-height: 218px;
+  }
+}
+
+
+.dreamer-admin-topbar__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 0 8px;
+  border: 1px solid rgba(20, 37, 63, 0.10);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 6px 10px;
+  color: rgba(20, 37, 63, 0.72);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(20, 37, 63, 0.04);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.dreamer-admin-topbar__back:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 37, 63, 0.18);
+  background: #fff;
+  color: #14253f;
+}
+
+.dreamer-admin-topbar__back:active {
+  transform: translateY(0);
+}
+
+@media (min-width: 721px) {
+  .dreamer-admin-topbar__back {
+    display: none;
+  }
+}
+
+
+@media (max-width: 720px) {
+  .dreamer-admin-topbar {
+    position: relative;
+  }
+
+  .dreamer-admin-topbar > div:first-child {
+    width: 100%;
+    box-sizing: border-box;
+    padding-right: 182px;
+  }
+
+  .dreamer-admin-topbar__back {
+    position: absolute;
+    top: 22px;
+    right: 74px;
+    z-index: 2;
+    margin: 0;
+    min-height: 38px;
+    padding: 0 13px;
+    border-color: rgba(124, 73, 87, 0.18);
+    background: rgba(255, 255, 255, 0.86);
+    color: #5e4450;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(77, 48, 58, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 }

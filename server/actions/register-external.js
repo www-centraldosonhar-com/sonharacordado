@@ -2,6 +2,10 @@ import crypto from 'node:crypto'
 import process from 'node:process'
 import { neon } from '@neondatabase/serverless'
 
+import {
+  acceptReferralCodeForUser,
+} from './dreamer-referrals.js'
+
 const sql =
   neon(process.env.DATABASE_URL)
 
@@ -60,6 +64,7 @@ export default async function handler(
       name,
       project,
       password,
+      referralCode,
     } = request.body ?? {}
 
     const cleanName =
@@ -194,10 +199,22 @@ export default async function handler(
         updated_at = CURRENT_TIMESTAMP
     `
 
+    let referral = null
+
+    if (referralCode) {
+      referral = await acceptReferralCodeForUser({
+        code: referralCode,
+        userId,
+      })
+    }
+
     return response.status(201).json({
       success: true,
+      referral,
       message:
-        'Conta criada! Agora você já pode entrar no Espaço Sócio Sonhador. ❤️',
+        referral?.accepted
+          ? `Conta criada e convite para ${referral.project} registrado! Agora você já pode entrar no Espaço Sócio Sonhador. ❤️`
+          : 'Conta criada! Agora você já pode entrar no Espaço Sócio Sonhador. ❤️',
     })
   } catch (error) {
     console.error(

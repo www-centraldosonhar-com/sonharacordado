@@ -70,6 +70,25 @@ function formatDate(value) {
 }
 
 
+function readExpenseDraft(key) {
+  if (
+    typeof window === 'undefined'
+  ) {
+    return {}
+  }
+
+  try {
+    return JSON.parse(
+      window.localStorage.getItem(
+        key
+      ) || '{}'
+    )
+  } catch {
+    return {}
+  }
+}
+
+
 // =========================================================
 // COMPONENT
 // =========================================================
@@ -81,10 +100,17 @@ function AdminExpensesPanel({
   mode = 'normal',
   fixedEventId = '',
   fixedTeamId = '',
+  draftOwnerKey = 'default',
 }) {
 
   const isEmbedded =
     mode === 'embedded'
+
+  const draftKey =
+    `central-sonhar:draft:expense:${draftOwnerKey}:${mode}:${fixedEventId || 'event'}:${fixedTeamId || 'team'}`
+
+  const initialDraft =
+    readExpenseDraft(draftKey)
 
   const [
     cancellingExpenseId,
@@ -104,22 +130,30 @@ function AdminExpensesPanel({
   const [
     eventId,
     setEventId,
-  ] = useState('')
+  ] = useState(
+    initialDraft.eventId || ''
+  )
 
   const [
     teamId,
     setTeamId,
-  ] = useState('')
+  ] = useState(
+    initialDraft.teamId || ''
+  )
 
   const [
     description,
     setDescription,
-  ] = useState('')
+  ] = useState(
+    initialDraft.description || ''
+  )
 
   const [
     amount,
     setAmount,
-  ] = useState('')
+  ] = useState(
+    initialDraft.amount || ''
+  )
 
   const [
     receipt,
@@ -236,6 +270,49 @@ function AdminExpensesPanel({
               : ''
           )
         )
+
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined'
+    ) {
+      return
+    }
+
+    const payload = {
+      eventId:
+        isEmbedded ? '' : eventId,
+      teamId:
+        isEmbedded ? '' : teamId,
+      description,
+      amount,
+    }
+
+    const hasDraft =
+      Object.values(payload).some(
+        (value) =>
+          String(value || '').trim()
+      )
+
+    if (!hasDraft) {
+      window.localStorage.removeItem(
+        draftKey
+      )
+      return
+    }
+
+    window.localStorage.setItem(
+      draftKey,
+      JSON.stringify(payload)
+    )
+  }, [
+    amount,
+    description,
+    draftKey,
+    eventId,
+    isEmbedded,
+    teamId,
+  ])
 
 
   // =====================================================
@@ -643,6 +720,14 @@ function AdminExpensesPanel({
       setAmount('')
       setReceipt(null)
 
+      if (
+        typeof window !== 'undefined'
+      ) {
+        window.localStorage.removeItem(
+          draftKey
+        )
+      }
+
       // Limpa visualmente o input.
       const input =
         document.getElementById(
@@ -935,7 +1020,7 @@ function AdminExpensesPanel({
               </strong>
 
               <small>
-                Comprovante obrigatório
+                Rascunho salvo automaticamente · comprovante precisa ser reanexado após recarregar
               </small>
             </div>
           </div>

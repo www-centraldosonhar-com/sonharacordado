@@ -362,6 +362,16 @@ export default async function handler(
     const body = request.body ?? {}
     const operation = body.operation
 
+    if (
+      campaign.status === 'closed' &&
+      operation !== 'receipt-url'
+    ) {
+      return response.status(409).json({
+        error:
+          'A Olimpíada já foi fechada. Arrecadações não podem mais alterar o placar oficial.',
+      })
+    }
+
     if (operation === 'prepare-receipt') {
       const contentType = String(
         body.contentType || ''

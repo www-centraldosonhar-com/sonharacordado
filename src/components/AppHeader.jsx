@@ -1,5 +1,6 @@
 function AppHeader({
   user,
+  onBack,
   onLogout,
   onOpenAdmin,
 }) {
@@ -52,6 +53,16 @@ function AppHeader({
         </div>
 
         <div className="header-account-actions">
+          <button
+            className="icon-button"
+            type="button"
+            onClick={onBack}
+            title="Seleção de áreas"
+            aria-label="Voltar para seleção de áreas"
+          >
+            ↩
+          </button>
+
           {user.user_type === 'admin' ||
           user.userType === 'admin' ? (
             <button

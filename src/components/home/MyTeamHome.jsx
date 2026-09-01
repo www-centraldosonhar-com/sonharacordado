@@ -249,7 +249,9 @@ const projectWelcome = {
 
               const eventDate =
                 rawDate
-                  ? new Date(rawDate)
+                  ? new Date(
+                      `${String(rawDate).slice(0, 10)}T00:00:00`
+                    )
                   : null
 
               return (

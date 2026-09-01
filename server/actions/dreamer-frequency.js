@@ -75,6 +75,13 @@ export default async function handler(
       return adminOnly(response)
     }
 
+    if (campaign.status === 'closed') {
+      return response.status(409).json({
+        error:
+          'A Olimpíada já foi fechada. A frequência oficial está congelada.',
+      })
+    }
+
     const {
       operation,
       eventId,

@@ -1628,6 +1628,9 @@ function AdminPage({
                 <AdminEventComposer
                   projects={data.projects || []}
                   onCreated={reloadAdmin}
+                  draftOwnerKey={
+                    user?.id || 'admin'
+                  }
                 />
               )}
 
@@ -2026,6 +2029,9 @@ function AdminPage({
                   }
                   access={
                     data.adminAccess
+                  }
+                  draftOwnerKey={
+                    user?.id || 'admin'
                   }
                 />
               </div>

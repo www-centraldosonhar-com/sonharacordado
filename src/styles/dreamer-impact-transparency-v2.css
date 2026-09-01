@@ -1,0 +1,79 @@
+/* Sócio Sonhador — Impacto & Transparência */
+.dreamer-impact-transparency-v2__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.dreamer-impact-transparency-v2__grid > div {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid rgba(31, 43, 67, .08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.dreamer-impact-transparency-v2__grid > .is-money {
+  background: linear-gradient(135deg, rgba(235, 249, 241, .98), rgba(255, 255, 255, .82));
+}
+
+.dreamer-impact-transparency-v2__grid small {
+  color: #858da0;
+  font-size: .66rem;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.dreamer-impact-transparency-v2__grid strong {
+  color: #283148;
+  font-size: 1.28rem;
+  line-height: 1.1;
+}
+
+.dreamer-impact-transparency-v2__grid > .is-money strong {
+  color: #397154;
+}
+
+.dreamer-impact-transparency-v2__grid span {
+  color: #8a92a2;
+  font-size: .68rem;
+  line-height: 1.35;
+}
+
+.dreamer-impact-transparency-v2__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .56);
+}
+
+.dreamer-impact-transparency-v2__note > span {
+  color: #cf7788;
+  font-weight: 900;
+}
+
+.dreamer-impact-transparency-v2__note p {
+  margin: 0;
+  color: #7f8798;
+  font-size: .7rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .dreamer-impact-transparency-v2__grid > div {
+    min-height: 104px;
+    padding: 12px;
+  }
+
+  .dreamer-impact-transparency-v2__grid strong {
+    font-size: 1.08rem;
+  }
+}

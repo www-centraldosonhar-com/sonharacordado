@@ -1,0 +1,382 @@
+/* Sócio Sonhador · Admin de Parceiros v2 */
+.dreamer-partner-admin-v2 {
+  display: grid;
+  gap: 18px;
+}
+
+.dreamer-partner-admin-v2__summary,
+.dreamer-partner-admin-v2__directory {
+  padding: 24px;
+  border: 1px solid rgba(20, 38, 70, .08);
+  border-radius: 24px;
+  background: #fff;
+}
+
+.dreamer-partner-admin-v2__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.dreamer-partner-admin-v2__summary h3,
+.dreamer-partner-admin-v2__directory h3,
+.dreamer-partner-admin-v2__guide h3 {
+  margin: 6px 0 7px;
+  color: #202a40;
+}
+
+.dreamer-partner-admin-v2__summary p {
+  max-width: 640px;
+  margin: 0;
+  color: #747e91;
+  line-height: 1.55;
+}
+
+.dreamer-partner-admin-v2__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(82px, 1fr));
+  gap: 8px;
+}
+
+.dreamer-partner-admin-v2__metrics span {
+  min-width: 88px;
+  padding: 12px 10px;
+  border-radius: 15px;
+  background: #f7f8fb;
+  text-align: center;
+}
+
+.dreamer-partner-admin-v2__metrics strong,
+.dreamer-partner-admin-v2__metrics small {
+  display: block;
+}
+
+.dreamer-partner-admin-v2__metrics strong {
+  color: #202a40;
+  font-size: 1.15rem;
+}
+
+.dreamer-partner-admin-v2__metrics small {
+  margin-top: 2px;
+  color: #8992a4;
+  font-size: .68rem;
+}
+
+.dreamer-partner-admin-v2__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, .55fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.dreamer-partner-admin-v2__form {
+  min-width: 0;
+}
+
+.dreamer-partner-admin-v2__preview {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 14px;
+  align-items: center;
+  margin: -2px 0 20px;
+  padding: 14px;
+  border: 1px solid #e8ebf1;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fbfcfe, #f5f7fb);
+}
+
+.dreamer-partner-admin-v2__preview-logo {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(20, 38, 70, .06);
+}
+
+.dreamer-partner-admin-v2__preview-logo img {
+  width: 60px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.dreamer-partner-admin-v2__preview-logo span {
+  color: #4d5870;
+  font-size: 1.35rem;
+  font-weight: 950;
+}
+
+.dreamer-partner-admin-v2__preview > div:last-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dreamer-partner-admin-v2__preview small,
+.dreamer-partner-admin-v2__type {
+  color: #b16d78;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.dreamer-partner-admin-v2__preview small.is-sponsor,
+.dreamer-partner-admin-v2__type.is-sponsor,
+.dreamer-partner-admin-v2 .is-sponsor .dreamer-partner-admin-v2__type {
+  color: #a57928;
+}
+
+.dreamer-partner-admin-v2__preview small.is-supporter,
+.dreamer-partner-admin-v2__type.is-supporter,
+.dreamer-partner-admin-v2 .is-supporter .dreamer-partner-admin-v2__type {
+  color: #4e77a8;
+}
+
+.dreamer-partner-admin-v2__preview strong {
+  overflow: hidden;
+  color: #202a40;
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dreamer-partner-admin-v2__preview p {
+  margin: 0;
+  color: #818a9b;
+  font-size: .76rem;
+}
+
+.dreamer-partner-admin-v2__form-note {
+  display: flex;
+  gap: 9px;
+  margin-top: 15px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: #f7f8fb;
+}
+
+.dreamer-partner-admin-v2__form-note p {
+  margin: 0;
+  color: #717b8e;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+
+.dreamer-partner-admin-v2__guide {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid rgba(20, 38, 70, .08);
+  border-radius: 24px;
+  background: #fff;
+}
+
+.dreamer-partner-admin-v2__guide article {
+  padding: 13px;
+  border: 1px solid #eceef3;
+  border-radius: 15px;
+  background: #fafbfc;
+}
+
+.dreamer-partner-admin-v2__guide article.is-sponsor {
+  background: #fffaf0;
+}
+
+.dreamer-partner-admin-v2__guide article.is-partner {
+  background: #fff8f9;
+}
+
+.dreamer-partner-admin-v2__guide article.is-supporter {
+  background: #f5f9ff;
+}
+
+.dreamer-partner-admin-v2__guide b {
+  color: #303b51;
+  font-size: .78rem;
+}
+
+.dreamer-partner-admin-v2__guide p {
+  margin: 5px 0 0;
+  color: #798397;
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.dreamer-partner-admin-v2__guide > small {
+  padding-top: 4px;
+  color: #929aaa;
+  font-size: .68rem;
+}
+
+.dreamer-partner-admin-v2__directory-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dreamer-partner-admin-v2__directory-heading small {
+  color: #8a93a4;
+}
+
+.dreamer-partner-admin-v2__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dreamer-partner-admin-v2__cards > article {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e8ebf1;
+  border-radius: 18px;
+  background: #fcfcfd;
+}
+
+.dreamer-partner-admin-v2__cards > article.is-hidden {
+  opacity: .65;
+}
+
+.dreamer-partner-admin-v2__card-top {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: center;
+}
+
+.dreamer-partner-admin-v2__card-top > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dreamer-partner-admin-v2__card-top strong {
+  overflow: hidden;
+  color: #202a40;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dreamer-partner-admin-v2__featured {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: #fff5d9;
+  color: #8c681c;
+  font-size: .62rem;
+  white-space: nowrap;
+}
+
+.dreamer-partner-admin-v2__cards > article > p {
+  min-height: 34px;
+  margin: 0;
+  color: #737d90;
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.dreamer-partner-admin-v2__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dreamer-partner-admin-v2__badges span,
+.dreamer-partner-admin-v2__badges a {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #f0f2f6;
+  color: #6f788a;
+  font-size: .64rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dreamer-partner-admin-v2__badges span.is-active {
+  background: #edf8f1;
+  color: #347451;
+}
+
+.dreamer-partner-admin-v2__badges span.is-hidden {
+  background: #f4f4f6;
+  color: #9297a2;
+}
+
+.dreamer-partner-admin-v2__cards > article > button {
+  justify-self: start;
+  padding: 8px 11px;
+  border: 1px solid #e1e5ec;
+  border-radius: 11px;
+  background: #fff;
+  color: #39445a;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+@media (max-width: 980px) {
+  .dreamer-partner-admin-v2__summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dreamer-partner-admin-v2__metrics {
+    width: 100%;
+  }
+
+  .dreamer-partner-admin-v2__workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dreamer-partner-admin-v2__summary,
+  .dreamer-partner-admin-v2__directory,
+  .dreamer-partner-admin-v2__guide {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .dreamer-partner-admin-v2__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dreamer-partner-admin-v2__preview {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .dreamer-partner-admin-v2__preview-logo {
+    width: 58px;
+    height: 58px;
+  }
+
+  .dreamer-partner-admin-v2__preview-logo img {
+    width: 48px;
+    height: 40px;
+  }
+
+  .dreamer-partner-admin-v2__directory-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dreamer-partner-admin-v2__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-partner-admin-v2__card-top {
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+
+  .dreamer-partner-admin-v2__featured {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
