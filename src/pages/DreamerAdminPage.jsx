@@ -44,7 +44,7 @@ const ADMIN_SECTIONS = [
   },
   {
     id: 'community',
-    label: 'Ações & parceiros',
+    label: 'Comunidade',
     icon: '♥',
   },
   {

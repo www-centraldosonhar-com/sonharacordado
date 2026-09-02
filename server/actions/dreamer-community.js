@@ -27,6 +27,11 @@ const PARTNER_TYPES = new Set([
   'supporter',
 ])
 
+const STORY_STATUSES = new Set([
+  'draft',
+  'published',
+])
+
 function cleanText(value, maxLength = 4000) {
   return String(value || '')
     .trim()
@@ -167,6 +172,35 @@ async function getPartners({ admin = false } = {}) {
   `
 }
 
+async function getStories({ admin = false } = {}) {
+  if (admin) {
+    return sql`
+      SELECT
+        story.id, story.project_id, project.name AS project,
+        story.title, story.summary, story.story_text, story.image_url,
+        story.story_date, story.status, story.featured, story.sort_order,
+        story.created_at, story.updated_at
+      FROM dreamer_stories story
+      LEFT JOIN projects project ON project.id = story.project_id
+      ORDER BY story.featured DESC, story.sort_order ASC,
+        COALESCE(story.story_date, story.created_at::date) DESC, story.id DESC
+    `
+  }
+
+  return sql`
+    SELECT
+      story.id, story.project_id, project.name AS project,
+      story.title, story.summary, story.story_text, story.image_url,
+      story.story_date, story.featured, story.sort_order
+    FROM dreamer_stories story
+    LEFT JOIN projects project ON project.id = story.project_id
+    WHERE story.status = 'published'
+    ORDER BY story.featured DESC, story.sort_order ASC,
+      COALESCE(story.story_date, story.created_at::date) DESC, story.id DESC
+    LIMIT 12
+  `
+}
+
 async function requireAdmin(currentUser, response) {
   if (!currentUser.isDreamerAdmin) {
     response.status(403).json({
@@ -205,27 +239,31 @@ export default async function handler(request, response) {
       if (scope === 'admin') {
         if (!(await requireAdmin(currentUser, response))) return
 
-        const [projects, actions, partners] = await Promise.all([
+        const [projects, actions, partners, stories] = await Promise.all([
           getProjects(),
           getAdminActions(),
           getPartners({ admin: true }),
+          getStories({ admin: true }),
         ])
 
         return response.status(200).json({
           projects,
           actions,
           partners,
+          stories,
         })
       }
 
-      const [actions, partners] = await Promise.all([
+      const [actions, partners, stories] = await Promise.all([
         getPublicActions(),
         getPartners(),
+        getStories(),
       ])
 
       return response.status(200).json({
         actions,
         partners,
+        stories,
       })
     }
 
@@ -423,13 +461,63 @@ export default async function handler(request, response) {
       })
     }
 
+
+    if (operation === 'saveStory') {
+      const id = cleanInteger(request.body?.id, 0)
+      const title = cleanText(request.body?.title, 180)
+      const summary = cleanText(request.body?.summary, 420)
+      const storyText = cleanText(request.body?.storyText, 6000)
+      const imageUrl = cleanText(request.body?.imageUrl, 1000)
+      const storyDate = cleanOptionalDate(request.body?.storyDate)
+      const projectId = normalizeProjectId(request.body?.projectId)
+      const status = cleanText(request.body?.status, 40) || 'draft'
+      const featured = cleanBoolean(request.body?.featured) ? 1 : 0
+      const sortOrder = Math.max(-9999, Math.min(9999, cleanInteger(request.body?.sortOrder, 0)))
+
+      if (!title) return response.status(400).json({ error: 'Informe o título da história.' })
+      if (!summary) return response.status(400).json({ error: 'Informe um resumo curto da história.' })
+      if (Number.isNaN(projectId)) return response.status(400).json({ error: 'Projeto inválido.' })
+      if (!STORY_STATUSES.has(status)) return response.status(400).json({ error: 'Status da história inválido.' })
+
+      let rows
+      if (id > 0) {
+        rows = await sql`
+          UPDATE dreamer_stories SET
+            project_id = ${projectId}, title = ${title}, summary = ${summary},
+            story_text = ${storyText}, image_url = ${imageUrl}, story_date = ${storyDate},
+            status = ${status}, featured = ${featured}, sort_order = ${sortOrder},
+            updated_by = ${currentUser.id}, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${id}
+          RETURNING id
+        `
+      } else {
+        rows = await sql`
+          INSERT INTO dreamer_stories (
+            project_id, title, summary, story_text, image_url, story_date,
+            status, featured, sort_order, created_by, updated_by
+          ) VALUES (
+            ${projectId}, ${title}, ${summary}, ${storyText}, ${imageUrl}, ${storyDate},
+            ${status}, ${featured}, ${sortOrder}, ${currentUser.id}, ${currentUser.id}
+          )
+          RETURNING id
+        `
+      }
+
+      if (!rows.length) return response.status(404).json({ error: 'História não encontrada.' })
+
+      return response.status(200).json({
+        message: id > 0 ? 'História atualizada.' : 'História criada.',
+        id: rows[0].id,
+      })
+    }
+
     return response.status(400).json({
       error: 'Operação não reconhecida.',
     })
   } catch (error) {
     console.error('Dreamer community error:', error)
     return response.status(500).json({
-      error: 'Não foi possível carregar ações e parceiros do Sócio Sonhador.',
+      error: 'Não foi possível carregar a comunidade do Sócio Sonhador.',
     })
   }
 }

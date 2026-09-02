@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import '../styles/dreamer-community-admin-v2.css'
+import '../styles/dreamer-stories-v1.css'
 
 const EMPTY_ACTION = {
   id: 0,
@@ -34,6 +35,19 @@ const PARTNER_TYPE_META = {
   },
 }
 
+const EMPTY_STORY = {
+  id: 0,
+  projectId: '',
+  title: '',
+  summary: '',
+  storyText: '',
+  imageUrl: '',
+  storyDate: '',
+  status: 'draft',
+  featured: false,
+  sortOrder: 0,
+}
+
 const EMPTY_PARTNER = {
   id: 0,
   name: '',
@@ -64,13 +78,14 @@ function toInputDate(value) {
 
 function DreamerCommunityAdminPanel() {
   const [tab, setTab] = useState('actions')
-  const [data, setData] = useState({ projects: [], actions: [], partners: [] })
+  const [data, setData] = useState({ projects: [], actions: [], partners: [], stories: [] })
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [actionForm, setActionForm] = useState(EMPTY_ACTION)
   const [partnerForm, setPartnerForm] = useState(EMPTY_PARTNER)
+  const [storyForm, setStoryForm] = useState(EMPTY_STORY)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -177,6 +192,29 @@ function DreamerCommunityAdminPanel() {
     if (ok) setActionForm(EMPTY_ACTION)
   }
 
+  async function saveStory(event) {
+    event.preventDefault()
+    const ok = await post({ operation: 'saveStory', ...storyForm })
+    if (ok) setStoryForm(EMPTY_STORY)
+  }
+
+  function editStory(item) {
+    setStoryForm({
+      id: item.id,
+      projectId: item.project_id || '',
+      title: item.title || '',
+      summary: item.summary || '',
+      storyText: item.story_text || '',
+      imageUrl: item.image_url || '',
+      storyDate: item.story_date ? String(item.story_date).slice(0, 10) : '',
+      status: item.status || 'draft',
+      featured: Boolean(item.featured),
+      sortOrder: Number(item.sort_order || 0),
+    })
+    setTab('stories')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function savePartner(event) {
     event.preventDefault()
     const ok = await post({ operation: 'savePartner', ...partnerForm })
@@ -232,12 +270,14 @@ function DreamerCommunityAdminPanel() {
         <div className="dreamer-community-admin__stats">
           <span><strong>{openActions}</strong><small>ações publicadas</small></span>
           <span><strong>{data.partners.filter(item => item.active).length}</strong><small>parceiros ativos</small></span>
+          <span><strong>{data.stories.filter(item => item.status === 'published').length}</strong><small>histórias publicadas</small></span>
         </div>
       </section>
 
       <div className="dreamer-community-admin__tabs">
         <button type="button" className={tab === 'actions' ? 'is-active' : ''} onClick={() => setTab('actions')}>Ações</button>
         <button type="button" className={tab === 'partners' ? 'is-active' : ''} onClick={() => setTab('partners')}>Parceiros</button>
+        <button type="button" className={tab === 'stories' ? 'is-active' : ''} onClick={() => setTab('stories')}>Histórias</button>
       </div>
 
       {message ? <div className="dreamer-community-admin__notice is-success">{message}</div> : null}
@@ -277,7 +317,7 @@ function DreamerCommunityAdminPanel() {
             )) : <div className="dreamer-community-list__empty">Nenhuma ação cadastrada ainda.</div>}
           </section>
         </>
-      ) : (
+      ) : tab === 'partners' ? (
         <div className="dreamer-partner-admin-v2">
           <section className="dreamer-partner-admin-v2__summary">
             <div>
@@ -405,7 +445,39 @@ function DreamerCommunityAdminPanel() {
             </div>
           </section>
         </div>
-      )}
+      ) : null}
+
+      {tab === 'stories' ? (
+        <div className="dreamer-stories-admin">
+          <form className="dreamer-community-form" onSubmit={saveStory}>
+            <div className="dreamer-community-form__heading">
+              <div><span>{storyForm.id ? 'EDITANDO HISTÓRIA' : 'NOVA HISTÓRIA'}</span><h3>{storyForm.id ? storyForm.title : 'Conte um sonho que virou realidade'}</h3></div>
+              {storyForm.id ? <button type="button" onClick={() => setStoryForm(EMPTY_STORY)}>Cancelar edição</button> : null}
+            </div>
+            <div className="dreamer-community-form__grid">
+              <label className="is-wide">Título<input value={storyForm.title} onChange={event => setStoryForm(current => ({ ...current, title: event.target.value }))} placeholder="Ex.: Um dia que virou memória para sempre" required /></label>
+              <label>Projeto<select value={storyForm.projectId} onChange={event => setStoryForm(current => ({ ...current, projectId: event.target.value }))}><option value="">Todos / Geral</option>{data.projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
+              <label>Data da história<input type="date" value={storyForm.storyDate} onChange={event => setStoryForm(current => ({ ...current, storyDate: event.target.value }))} /></label>
+              <label className="is-wide">Resumo<input value={storyForm.summary} onChange={event => setStoryForm(current => ({ ...current, summary: event.target.value }))} placeholder="Uma frase humana e curta para apresentar a história" required /></label>
+              <label className="is-wide">História<textarea value={storyForm.storyText} onChange={event => setStoryForm(current => ({ ...current, storyText: event.target.value }))} placeholder="Conte o que aconteceu, por que foi especial e o que esse momento significou." /></label>
+              <label className="is-wide">URL da imagem<input value={storyForm.imageUrl} onChange={event => setStoryForm(current => ({ ...current, imageUrl: event.target.value }))} placeholder="https://... (opcional)" /></label>
+              <label>Status<select value={storyForm.status} onChange={event => setStoryForm(current => ({ ...current, status: event.target.value }))}><option value="draft">Rascunho</option><option value="published">Publicada</option></select></label>
+              <label>Ordem<input type="number" value={storyForm.sortOrder} onChange={event => setStoryForm(current => ({ ...current, sortOrder: event.target.value }))} /></label>
+              <label className="dreamer-community-form__check"><input type="checkbox" checked={storyForm.featured} onChange={event => setStoryForm(current => ({ ...current, featured: event.target.checked }))} /> História em destaque</label>
+            </div>
+            <button className="dreamer-community-form__submit" type="submit" disabled={busy}>{busy ? 'Salvando…' : storyForm.id ? 'Salvar história' : 'Criar história'}</button>
+          </form>
+
+          <section className="dreamer-community-list dreamer-stories-admin__list">
+            {data.stories.length ? data.stories.map(item => (
+              <article key={item.id}>
+                <div><span>{item.project || 'GERAL'} · {item.status === 'published' ? 'PUBLICADA' : 'RASCUNHO'}</span><strong>{item.title}</strong><small>{item.summary}</small></div>
+                <div className="dreamer-community-list__meta"><b>{item.featured ? '★ Destaque' : item.story_date ? String(item.story_date).slice(0, 10).split('-').reverse().join('/') : 'História'}</b><button type="button" onClick={() => editStory(item)}>Editar</button></div>
+              </article>
+            )) : <div className="dreamer-community-list__empty">Nenhuma história cadastrada ainda.</div>}
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }

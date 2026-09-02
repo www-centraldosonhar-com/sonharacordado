@@ -9,6 +9,7 @@ import DreamerAchievementsPanel from '../components/DreamerAchievementsPanel'
 import '../styles/dreamer.css'
 
 import '../styles/dreamer-impact-transparency-v2.css'
+import '../styles/dreamer-stories-v1.css'
 const PARTNER_META = {
   sponsor: {
     label: 'Patrocinador',
@@ -122,6 +123,7 @@ function DreamerPage({
   const [communityData, setCommunityData] = useState({
     actions: [],
     partners: [],
+    stories: [],
   })
 
   useEffect(() => {
@@ -178,6 +180,7 @@ function DreamerPage({
           setCommunityData({
             actions: payload?.actions || [],
             partners: payload?.partners || [],
+            stories: payload?.stories || [],
           })
         }
       })
@@ -247,6 +250,9 @@ function DreamerPage({
 
   const supportActions = communityData.actions || []
   const partners = communityData.partners || []
+  const stories = communityData.stories || []
+  const featuredStory = stories.find(story => story.featured) || stories[0] || null
+  const otherStories = featuredStory ? stories.filter(story => story.id !== featuredStory.id).slice(0, 3) : []
 
   const publishedSupportActions = supportActions.filter(
     action => action.status === 'published'
@@ -723,6 +729,32 @@ function DreamerPage({
             )}
           </div>
         </section>
+
+        {featuredStory ? (
+          <section className="dreamer-stories">
+            <div className="dreamer-stories__heading">
+              <div><span className="dreamer-section-label">HISTÓRIAS DO SONHAR</span><h2>Sonhos que viraram lembranças de verdade.</h2><p>Por trás de cada número existe uma história, um encontro e alguém que levou aquele momento para a vida.</p></div>
+              <span className="dreamer-stories__heart">♡</span>
+            </div>
+            <div className="dreamer-stories__layout">
+              <article className="dreamer-stories__featured">
+                {featuredStory.image_url ? <div className="dreamer-stories__image"><img src={featuredStory.image_url} alt="" /></div> : <div className="dreamer-stories__image dreamer-stories__image--empty"><span>✦</span></div>}
+                <div className="dreamer-stories__featured-copy">
+                  <small>{featuredStory.project || 'SONHAR ACORDADO'}{featuredStory.story_date ? ` · ${String(featuredStory.story_date).slice(0, 10).split('-').reverse().join('/')}` : ''}</small>
+                  <h3>{featuredStory.title}</h3>
+                  <p>{featuredStory.story_text || featuredStory.summary}</p>
+                  {featuredStory.story_text ? <strong>{featuredStory.summary}</strong> : null}
+                </div>
+              </article>
+              {otherStories.length ? <div className="dreamer-stories__more">{otherStories.map(story => (
+                <article key={story.id}>
+                  <div className="dreamer-stories__mini-mark">{story.image_url ? <img src={story.image_url} alt="" /> : <span>♡</span>}</div>
+                  <div><small>{story.project || 'SONHAR'}{story.story_date ? ` · ${String(story.story_date).slice(0, 10).split('-').reverse().join('/')}` : ''}</small><h3>{story.title}</h3><p>{story.summary}</p></div>
+                </article>
+              ))}</div> : null}
+            </div>
+          </section>
+        ) : null}
 
         <section className="dreamer-home-columns dreamer-home-columns--impact">
           <article className="dreamer-my-team">
