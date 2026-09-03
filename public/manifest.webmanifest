@@ -1,6 +1,6 @@
 {
-  "name": "Central do Sonhar",
-  "short_name": "Central",
+  "name": "Central Sonhar",
+  "short_name": "Central Sonhar",
   "description": "Central do Voluntário Sonhador",
   "start_url": "/",
   "scope": "/",
@@ -10,9 +10,15 @@
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
