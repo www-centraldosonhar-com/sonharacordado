@@ -561,6 +561,7 @@ export default async function handler(request, response) {
           ${globalAdmin}
           OR e.project_id =
             ${admin.projectId}
+          OR e.project_id IS NULL
         )
 
       ORDER BY

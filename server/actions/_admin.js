@@ -932,13 +932,21 @@ export async function adminCanManageRegistration(
     return true
   }
 
-  // Eventos gerais ficam com
-  // Administração Geral.
+  // Eventos gerais podem ser acompanhados por:
+  // - Admin Geral;
+  // - qualquer Admin de Projeto;
+  // - qualquer Admin da equipe Voluntários.
+  //
+  // Como o evento não pertence a um projeto específico,
+  // não aplicamos filtro por admin.projectId neste caso.
   if (
     registration.project_id ===
     null
   ) {
-    return false
+    return (
+      isProjectAdmin(admin) ||
+      isVolunteerTeamAdmin(admin)
+    )
   }
 
   // Admin de Projeto.
