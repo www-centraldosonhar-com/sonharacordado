@@ -1570,7 +1570,7 @@ export default function AdminAssistedPanel({
                       <span>
                         {
                           person.allergies ||
-                          'Nenhuma informada'
+                          'Não'
                         }
                       </span>
                     </div>
