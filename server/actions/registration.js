@@ -98,7 +98,7 @@ async function getEvent(
       registration_fee,
       registration_deadline,
       registrations_open,
-      event_date
+      event_date::text AS event_date
     FROM events
     WHERE id = ${eventId}
     LIMIT 1
@@ -121,7 +121,7 @@ async function getPairedRegistrationEvent(event) {
       name,
       event_type,
       project_id,
-      event_date,
+      event_date::text AS event_date,
       active
     FROM events
     WHERE id = ${pairedEventId}

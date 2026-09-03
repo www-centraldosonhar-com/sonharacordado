@@ -29,7 +29,7 @@ async function getRegistrationAuditContext(
 
       e.project_id,
       e.name AS event_name,
-      e.event_date,
+      e.event_date::text AS event_date,
       e.paired_registration_event_id,
 
       u.name AS user_name
@@ -70,7 +70,7 @@ async function syncPairedRegistrationOnApproval({
       name,
       event_type,
       project_id,
-      event_date,
+      event_date::text AS event_date,
       active
     FROM events
     WHERE id = ${pairedEventId}

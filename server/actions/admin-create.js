@@ -363,7 +363,7 @@ export default async function handler(request, response) {
             id,
             event_type,
             project_id,
-            event_date
+            event_date::text AS event_date
           FROM events
           WHERE id = ${pairedEventId}
           LIMIT 1
