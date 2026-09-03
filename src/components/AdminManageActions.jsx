@@ -137,17 +137,34 @@ function AdminManageActions({
   }
 
   async function handlePassword() {
-    const password = window.prompt(
-      'Digite a nova senha:'
+    const pin = window.prompt(
+      'Digite o novo PIN de 4 números:'
     )
 
-    if (!password) {
+    if (pin === null) {
+      return
+    }
+
+    const cleanPin = String(pin).trim()
+
+    if (!/^\d{4}$/.test(cleanPin)) {
+      setMessage(
+        'O PIN deve ter exatamente 4 números.'
+      )
+      return
+    }
+
+    const confirmed = window.confirm(
+      'Confirmar a alteração do PIN deste usuário?'
+    )
+
+    if (!confirmed) {
       return
     }
 
     await sendAction(
       'reset-password',
-      { password }
+      { pin: cleanPin }
     )
   }
 
@@ -779,7 +796,7 @@ function AdminManageActions({
               disabled={isLoading}
               onClick={handlePassword}
             >
-              🔑 Senha
+              🔑 PIN
             </button>
           )}
         </>

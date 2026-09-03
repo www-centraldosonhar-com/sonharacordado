@@ -10,6 +10,15 @@ import {
   sql,
 } from './_admin.js'
 
+import {
+  isValidPin,
+  normalizePin,
+} from './_pin.js'
+
+import {
+  createWerkzeugHash,
+} from './_password.js'
+
 function cleanText(value) {
   if (typeof value !== 'string') {
     return ''
@@ -139,6 +148,40 @@ export default async function handler(
           Number(users[0].active) === 1
             ? 'Usuário ativado! 👤'
             : 'Usuário desativado.',
+      })
+    }
+
+    if (action === 'reset-password') {
+      const pin = normalizePin(
+        data.pin ?? data.password
+      )
+
+      if (!isValidPin(pin)) {
+        return response.status(400).json({
+          error:
+            'O PIN deve ter exatamente 4 números.',
+        })
+      }
+
+      const passwordHash =
+        await createWerkzeugHash(pin)
+
+      const users = await sql`
+        UPDATE users
+        SET password_hash = ${passwordHash}
+        WHERE id = ${recordId}
+        RETURNING id
+      `
+
+      if (!users[0]) {
+        return response.status(404).json({
+          error: 'Usuário não encontrado.',
+        })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message: 'PIN alterado com sucesso! 🔐',
       })
     }
 
