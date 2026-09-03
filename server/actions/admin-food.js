@@ -105,13 +105,6 @@ export default async function handler(
             ${admin.projectId}
         )
 
-        AND NULLIF(
-          TRIM(
-            assisted.allergies
-          ),
-          ''
-        ) IS NOT NULL
-
       ORDER BY
         project.name,
         assisted.full_name
@@ -157,13 +150,6 @@ export default async function handler(
           OR users.project_id =
             ${admin.projectId}
         )
-
-        AND NULLIF(
-          TRIM(
-            users.allergies
-          ),
-          ''
-        ) IS NOT NULL
 
       ORDER BY
         project.name,
