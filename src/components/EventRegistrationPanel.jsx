@@ -74,8 +74,22 @@ function EventRegistrationPanel({
       currentUser?.email || ''
     ).trim()
 
+  const adminScope =
+    currentUser?.adminScope ||
+    currentUser?.admin_scope ||
+    null
+
+  const adminWithoutTeam =
+    !registrationProfileTeam &&
+    ['global', 'project'].includes(
+      adminScope
+    )
+
   const registrationTeam =
-    registrationProfileTeam?.code || ''
+    registrationProfileTeam?.code ||
+    (adminWithoutTeam
+      ? 'administration'
+      : '')
 
 
 const [coupon, setCoupon] =
@@ -591,17 +605,23 @@ const [coupon, setCoupon] =
 
             <strong>
               {registrationProfileTeam?.name ||
-                REGISTRATION_TEAMS.find(
-                  (option) =>
-                    option.value ===
-                      registrationTeam
-                )?.label ||
-                'Equipe não cadastrada'}
+                (adminWithoutTeam
+                  ? adminScope === 'global'
+                    ? 'Administração Geral — sem equipe'
+                    : 'Administração do Projeto — sem equipe'
+                  : REGISTRATION_TEAMS.find(
+                      (option) =>
+                        option.value ===
+                          registrationTeam
+                    )?.label ||
+                    'Equipe não cadastrada')}
             </strong>
           </div>
 
           <small>
-            ✓ Definida pelo seu cadastro na Central
+            {adminWithoutTeam
+              ? '✓ Administradores Geral/Projeto podem participar sem equipe operacional'
+              : '✓ Definida pelo seu cadastro na Central'}
           </small>
         </div>
 

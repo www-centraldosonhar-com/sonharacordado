@@ -12,6 +12,7 @@ const TEAMS = new Set([
   'media',
   'food',
   'volunteers',
+  'administration',
 ])
 
 const RECEIPT_BUCKET =
@@ -230,6 +231,25 @@ async function syncConfirmedPairedRegistration({
     eventName: pairedEvent.name,
     reusedExisting: false,
   }
+}
+
+
+async function canRegisterWithoutTeam(userId) {
+  const rows = await sql`
+    SELECT up.admin_scope
+    FROM user_permissions up
+    WHERE
+      up.user_id = ${userId}
+      AND up.permission = 'admin'
+      AND up.active = 1
+      AND up.admin_scope IN (
+        'global',
+        'project'
+      )
+    LIMIT 1
+  `
+
+  return Boolean(rows[0])
 }
 
 function registrationIsOpen(event) {
@@ -486,11 +506,25 @@ export default async function handler(
       const cleanRegistrationEmail =
         cleanEmail(email)
 
+      const administrationRegistration =
+        team === 'administration'
+
+      const administrationAllowed =
+        administrationRegistration
+          ? await canRegisterWithoutTeam(
+              sessionUser.userId
+            )
+          : false
+
       if (
         !validEmail(
           cleanRegistrationEmail
         ) ||
-        !TEAMS.has(team)
+        !TEAMS.has(team) ||
+        (
+          administrationRegistration &&
+          !administrationAllowed
+        )
       ) {
         return response.status(400).json({
           error:

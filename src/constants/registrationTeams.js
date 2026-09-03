@@ -1,5 +1,9 @@
 export const REGISTRATION_TEAMS = [
   {
+    value: 'administration',
+    label: '🧭 Administração — sem equipe',
+  },
+  {
     value: 'activities',
     label: '🎨 Equipe de Atividades',
   },
