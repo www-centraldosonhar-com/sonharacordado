@@ -146,6 +146,8 @@ export default async function handler(request, response) {
         events.registration_fee,
         events.registration_deadline,
         events.registrations_open,
+        events.paired_registration_event_id,
+        paired_event.name AS paired_registration_event_name,
         events.active,
         (
           SELECT COUNT(*)::int
@@ -159,6 +161,9 @@ export default async function handler(request, response) {
       FROM events
       LEFT JOIN projects
         ON events.project_id = projects.id
+      LEFT JOIN events paired_event
+        ON paired_event.id =
+          events.paired_registration_event_id
       WHERE events.active = 1
         AND events.event_date >= CURRENT_DATE
       ORDER BY

@@ -1627,6 +1627,7 @@ function AdminPage({
               {canManageEvents && (
                 <AdminEventComposer
                   projects={data.projects || []}
+                  events={data.events || []}
                   onCreated={reloadAdmin}
                   draftOwnerKey={
                     user?.id || 'admin'
@@ -1661,6 +1662,12 @@ function AdminPage({
                 <p>
                   📍 {event.location}
                 </p>
+
+                {event.paired_registration_event_name && (
+                  <p>
+                    ✨ Inscrição dupla com {event.paired_registration_event_name}
+                  </p>
+                )}
 
                 {event.location && (
                   <div className="admin-event-map-actions">
@@ -1724,6 +1731,7 @@ function AdminPage({
                       type="event"
                       item={event}
                       projects={data.projects}
+                      events={data.events || []}
                       onUpdated={reloadAdmin}
                     />
                   </>

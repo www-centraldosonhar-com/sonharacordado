@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 function AdminEventComposer({
   projects = [],
+  events = [],
   onCreated,
   draftOwnerKey = 'default',
 }) {
@@ -66,6 +67,8 @@ function AdminEventComposer({
         initialDraft.registrationDeadline || '',
       registrationFee:
         initialDraft.registrationFee ?? '0',
+      pairedRegistrationEventId:
+        initialDraft.pairedRegistrationEventId || '',
     })
 
   useEffect(() => {
@@ -154,6 +157,12 @@ function AdminEventComposer({
       registrationFee:
         draft.registrationFee || 0,
 
+      pairedRegistrationEventId:
+        eventType === 'specific' &&
+        draft.pairedRegistrationEventId
+          ? Number(draft.pairedRegistrationEventId)
+          : null,
+
     }
 
     setIsSaving(true)
@@ -206,6 +215,7 @@ function AdminEventComposer({
         location: '',
         registrationDeadline: '',
         registrationFee: '0',
+        pairedRegistrationEventId: '',
       })
 
       if (
@@ -310,9 +320,17 @@ function AdminEventComposer({
                 name="eventType"
                 value={eventType}
                 onChange={(event) => {
-                  setEventType(
+                  const nextType =
                     event.target.value
-                  )
+
+                  setEventType(nextType)
+
+                  if (nextType === 'general') {
+                    updateDraft(
+                      'pairedRegistrationEventId',
+                      ''
+                    )
+                  }
                 }}
               >
                 <option value="specific">
@@ -370,6 +388,53 @@ function AdminEventComposer({
                 )}
               </select>
             </label>
+
+            {eventType === 'specific' && (
+              <label className="is-wide">
+                <span>
+                  Inscrição dupla
+                </span>
+
+                <select
+                  name="pairedRegistrationEventId"
+                  value={draft.pairedRegistrationEventId}
+                  onChange={(event) =>
+                    updateDraft(
+                      'pairedRegistrationEventId',
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="">
+                    Sem evento complementar
+                  </option>
+
+                  {events
+                    .filter(
+                      (candidate) =>
+                        candidate.event_type === 'general' &&
+                        candidate.project_id == null &&
+                        (!draft.eventDate ||
+                          String(candidate.event_date).slice(0, 10) ===
+                            draft.eventDate)
+                    )
+                    .map((candidate) => (
+                      <option
+                        key={candidate.id}
+                        value={candidate.id}
+                      >
+                        {candidate.name} — {String(
+                          candidate.event_date
+                        ).slice(0, 10)}
+                      </option>
+                    ))}
+                </select>
+
+                <small>
+                  Ao confirmar este evento, o voluntário também será inscrito no evento geral vinculado, sem nova cobrança.
+                </small>
+              </label>
+            )}
 
             <label>
               <span>

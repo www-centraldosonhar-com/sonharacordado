@@ -4,6 +4,7 @@ function AdminManageActions({
   type,
   item,
   projects = [],
+  events = [],
   teams = [],
   onUpdated,
 }) {
@@ -395,6 +396,41 @@ function AdminManageActions({
               Geral
             </option>
           </select>
+
+          {item.event_type === 'specific' && (
+            <>
+              <label>Inscrição dupla</label>
+
+              <select
+                name="pairedRegistrationEventId"
+                defaultValue={
+                  item.paired_registration_event_id || ''
+                }
+              >
+                <option value="">
+                  Sem evento complementar
+                </option>
+
+                {events
+                  .filter(
+                    (candidate) =>
+                      Number(candidate.id) !== Number(item.id) &&
+                      candidate.event_type === 'general' &&
+                      candidate.project_id == null &&
+                      String(candidate.event_date).slice(0, 10) ===
+                        String(item.event_date).slice(0, 10)
+                  )
+                  .map((candidate) => (
+                    <option
+                      key={candidate.id}
+                      value={candidate.id}
+                    >
+                      {candidate.name}
+                    </option>
+                  ))}
+              </select>
+            </>
+          )}
 
           <label>Data</label>
 

@@ -25,9 +25,12 @@ async function getRegistrationAuditContext(
       er.user_id,
       er.status,
       er.team,
+      er.email,
 
       e.project_id,
       e.name AS event_name,
+      e.event_date,
+      e.paired_registration_event_id,
 
       u.name AS user_name
 
@@ -46,6 +49,141 @@ async function getRegistrationAuditContext(
   `
 
   return rows[0] || null
+}
+
+
+async function syncPairedRegistrationOnApproval({
+  sourceRegistrationId,
+  context,
+  adminId,
+}) {
+  const pairedEventId =
+    Number(context?.paired_registration_event_id)
+
+  if (!Number.isInteger(pairedEventId)) {
+    return null
+  }
+
+  const pairedRows = await sql`
+    SELECT
+      id,
+      name,
+      event_type,
+      project_id,
+      event_date,
+      active
+    FROM events
+    WHERE id = ${pairedEventId}
+    LIMIT 1
+  `
+
+  const pairedEvent = pairedRows[0]
+
+  if (
+    !pairedEvent ||
+    Number(pairedEvent.active) !== 1 ||
+    pairedEvent.event_type !== 'general' ||
+    pairedEvent.project_id !== null ||
+    String(pairedEvent.event_date).slice(0, 10) !==
+      String(context.event_date).slice(0, 10)
+  ) {
+    throw new Error(
+      'O evento complementar vinculado não está válido para inscrição dupla.'
+    )
+  }
+
+  const existingRows = await sql`
+    SELECT
+      id,
+      paired_from_registration_id
+    FROM event_registrations
+    WHERE event_id = ${pairedEvent.id}
+      AND user_id = ${context.user_id}
+    LIMIT 1
+  `
+
+  const existing = existingRows[0]
+
+  if (
+    existing &&
+    existing.paired_from_registration_id === null
+  ) {
+    return {
+      eventId: pairedEvent.id,
+      eventName: pairedEvent.name,
+      reusedExisting: true,
+    }
+  }
+
+  if (existing) {
+    await sql`
+      UPDATE event_registrations
+      SET
+        email = ${context.email},
+        team = ${context.team},
+        status = 'confirmed',
+        payment_receipt_path = NULL,
+        coupon_id = NULL,
+        rejection_reason = NULL,
+        reviewed_at = CURRENT_TIMESTAMP,
+        reviewed_by = ${adminId},
+        paired_from_registration_id = ${sourceRegistrationId},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${existing.id}
+    `
+  } else {
+    await sql`
+      INSERT INTO event_registrations (
+        event_id,
+        user_id,
+        email,
+        team,
+        status,
+        payment_receipt_path,
+        coupon_id,
+        paired_from_registration_id,
+        reviewed_at,
+        reviewed_by
+      )
+      VALUES (
+        ${pairedEvent.id},
+        ${context.user_id},
+        ${context.email},
+        ${context.team},
+        'confirmed',
+        NULL,
+        NULL,
+        ${sourceRegistrationId},
+        CURRENT_TIMESTAMP,
+        ${adminId}
+      )
+    `
+  }
+
+  return {
+    eventId: pairedEvent.id,
+    eventName: pairedEvent.name,
+    reusedExisting: false,
+  }
+}
+
+async function syncPairedRegistrationStatus({
+  sourceRegistrationId,
+  status,
+  reason = null,
+  adminId,
+}) {
+  await sql`
+    UPDATE event_registrations
+    SET
+      status = ${status},
+      rejection_reason = ${reason},
+      reviewed_at = CURRENT_TIMESTAMP,
+      reviewed_by = ${adminId},
+      updated_at = CURRENT_TIMESTAMP
+    WHERE paired_from_registration_id =
+      ${sourceRegistrationId}
+  `
 }
 
 
@@ -220,6 +358,14 @@ export default async function handler(
         })
       }
 
+      const pairedRegistration =
+        await syncPairedRegistrationOnApproval({
+          sourceRegistrationId:
+            Number(registrationId),
+          context: registrationContext,
+          adminId: admin.id,
+        })
+
       await logAdminAction({
         admin,
         action:
@@ -247,7 +393,9 @@ export default async function handler(
       return response.status(200).json({
         success: true,
         message:
-          'Inscrição confirmada! 🎟️✅',
+          pairedRegistration
+            ? `Inscrições confirmadas em ${registrationContext?.event_name} + ${pairedRegistration.eventName}! 🎟️✅`
+            : 'Inscrição confirmada! 🎟️✅',
       })
     }
 
@@ -290,6 +438,14 @@ export default async function handler(
             'Inscrição não encontrada.',
         })
       }
+
+      await syncPairedRegistrationStatus({
+        sourceRegistrationId:
+          Number(registrationId),
+        status: 'payment_rejected',
+        reason: cleanReason,
+        adminId: admin.id,
+      })
 
       await logAdminAction({
         admin,
@@ -346,6 +502,13 @@ export default async function handler(
             'Inscrição não encontrada.',
         })
       }
+
+      await syncPairedRegistrationStatus({
+        sourceRegistrationId:
+          Number(registrationId),
+        status: 'cancelled',
+        adminId: admin.id,
+      })
 
       await logAdminAction({
         admin,

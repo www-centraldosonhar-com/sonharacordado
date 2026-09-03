@@ -597,6 +597,16 @@ export default async function handler(
       const driveLink =
         cleanText(data.driveLink)
 
+      const rawPairedEventId =
+        data.pairedRegistrationEventId
+
+      const pairedEventId =
+        rawPairedEventId === '' ||
+        rawPairedEventId === null ||
+        rawPairedEventId === undefined
+          ? null
+          : Number(rawPairedEventId)
+
       if (
         !name ||
         !eventDate ||
@@ -620,11 +630,53 @@ export default async function handler(
         (
           projectId !== null &&
           !Number.isInteger(projectId)
+        ) ||
+        (
+          pairedEventId !== null &&
+          !Number.isInteger(pairedEventId)
+        ) ||
+        (
+          eventType === 'general' &&
+          pairedEventId !== null
         )
       ) {
         return response.status(400).json({
           error: 'Dados do evento inválidos.',
         })
+      }
+
+      if (pairedEventId !== null) {
+        if (pairedEventId === Number(recordId)) {
+          return response.status(400).json({
+            error: 'Um evento não pode vincular a própria inscrição.',
+          })
+        }
+
+        const pairedRows = await sql`
+          SELECT
+            id,
+            event_type,
+            project_id,
+            event_date
+          FROM events
+          WHERE id = ${pairedEventId}
+          LIMIT 1
+        `
+
+        const pairedEvent = pairedRows[0]
+
+        if (
+          !pairedEvent ||
+          pairedEvent.event_type !== 'general' ||
+          pairedEvent.project_id !== null ||
+          String(pairedEvent.event_date).slice(0, 10) !==
+            String(eventDate).slice(0, 10)
+        ) {
+          return response.status(400).json({
+            error:
+              'A inscrição dupla deve apontar para um evento geral da mesma data.',
+          })
+        }
       }
 
       // Evento geral da ONG pode ser administrado pelo
@@ -667,7 +719,9 @@ export default async function handler(
           registration_fee =
             ${registrationFee},
           drive_link =
-            ${driveLink || null}
+            ${driveLink || null},
+          paired_registration_event_id =
+            ${pairedEventId}
         WHERE id = ${recordId}
         RETURNING id
       `

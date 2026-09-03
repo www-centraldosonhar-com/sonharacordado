@@ -92,16 +92,144 @@ async function getEvent(
     SELECT
       id,
       name,
+      project_id,
+      paired_registration_event_id,
       active,
       registration_fee,
       registration_deadline,
-      registrations_open
+      registrations_open,
+      event_date
     FROM events
     WHERE id = ${eventId}
     LIMIT 1
   `
 
   return rows[0]
+}
+
+async function getPairedRegistrationEvent(event) {
+  const pairedEventId =
+    Number(event?.paired_registration_event_id)
+
+  if (!Number.isInteger(pairedEventId)) {
+    return null
+  }
+
+  const rows = await sql`
+    SELECT
+      id,
+      name,
+      event_type,
+      project_id,
+      event_date,
+      active
+    FROM events
+    WHERE id = ${pairedEventId}
+    LIMIT 1
+  `
+
+  return rows[0] || null
+}
+
+async function syncConfirmedPairedRegistration({
+  sourceRegistrationId,
+  sourceEvent,
+  userId,
+  email,
+  team,
+}) {
+  const pairedEvent =
+    await getPairedRegistrationEvent(
+      sourceEvent
+    )
+
+  if (!pairedEvent) {
+    return null
+  }
+
+  if (
+    Number(pairedEvent.active) !== 1 ||
+    pairedEvent.event_type !== 'general' ||
+    pairedEvent.project_id !== null ||
+    String(pairedEvent.event_date).slice(0, 10) !==
+      String(sourceEvent.event_date).slice(0, 10)
+  ) {
+    throw new Error(
+      'O evento complementar vinculado não está válido para inscrição dupla.'
+    )
+  }
+
+  const existingRows = await sql`
+    SELECT
+      id,
+      paired_from_registration_id
+    FROM event_registrations
+    WHERE event_id = ${pairedEvent.id}
+      AND user_id = ${userId}
+    LIMIT 1
+  `
+
+  const existing = existingRows[0]
+
+  if (
+    existing &&
+    existing.paired_from_registration_id === null
+  ) {
+    return {
+      eventId: pairedEvent.id,
+      eventName: pairedEvent.name,
+      reusedExisting: true,
+    }
+  }
+
+  if (existing) {
+    await sql`
+      UPDATE event_registrations
+      SET
+        email = ${email},
+        team = ${team},
+        status = 'confirmed',
+        payment_receipt_path = NULL,
+        coupon_id = NULL,
+        rejection_reason = NULL,
+        reviewed_at = CURRENT_TIMESTAMP,
+        reviewed_by = NULL,
+        paired_from_registration_id = ${sourceRegistrationId},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${existing.id}
+    `
+  } else {
+    await sql`
+      INSERT INTO event_registrations (
+        event_id,
+        user_id,
+        email,
+        team,
+        status,
+        payment_receipt_path,
+        coupon_id,
+        paired_from_registration_id,
+        reviewed_at
+      )
+      VALUES (
+        ${pairedEvent.id},
+        ${userId},
+        ${email},
+        ${team},
+        'confirmed',
+        NULL,
+        NULL,
+        ${sourceRegistrationId},
+        CURRENT_TIMESTAMP
+      )
+    `
+  }
+
+  return {
+    eventId: pairedEvent.id,
+    eventName: pairedEvent.name,
+    reusedExisting: false,
+  }
 }
 
 function registrationIsOpen(event) {
@@ -499,8 +627,10 @@ export default async function handler(
         }
       }
 
+      let savedRegistrationId
+
       if (existing) {
-        await sql`
+        const updatedRows = await sql`
           UPDATE event_registrations
           SET
             email =
@@ -521,9 +651,13 @@ export default async function handler(
             updated_at =
               CURRENT_TIMESTAMP
           WHERE id = ${existing.id}
+          RETURNING id
         `
+
+        savedRegistrationId =
+          Number(updatedRows[0]?.id)
       } else {
-        await sql`
+        const insertedRows = await sql`
           INSERT INTO event_registrations (
             event_id,
             user_id,
@@ -546,14 +680,38 @@ export default async function handler(
             },
             ${couponId}
           )
+          RETURNING id
         `
+
+        savedRegistrationId =
+          Number(insertedRows[0]?.id)
+      }
+
+      let pairedRegistration = null
+
+      if (
+        freeEvent &&
+        Number.isInteger(savedRegistrationId)
+      ) {
+        pairedRegistration =
+          await syncConfirmedPairedRegistration({
+            sourceRegistrationId:
+              savedRegistrationId,
+            sourceEvent: event,
+            userId: sessionUser.userId,
+            email: cleanRegistrationEmail,
+            team,
+          })
       }
 
       return response.status(200).json({
         success: true,
+        pairedRegistration,
         message:
           freeEvent
-            ? 'Inscrição confirmada! Este evento é gratuito. ❤️'
+            ? pairedRegistration
+              ? `Inscrições confirmadas em ${event.name} + ${pairedRegistration.eventName}! ❤️`
+              : 'Inscrição confirmada! Este evento é gratuito. ❤️'
             : coupon
               ? 'Cupom enviado para aprovação! 🎟️'
               : 'Comprovante enviado para conferência! 💙',

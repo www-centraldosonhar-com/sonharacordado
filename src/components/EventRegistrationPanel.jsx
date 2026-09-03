@@ -396,6 +396,12 @@ const [coupon, setCoupon] =
             )}
           </p>
 
+          {event.paired_registration_event_name && (
+            <p>
+              ✨ Inclui também: {event.paired_registration_event_name}
+            </p>
+          )}
+
           <strong className="registration-confirmed-label">
             INSCRIÇÃO CONFIRMADA ✓
           </strong>
@@ -493,6 +499,18 @@ const [coupon, setCoupon] =
             : ''}
         </span>
       </div>
+
+      {event.paired_registration_event_name && (
+        <div className="registration-status-card">
+          <strong>
+            ✨ Inscrição dupla
+          </strong>
+
+          <p>
+            Ao confirmar sua inscrição neste evento, você também fica inscrito em {event.paired_registration_event_name}, sem nova cobrança.
+          </p>
+        </div>
+      )}
 
       <div className="registration-payment-box">
         {isFreeEvent ? (

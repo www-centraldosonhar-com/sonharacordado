@@ -301,6 +301,7 @@ export default async function handler(request, response) {
         registrationFee,
         registrationDeadline,
         driveLink,
+        pairedRegistrationEventId,
       } = data
 
       if (
@@ -332,6 +333,57 @@ export default async function handler(request, response) {
         projectId
           ? Number(projectId)
           : null
+
+      const pairedEventId =
+        pairedRegistrationEventId
+          ? Number(pairedRegistrationEventId)
+          : null
+
+      if (
+        pairedEventId !== null &&
+        !Number.isInteger(pairedEventId)
+      ) {
+        return response.status(400).json({
+          error: 'Evento complementar inválido.',
+        })
+      }
+
+      if (
+        eventType === 'general' &&
+        pairedEventId !== null
+      ) {
+        return response.status(400).json({
+          error: 'Evento geral não pode possuir inscrição dupla.',
+        })
+      }
+
+      if (pairedEventId !== null) {
+        const pairedRows = await sql`
+          SELECT
+            id,
+            event_type,
+            project_id,
+            event_date
+          FROM events
+          WHERE id = ${pairedEventId}
+          LIMIT 1
+        `
+
+        const pairedEvent = pairedRows[0]
+
+        if (
+          !pairedEvent ||
+          pairedEvent.event_type !== 'general' ||
+          pairedEvent.project_id !== null ||
+          String(pairedEvent.event_date).slice(0, 10) !==
+            String(eventDate).slice(0, 10)
+        ) {
+          return response.status(400).json({
+            error:
+              'A inscrição dupla deve apontar para um evento geral da mesma data.',
+          })
+        }
+      }
 
       // Evento geral da ONG pode ser administrado pelo
       // Admin Geral ou pela equipe transversal de Mídias.
@@ -367,6 +419,7 @@ export default async function handler(request, response) {
           registration_deadline,
           registrations_open,
           drive_link,
+          paired_registration_event_id,
           active
         )
         VALUES (
@@ -381,6 +434,7 @@ export default async function handler(request, response) {
           ${registrationDeadline},
           1,
           ${driveLink?.trim() || null},
+          ${pairedEventId},
           1
         )
         RETURNING id

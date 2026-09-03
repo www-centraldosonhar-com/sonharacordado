@@ -264,6 +264,8 @@ export default async function handler(request, response) {
         e.registration_deadline,
         e.registrations_open,
         e.drive_link,
+        e.paired_registration_event_id,
+        paired_event.name AS paired_registration_event_name,
         e.event_image_path,
         e.active,
         e.event_status,
@@ -272,6 +274,9 @@ export default async function handler(request, response) {
       FROM events e
       LEFT JOIN projects p
         ON e.project_id = p.id
+      LEFT JOIN events paired_event
+        ON paired_event.id =
+          e.paired_registration_event_id
 
       WHERE
         ${unrestrictedProjects}
