@@ -353,19 +353,25 @@ function HomePage({
   const getLocalDate = (value) => {
     if (!value) return null
 
-    // Evita alteração de dia causada por UTC em datas YYYY-MM-DD.
-    if (
-      typeof value === 'string' &&
-      /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ) {
-      const [year, month, day] =
-        value.split('-').map(Number)
-
-      return new Date(
-        year,
-        month - 1,
-        day
+    // Datas de calendário (evento, aniversário etc.) não devem
+    // sofrer conversão de fuso. O Neon pode devolver um DATE
+    // como ISO (2026-09-12T00:00:00.000Z), então usamos sempre
+    // a parte YYYY-MM-DD e reconstruímos a data no horário local.
+    if (typeof value === 'string') {
+      const calendarDate = value.match(
+        /^(\d{4})-(\d{2})-(\d{2})/
       )
+
+      if (calendarDate) {
+        const [, year, month, day] =
+          calendarDate.map(Number)
+
+        return new Date(
+          year,
+          month - 1,
+          day
+        )
+      }
     }
 
     const parsed = new Date(value)
