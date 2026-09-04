@@ -618,14 +618,12 @@ export default async function handler(
           code,
           project_id,
           usage_limit,
-          used_count,
           active
         )
         VALUES (
           ${couponCode},
           ${couponProjectId},
           ${usageLimit},
-          0,
           1
         )
         RETURNING
@@ -633,7 +631,6 @@ export default async function handler(
           code,
           project_id,
           usage_limit,
-          used_count,
           active
       `
 
