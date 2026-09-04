@@ -5345,3 +5345,90 @@
   .finance-dreamer-closures__title { flex-direction: column; }
   .finance-dreamer-closures__totals { grid-template-columns: 1fr; }
 }
+
+/* =====================================================
+   CUPONS — CRIAÇÃO
+   ===================================================== */
+
+.admin-coupon-create-card {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 250, 252, 0.96)
+    );
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+}
+
+.admin-coupon-create-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-coupon-create-head strong {
+  display: block;
+  font-size: 15px;
+}
+
+.admin-coupon-create-head > div > span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.68;
+}
+
+.admin-coupon-badge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.08);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin-coupon-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 10px;
+}
+
+.admin-coupon-fields label > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-coupon-fields input {
+  width: 100%;
+  min-height: 44px;
+}
+
+.admin-coupon-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .admin-coupon-create-head {
+    flex-direction: column;
+  }
+
+  .admin-coupon-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-coupon-create-actions button {
+    width: 100%;
+  }
+}

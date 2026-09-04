@@ -120,6 +120,12 @@ function AdminRegistrationsPanel({
   const [isLoading, setIsLoading] =
     useState(false)
 
+  const [couponCode, setCouponCode] =
+    useState('')
+
+  const [couponUsageLimit, setCouponUsageLimit] =
+    useState('1')
+
 
   // =====================================================
   // AGRUPAMENTO POR EVENTO
@@ -915,52 +921,100 @@ function AdminRegistrationsPanel({
               🎫 Gerenciar cupons
             </summary>
 
-            <div className="admin-coupon-row">
-              <strong>
-                Criar novo cupom
-              </strong>
+            <div className="admin-coupon-create-card">
+              <div className="admin-coupon-create-head">
+                <div>
+                  <strong>
+                    ✨ Criar novo cupom
+                  </strong>
 
-              <span>
-                Gratuidade na inscrição
-              </span>
+                  <span>
+                    Libere gratuidade para uma quantidade
+                    limitada de inscrições.
+                  </span>
+                </div>
 
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => {
-                  const couponCode =
-                    window.prompt(
-                      'Código do novo cupom (ex.: SONHAR2026):'
-                    )
+                <span className="admin-coupon-badge">
+                  🎟️ Gratuidade
+                </span>
+              </div>
 
-                  if (!couponCode) {
-                    return
-                  }
+              <div className="admin-coupon-fields">
+                <label>
+                  <span>Código</span>
 
-                  const usageLimit =
-                    window.prompt(
-                      'Quantas vezes esse cupom poderá ser usado?',
-                      '1'
-                    )
-
-                  if (!usageLimit) {
-                    return
-                  }
-
-                  action(
-                    'create-coupon',
-                    {
-                      couponCode,
-                      usageLimit:
-                        Number(
-                          usageLimit
-                        ),
+                  <input
+                    type="text"
+                    value={couponCode}
+                    disabled={isLoading}
+                    maxLength={32}
+                    placeholder="Ex.: SONHAR2026"
+                    autoComplete="off"
+                    onChange={(event) =>
+                      setCouponCode(
+                        event.target.value
+                          .toUpperCase()
+                          .replace(
+                            /[^A-Z0-9_-]/g,
+                            ''
+                          )
+                      )
                     }
-                  )
-                }}
-              >
-                + Criar cupom
-              </button>
+                  />
+                </label>
+
+                <label>
+                  <span>Limite de usos</span>
+
+                  <input
+                    type="number"
+                    min="1"
+                    max="10000"
+                    step="1"
+                    value={couponUsageLimit}
+                    disabled={isLoading}
+                    onChange={(event) =>
+                      setCouponUsageLimit(
+                        event.target.value
+                      )
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="admin-coupon-create-actions">
+                <button
+                  type="button"
+                  disabled={
+                    isLoading ||
+                    couponCode.trim().length < 3 ||
+                    Number(couponUsageLimit) < 1
+                  }
+                  onClick={async () => {
+                    const result =
+                      await action(
+                        'create-coupon',
+                        {
+                          couponCode:
+                            couponCode.trim(),
+                          usageLimit:
+                            Number(
+                              couponUsageLimit
+                            ),
+                        }
+                      )
+
+                    if (result) {
+                      setCouponCode('')
+                      setCouponUsageLimit('1')
+                    }
+                  }}
+                >
+                  {isLoading
+                    ? 'Criando...'
+                    : '+ Criar cupom'}
+                </button>
+              </div>
             </div>
 
             {coupons.length === 0 && (
@@ -980,9 +1034,8 @@ function AdminRegistrationsPanel({
                   </strong>
 
                   <span>
-                    {coupon.used_count}
-                    {' / '}
                     {coupon.usage_limit}
+                    {' usos permitidos'}
                   </span>
 
                   <button
