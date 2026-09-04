@@ -540,6 +540,112 @@ export default async function handler(
     }
 
     if (
+      operation === 'create-coupon'
+    ) {
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return response.status(403).json({
+          error:
+            'Você não possui permissão para criar cupons.',
+        })
+      }
+
+      const couponCode = String(
+        request.body?.couponCode || ''
+      )
+        .trim()
+        .toUpperCase()
+
+      const usageLimit = Number(
+        request.body?.usageLimit
+      )
+
+      if (
+        !couponCode ||
+        couponCode.length < 3 ||
+        couponCode.length > 32
+      ) {
+        return response.status(400).json({
+          error:
+            'Informe um código de cupom entre 3 e 32 caracteres.',
+        })
+      }
+
+      if (
+        !/^[A-Z0-9_-]+$/.test(couponCode)
+      ) {
+        return response.status(400).json({
+          error:
+            'Use somente letras, números, hífen ou underline no cupom.',
+        })
+      }
+
+      if (
+        !Number.isInteger(usageLimit) ||
+        usageLimit < 1 ||
+        usageLimit > 10000
+      ) {
+        return response.status(400).json({
+          error:
+            'O limite de usos deve ser um número entre 1 e 10000.',
+        })
+      }
+
+      const couponProjectId =
+        isGlobalAdmin(admin)
+          ? null
+          : admin.projectId
+
+      const duplicate = await sql`
+        SELECT id
+        FROM registration_coupons
+        WHERE UPPER(TRIM(code)) =
+          ${couponCode}
+        LIMIT 1
+      `
+
+      if (duplicate[0]) {
+        return response.status(409).json({
+          error:
+            'Já existe um cupom com esse código.',
+        })
+      }
+
+      const created = await sql`
+        INSERT INTO registration_coupons (
+          code,
+          project_id,
+          usage_limit,
+          used_count,
+          active
+        )
+        VALUES (
+          ${couponCode},
+          ${couponProjectId},
+          ${usageLimit},
+          0,
+          1
+        )
+        RETURNING
+          id,
+          code,
+          project_id,
+          usage_limit,
+          used_count,
+          active
+      `
+
+      return response.status(201).json({
+        success: true,
+        coupon: created[0],
+        message:
+          `Cupom ${couponCode} criado! 🎟️`,
+      })
+    }
+
+    if (
       operation === 'toggle-coupon'
     ) {
       if (

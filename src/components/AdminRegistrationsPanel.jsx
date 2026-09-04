@@ -909,12 +909,65 @@ function AdminRegistrationsPanel({
       )}
 
 
-      {canManageCoupons &&
-        coupons.length > 0 && (
+      {canManageCoupons && (
           <details className="admin-coupons-box">
             <summary>
               🎫 Gerenciar cupons
             </summary>
+
+            <div className="admin-coupon-row">
+              <strong>
+                Criar novo cupom
+              </strong>
+
+              <span>
+                Gratuidade na inscrição
+              </span>
+
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => {
+                  const couponCode =
+                    window.prompt(
+                      'Código do novo cupom (ex.: SONHAR2026):'
+                    )
+
+                  if (!couponCode) {
+                    return
+                  }
+
+                  const usageLimit =
+                    window.prompt(
+                      'Quantas vezes esse cupom poderá ser usado?',
+                      '1'
+                    )
+
+                  if (!usageLimit) {
+                    return
+                  }
+
+                  action(
+                    'create-coupon',
+                    {
+                      couponCode,
+                      usageLimit:
+                        Number(
+                          usageLimit
+                        ),
+                    }
+                  )
+                }}
+              >
+                + Criar cupom
+              </button>
+            </div>
+
+            {coupons.length === 0 && (
+              <p>
+                Nenhum cupom criado ainda.
+              </p>
+            )}
 
             {coupons.map(
               (coupon) => (
