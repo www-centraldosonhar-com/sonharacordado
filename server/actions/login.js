@@ -1,3 +1,4 @@
+import { logAdminAction } from './_admin-audit.js'
 import crypto from 'node:crypto'
 import process from 'node:process'
 import { Buffer } from 'node:buffer'
@@ -288,6 +289,27 @@ export default async function handler(request, response) {
         .filter(Boolean)
         .join('; ')
     )
+
+    await logAdminAction({
+      admin: user,
+      action: 'user_login',
+      entityType: 'session',
+      entityId: user.id,
+      projectId:
+        user.project_id || null,
+      details: {
+        username:
+          user.username || null,
+        project:
+          user.project || null,
+        userType:
+          user.user_type || null,
+        teams:
+          teams.map(
+            (team) => team.code
+          ),
+      },
+    })
 
     return response.status(200).json({
       user: {
