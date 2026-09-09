@@ -188,10 +188,23 @@ export function getAdminCapabilities(admin) {
         team.code
     )
 
+  // No PPF, Voluntários e Assistidos formam uma única
+  // equipe operacional. O vínculo permanece `volunteers`,
+  // mas o Admin dessa equipe também administra Assistidos.
+  const ppfUnifiedPeopleAdmin =
+    teamAdmin &&
+    Number(admin?.projectId) === 2 &&
+    teamCodes.includes(
+      'volunteers'
+    )
+
   const assistedAdmin =
     teamAdmin &&
-    teamCodes.includes(
-      'assisted'
+    (
+      teamCodes.includes(
+        'assisted'
+      ) ||
+      ppfUnifiedPeopleAdmin
     )
 
   const foodAdmin =

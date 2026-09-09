@@ -27,20 +27,41 @@ import {
 // Admin da Equipe Assistidos
 //   → próprio projeto
 //
+// Admin da Equipe Voluntários & Assistidos (PPF)
+//   → Assistidos do próprio PPF
+//
 // Demais Admins
 //   → sem acesso
 //
 // =========================================================
 
 function isAssistedTeamAdmin(admin) {
-  return (
-    isTeamAdmin(admin) &&
+  if (!isTeamAdmin(admin)) {
+    return false
+  }
+
+  const teamCodes =
     (
       admin?.teams || []
-    ).some(
+    ).map(
       team =>
-        team.code === 'assisted'
+        team.code
     )
+
+  const directAssistedAdmin =
+    teamCodes.includes(
+      'assisted'
+    )
+
+  const ppfUnifiedPeopleAdmin =
+    Number(admin?.projectId) === 2 &&
+    teamCodes.includes(
+      'volunteers'
+    )
+
+  return (
+    directAssistedAdmin ||
+    ppfUnifiedPeopleAdmin
   )
 }
 
