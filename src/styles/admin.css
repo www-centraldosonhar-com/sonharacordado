@@ -5432,3 +5432,31 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   CHECKLIST — MULTIPLE ASSIGNEES
+   ========================================================= */
+
+.admin-checklist-assignees {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-checklist-assignee {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-checklist-assignee > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  opacity: 0.78;
+}
+
+@media (max-width: 640px) {
+  .admin-checklist-assignees {
+    grid-template-columns: 1fr;
+  }
+}

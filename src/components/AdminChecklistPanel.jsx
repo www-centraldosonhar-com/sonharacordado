@@ -13,9 +13,9 @@ function AdminChecklistPanel({
   ] = useState([])
 
   const [
-    assignedUserId,
-    setAssignedUserId,
-  ] = useState('')
+    assignedUserIds,
+    setAssignedUserIds,
+  ] = useState(['', ''])
 
   const [
     message,
@@ -88,16 +88,36 @@ function AdminChecklistPanel({
           )
         )
 
-        if (
+        const loadedAssignees =
+          Array.isArray(
+            loaded[0]?.assigned_users
+          )
+            ? loaded[0].assigned_users
+            : []
+
+        if (loadedAssignees.length) {
+          setAssignedUserIds([
+            String(
+              loadedAssignees[0]
+                ?.user_id || ''
+            ),
+            String(
+              loadedAssignees[1]
+                ?.user_id || ''
+            ),
+          ])
+        } else if (
           loaded[0]
             ?.assigned_user_id
         ) {
-          setAssignedUserId(
+          // Compatibilidade durante a migração.
+          setAssignedUserIds([
             String(
               loaded[0]
                 .assigned_user_id
-            )
-          )
+            ),
+            '',
+          ])
         }
       })
       .catch((error) => {
@@ -143,9 +163,9 @@ function AdminChecklistPanel({
   const responsibleLabel =
     isAssistedChecklist
       ? isCheckout
-        ? 'Responsável pelo check-out'
-        : 'Responsável pelo check-in'
-      : 'Responsável pelo check-in'
+        ? 'Responsáveis pelo check-out'
+        : 'Responsáveis pelo check-in'
+      : 'Responsáveis pelo check-in'
 
 
   // =====================================================
@@ -157,9 +177,24 @@ function AdminChecklistPanel({
   ) {
     event.preventDefault()
 
-    if (!assignedUserId) {
+    const selectedAssignees =
+      assignedUserIds
+        .filter(Boolean)
+        .map(Number)
+
+    if (selectedAssignees.length === 0) {
       setMessage(
-        'Escolha o responsável pelo check-in.'
+        'Escolha pelo menos um responsável.'
+      )
+      return
+    }
+
+    if (
+      new Set(selectedAssignees).size !==
+      selectedAssignees.length
+    ) {
+      setMessage(
+        'Escolha pessoas diferentes para os dois responsáveis.'
       )
       return
     }
@@ -187,10 +222,8 @@ function AdminChecklistPanel({
                 eventRoleId:
                   activity.id,
 
-                assignedUserId:
-                  Number(
-                    assignedUserId
-                  ),
+                assignedUserIds:
+                  selectedAssignees,
               }),
           }
         )
@@ -209,8 +242,29 @@ function AdminChecklistPanel({
         [result.checklist]
       )
 
+      const savedAssignees =
+        Array.isArray(
+          result.checklist
+            ?.assigned_users
+        )
+          ? result.checklist.assigned_users
+          : []
+
+      if (savedAssignees.length) {
+        setAssignedUserIds([
+          String(
+            savedAssignees[0]
+              ?.user_id || ''
+          ),
+          String(
+            savedAssignees[1]
+              ?.user_id || ''
+          ),
+        ])
+      }
+
       setMessage(
-        '✅ Responsável pelo check-in definido!'
+        '✅ Responsáveis definidos!'
       )
     } catch (error) {
       setMessage(
@@ -274,37 +328,84 @@ function AdminChecklistPanel({
             {responsibleLabel}
           </label>
 
-          <select
-            value={assignedUserId}
-            disabled={isLocked}
-            onChange={(event) =>
-              setAssignedUserId(
-                event.target.value
-              )
-            }
-            required
-          >
-            <option value="">
-              Selecione
-            </option>
-
-            {activityParticipants.map(
-              (participant) => (
-                <option
-                  key={
-                    participant.user_id
-                  }
-                  value={
-                    participant.user_id
-                  }
+          <div className="admin-checklist-assignees">
+            {[0, 1].map(
+              (index) => (
+                <label
+                  key={index}
+                  className="admin-checklist-assignee"
                 >
-                  {participant.user_name}
-                  {' — '}
-                  {participant.project_name}
-                </option>
+                  <span>
+                    Responsável {index + 1}
+                    {index === 1
+                      ? ' (opcional)'
+                      : ''}
+                  </span>
+
+                  <select
+                    value={
+                      assignedUserIds[index]
+                    }
+                    disabled={isLocked}
+                    onChange={(event) => {
+                      const value =
+                        event.target.value
+
+                      setAssignedUserIds(
+                        (current) => {
+                          const next =
+                            [...current]
+
+                          next[index] = value
+
+                          return next
+                        }
+                      )
+                    }}
+                    required={index === 0}
+                  >
+                    <option value="">
+                      {index === 0
+                        ? 'Selecione'
+                        : 'Sem segundo responsável'}
+                    </option>
+
+                    {activityParticipants.map(
+                      (participant) => {
+                        const value =
+                          String(
+                            participant.user_id
+                          )
+
+                        const otherIndex =
+                          index === 0 ? 1 : 0
+
+                        return (
+                          <option
+                            key={
+                              participant.user_id
+                            }
+                            value={
+                              participant.user_id
+                            }
+                            disabled={
+                              assignedUserIds[
+                                otherIndex
+                              ] === value
+                            }
+                          >
+                            {participant.user_name}
+                            {' — '}
+                            {participant.project_name}
+                          </option>
+                        )
+                      }
+                    )}
+                  </select>
+                </label>
               )
             )}
-          </select>
+          </div>
 
           <button
             type="submit"
@@ -316,8 +417,8 @@ function AdminChecklistPanel({
             {isLoading
               ? 'Salvando...'
               : checklist
-                ? 'Atualizar responsável'
-                : 'Definir responsável'}
+                ? 'Atualizar responsáveis'
+                : 'Definir responsáveis'}
           </button>
         </form>
       )}
@@ -330,7 +431,7 @@ function AdminChecklistPanel({
             </strong>
 
             <span>
-              Acesso liberado ao responsável.
+              Acesso liberado aos responsáveis da mesma checklist.
             </span>
           </div>
 

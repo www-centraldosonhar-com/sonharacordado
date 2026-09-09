@@ -83,7 +83,19 @@ async function getChecklistAccess(
       )
   }
 
+  const assigneeRows = await sql`
+    SELECT 1
+    FROM activity_checklist_assignees aca
+    WHERE aca.checklist_id = ${checklist.id}
+      AND aca.user_id = ${session.userId}
+    LIMIT 1
+  `
+
+  // Compatibilidade com checklists antigas durante a migração:
+  // assigned_user_id permanece como responsável principal,
+  // enquanto a nova tabela permite dois operadores.
   const assigned =
+    Boolean(assigneeRows[0]) ||
     Number(
       checklist.assigned_user_id
     ) ===
@@ -239,6 +251,7 @@ export default async function handler(
     lookupActivityName,
     title,
     assignedUserId,
+    assignedUserIds,
     itemId,
     checked,
     notes,
@@ -723,7 +736,28 @@ export default async function handler(
           ac.active,
           ac.created_at,
 
-          u.name AS assigned_user_name,
+          (
+            SELECT COALESCE(
+              json_agg(
+                json_build_object(
+                  'user_id', assignee.user_id,
+                  'user_name', assignee_user.name
+                )
+                ORDER BY
+                  CASE
+                    WHEN assignee.user_id = ac.assigned_user_id
+                      THEN 0
+                    ELSE 1
+                  END,
+                  assignee_user.name
+              ),
+              '[]'::json
+            )
+            FROM activity_checklist_assignees assignee
+            JOIN users assignee_user
+              ON assignee_user.id = assignee.user_id
+            WHERE assignee.checklist_id = ac.id
+          ) AS assigned_users,
 
           COUNT(aci.id)::int AS total_items,
 
@@ -735,10 +769,6 @@ export default async function handler(
           )::int AS checked_items
 
         FROM activity_checklists ac
-
-        LEFT JOIN users u
-          ON u.id =
-            ac.assigned_user_id
 
         LEFT JOIN activity_checklist_items aci
           ON aci.checklist_id =
@@ -756,8 +786,7 @@ export default async function handler(
           ac.source_type,
           ac.assigned_user_id,
           ac.active,
-          ac.created_at,
-          u.name
+          ac.created_at
 
         ORDER BY
           ac.created_at DESC
@@ -789,8 +818,22 @@ export default async function handler(
       const numericEventRoleId =
         Number(eventRoleId)
 
+      const rawAssignedUserIds =
+        Array.isArray(assignedUserIds)
+          ? assignedUserIds
+          : assignedUserId
+            ? [assignedUserId]
+            : []
+
+      const numericAssignedUserIds =
+        [...new Set(
+          rawAssignedUserIds
+            .map(Number)
+            .filter(Number.isInteger)
+        )]
+
       const numericAssignedUserId =
-        Number(assignedUserId)
+        numericAssignedUserIds[0] ?? null
 
       const admin =
         await requireAdmin(request)
@@ -800,13 +843,12 @@ export default async function handler(
         !Number.isInteger(
           numericEventRoleId
         ) ||
-        !Number.isInteger(
-          numericAssignedUserId
-        )
+        numericAssignedUserIds.length === 0 ||
+        numericAssignedUserIds.length > 2
       ) {
         return response.status(400).json({
           error:
-            'Atividade ou responsável inválido.',
+            'Escolha um ou dois responsáveis válidos.',
         })
       }
 
@@ -895,25 +937,32 @@ export default async function handler(
         })
       }
 
-      // O responsável precisa estar confirmado exatamente
-      // nesta atividade.
-      const participation = await sql`
-        SELECT c.id
-        FROM confirmations c
-        WHERE
-          c.event_role_id =
-            ${numericEventRoleId}
-          AND c.user_id =
-            ${numericAssignedUserId}
-          AND c.status = 'confirmed'
-        LIMIT 1
-      `
+      // Todos os responsáveis precisam estar confirmados
+      // exatamente nesta atividade. Como o limite é dois,
+      // validamos individualmente para evitar ambiguidades
+      // de serialização de arrays entre Node e Postgres.
+      for (
+        const assigneeUserId
+        of numericAssignedUserIds
+      ) {
+        const participation = await sql`
+          SELECT c.id
+          FROM confirmations c
+          WHERE
+            c.event_role_id =
+              ${numericEventRoleId}
+            AND c.user_id =
+              ${assigneeUserId}
+            AND c.status = 'confirmed'
+          LIMIT 1
+        `
 
-      if (!participation[0]) {
-        return response.status(400).json({
-          error:
-            'O responsável precisa estar confirmado nesta atividade.',
-        })
+        if (!participation[0]) {
+          return response.status(400).json({
+            error:
+              'Todos os responsáveis precisam estar confirmados nesta atividade.',
+          })
+        }
       }
 
       const existingRows = await sql`
@@ -978,6 +1027,41 @@ export default async function handler(
           created[0]
       }
 
+      // Uma única checklist compartilhada pelos responsáveis.
+      // Primeiro garantimos os novos vínculos; só depois
+      // removemos responsáveis que deixaram de ser escolhidos.
+      // Assim, uma falha intermediária nunca zera os acessos.
+      for (
+        const assigneeUserId
+        of numericAssignedUserIds
+      ) {
+        await sql`
+          INSERT INTO activity_checklist_assignees (
+            checklist_id,
+            user_id
+          )
+          VALUES (
+            ${checklist.id},
+            ${assigneeUserId}
+          )
+          ON CONFLICT (checklist_id, user_id)
+          DO NOTHING
+        `
+      }
+
+      const secondaryAssignedUserId =
+        numericAssignedUserIds[1] ?? null
+
+      await sql`
+        DELETE FROM activity_checklist_assignees
+        WHERE checklist_id = ${checklist.id}
+          AND user_id <> ${numericAssignedUserId}
+          AND (
+            ${secondaryAssignedUserId}::int IS NULL
+            OR user_id <> ${secondaryAssignedUserId}
+          )
+      `
+
       await syncChecklist({
         ...checklist,
         event_id:
@@ -986,11 +1070,31 @@ export default async function handler(
           activity.role_name,
       })
 
+      const assignedUsers = await sql`
+        SELECT
+          aca.user_id,
+          u.name AS user_name
+        FROM activity_checklist_assignees aca
+        JOIN users u
+          ON u.id = aca.user_id
+        WHERE aca.checklist_id = ${checklist.id}
+        ORDER BY
+          CASE
+            WHEN aca.user_id = ${numericAssignedUserId}
+              THEN 0
+            ELSE 1
+          END,
+          u.name
+      `
+
       return response.status(200).json({
         success: true,
-        checklist,
+        checklist: {
+          ...checklist,
+          assigned_users: assignedUsers,
+        },
         message:
-          'Responsável pelo check-in definido! ✅',
+          'Responsáveis definidos! ✅',
       })
     }
 
@@ -1083,6 +1187,21 @@ export default async function handler(
       const checklist =
         created[0]
 
+      if (numericAssignedUserId !== null) {
+        await sql`
+          INSERT INTO activity_checklist_assignees (
+            checklist_id,
+            user_id
+          )
+          VALUES (
+            ${checklist.id},
+            ${numericAssignedUserId}
+          )
+          ON CONFLICT (checklist_id, user_id)
+          DO NOTHING
+        `
+      }
+
       const eventRows = await sql`
         SELECT event_id
         FROM event_roles
@@ -1145,8 +1264,15 @@ export default async function handler(
             ON r.id = er.role_id
 
           WHERE
-            ac.assigned_user_id =
-              ${session.userId}
+            (
+              EXISTS (
+                SELECT 1
+                FROM activity_checklist_assignees aca
+                WHERE aca.checklist_id = ac.id
+                  AND aca.user_id = ${session.userId}
+              )
+              OR ac.assigned_user_id = ${session.userId}
+            )
 
             AND ac.active = 1
 
@@ -1210,8 +1336,15 @@ export default async function handler(
           ON aci.checklist_id = ac.id
 
         WHERE
-          ac.assigned_user_id =
-            ${session.userId}
+          (
+            EXISTS (
+              SELECT 1
+              FROM activity_checklist_assignees aca
+              WHERE aca.checklist_id = ac.id
+                AND aca.user_id = ${session.userId}
+            )
+            OR ac.assigned_user_id = ${session.userId}
+          )
 
           AND ac.active = 1
 

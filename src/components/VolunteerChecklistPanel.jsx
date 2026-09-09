@@ -180,6 +180,87 @@ function VolunteerChecklistPanel({
 
 
   // =====================================================
+  // SHARED CHECKLIST — NEAR-REAL-TIME REFRESH
+  // =====================================================
+  // Dois responsáveis operam a mesma checklist no banco.
+  // Enquanto ela estiver aberta, atualizamos silenciosamente
+  // a lista para que a marcação feita em outro aparelho
+  // apareça sem exigir recarregar a página.
+  // =====================================================
+
+  useEffect(() => {
+    if (!selectedChecklistId) {
+      return undefined
+    }
+
+    let active = true
+    let loading = false
+
+    async function refreshSharedChecklist() {
+      if (
+        loading ||
+        document.hidden
+      ) {
+        return
+      }
+
+      loading = true
+
+      try {
+        const params =
+          new URLSearchParams({
+            operation: 'get',
+            checklistId:
+              String(
+                selectedChecklistId
+              ),
+          })
+
+        const response =
+          await fetch(
+            `/api/checklist?${params}`
+          )
+
+        const result =
+          await response.json()
+
+        if (
+          active &&
+          response.ok
+        ) {
+          setChecklist(
+            result.checklist
+          )
+
+          setItems(
+            result.items || []
+          )
+        }
+      } catch {
+        // A atualização automática é auxiliar.
+        // Uma oscilação de rede não bloqueia a operação
+        // nem substitui os erros das ações manuais.
+      } finally {
+        loading = false
+      }
+    }
+
+    const intervalId =
+      window.setInterval(
+        refreshSharedChecklist,
+        3000
+      )
+
+    return () => {
+      active = false
+      window.clearInterval(
+        intervalId
+      )
+    }
+  }, [selectedChecklistId])
+
+
+  // =====================================================
   // SEARCH + FILTER
   // =====================================================
 

@@ -34,3 +34,4 @@ dist-ssr
 
 # Local development backups
 *.before-*
+.env*
