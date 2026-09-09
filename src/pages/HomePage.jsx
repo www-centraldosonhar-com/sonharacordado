@@ -293,12 +293,26 @@ function HomePage({
                         activity?.team_code || ''
                       ).toLowerCase()
 
+                    const normalizedPrimaryTeamCode =
+                      String(
+                        primaryTeamCode || ''
+                      ).toLowerCase()
+
                     const ownTeamActivity =
-                      Boolean(primaryTeamCode) &&
+                      Boolean(
+                        normalizedPrimaryTeamCode
+                      ) &&
                       teamCode ===
-                        String(
-                          primaryTeamCode
-                        ).toLowerCase()
+                        normalizedPrimaryTeamCode
+
+                    const ppfUnifiedPeopleActivity =
+                      currentProjectId === 2 &&
+                      normalizedPrimaryTeamCode ===
+                        'volunteers' &&
+                      [
+                        'volunteers',
+                        'assisted',
+                      ].includes(teamCode)
 
                     const joinedMediaActivity =
                       teamCode === 'media' &&
@@ -308,6 +322,7 @@ function HomePage({
 
                     return (
                       ownTeamActivity ||
+                      ppfUnifiedPeopleActivity ||
                       joinedMediaActivity
                     )
                   }

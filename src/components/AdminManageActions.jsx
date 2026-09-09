@@ -6,6 +6,7 @@ function AdminManageActions({
   projects = [],
   events = [],
   teams = [],
+  projectTeams = [],
   onUpdated,
 }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -29,6 +30,31 @@ function AdminManageActions({
     userType,
     setUserType,
   ] = useState(initialUserType)
+
+  const [
+    selectedProjectId,
+    setSelectedProjectId,
+  ] = useState(
+    String(
+      item.project_id ??
+      projects?.[0]?.id ??
+      ''
+    )
+  )
+
+  const configuredUserTeams =
+    type === 'user'
+      ? projectTeams.filter(
+          (team) =>
+            String(team.project_id) ===
+            String(selectedProjectId)
+        )
+      : []
+
+  const userProjectTeams =
+    configuredUserTeams.length > 0
+      ? configuredUserTeams
+      : teams
 
   const [
     activityRequiresDelivery,
@@ -240,8 +266,11 @@ function AdminManageActions({
 
           <select
             name="projectId"
-            defaultValue={
-              item.project_id
+            value={selectedProjectId}
+            onChange={(event) =>
+              setSelectedProjectId(
+                event.target.value
+              )
             }
             required
           >
@@ -318,7 +347,7 @@ function AdminManageActions({
               Somente Mídias / sem equipe principal
             </option>
 
-            {teams
+            {userProjectTeams
               .filter(
                 (team) =>
                   team.code !== 'media'

@@ -78,26 +78,49 @@ export async function requireVolunteer(request) {
     return null
   }
 
-  // Equipes diretamente vinculadas ao usuário.
+  // Equipes diretamente vinculadas ao usuário,
+  // respeitando a configuração ativa do projeto.
+  //
+  // Exemplo:
+  // PPF mantém internamente `volunteers`, mas exibe
+  // "Equipe de Voluntários & Assistidos".
+  // Vínculos antigos com equipes inativas no projeto
+  // (como `assisted` no PPF/SJ) ficam preservados no banco,
+  // porém não aparecem operacionalmente.
   const userTeams = await sql`
     SELECT
       t.id,
       t.code,
-      t.name
+      COALESCE(
+        ptc.display_name,
+        t.name
+      ) AS name
     FROM user_teams ut
 
     JOIN teams t
       ON t.id = ut.team_id
+
+    JOIN project_team_config ptc
+      ON ptc.team_id = t.id
+      AND ptc.project_id = ${user.project_id}
+      AND ptc.active = 1
 
     WHERE ut.user_id =
       ${user.id}
       AND ut.active = 1
       AND t.active = 1
 
-    ORDER BY t.name
+    ORDER BY
+      COALESCE(
+        ptc.display_name,
+        t.name
+      )
   `
 
   // Todas as equipes existentes.
+  // Mantida para o Admin Geral por compatibilidade
+  // enquanto o contexto global de projeto ainda não
+  // foi conectado a esta função.
   const allTeams = await sql`
     SELECT
       id,
@@ -106,6 +129,34 @@ export async function requireVolunteer(request) {
     FROM teams
     WHERE active = 1
     ORDER BY name
+  `
+
+  // Equipes ativas do projeto do usuário.
+  // Admin de Projeto passa a enxergar somente
+  // as equipes configuradas para o próprio projeto.
+  const projectTeams = await sql`
+    SELECT
+      t.id,
+      t.code,
+      COALESCE(
+        ptc.display_name,
+        t.name
+      ) AS name
+    FROM project_team_config ptc
+
+    JOIN teams t
+      ON t.id = ptc.team_id
+
+    WHERE
+      ptc.project_id = ${user.project_id}
+      AND ptc.active = 1
+      AND t.active = 1
+
+    ORDER BY
+      COALESCE(
+        ptc.display_name,
+        t.name
+      )
   `
 
   const primaryTeam =
@@ -124,24 +175,32 @@ export async function requireVolunteer(request) {
   // =====================================================
   // ADMIN GERAL / ADMIN DE PROJETO
   // =====================================================
-  // Ambos enxergam todas as equipes.
-  // A diferença de projeto será aplicada pelo backend
-  // quando carregarmos conteúdo específico de cada área.
+  //
+  // Admin Geral:
+  // mantém catálogo global por compatibilidade nesta etapa.
+  //
+  // Admin de Projeto:
+  // enxerga somente as equipes ativas do próprio projeto.
+  //
+  // Voluntário/Admin de Equipe:
+  // mantém apenas suas equipes, já filtradas pela
+  // configuração ativa do projeto.
   // =====================================================
 
   if (
-    adminScope === 'global' ||
-    adminScope === 'project'
+    adminScope === 'global'
   ) {
     availableTeams =
       allTeams
+  } else if (
+    adminScope === 'project'
+  ) {
+    availableTeams =
+      projectTeams
   } else {
-    // Voluntário/Admin de Equipe:
-    // mantém as próprias equipes.
     availableTeams = [
       ...userTeams,
     ]
-
   }
 
   return {

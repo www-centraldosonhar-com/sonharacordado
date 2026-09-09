@@ -156,6 +156,51 @@ export default async function handler(
         .toLowerCase()
 
     // =====================================================
+    // BUSINESS RULE — PPF
+    //
+    // No PPF, Voluntários e Assistidos formam uma única
+    // equipe operacional. O vínculo principal continua
+    // sendo `volunteers`, mas seus membros também podem
+    // assumir atividades cadastradas como `assisted`.
+    //
+    // APS continua com as equipes separadas.
+    // SJ continua sem equipe de Assistidos.
+    // =====================================================
+
+    let belongsToPpfUnifiedPeopleTeam =
+      false
+
+    if (
+      Number(user.project_id) === 2 &&
+      activityTeamCode === 'assisted'
+    ) {
+      const volunteerMembership =
+        await sql`
+          SELECT 1
+          FROM user_teams ut
+
+          JOIN teams t
+            ON t.id = ut.team_id
+
+          WHERE
+            ut.user_id =
+              ${sessionUser.userId}
+            AND ut.active = 1
+            AND t.active = 1
+            AND t.code = 'volunteers'
+
+          LIMIT 1
+        `
+
+      belongsToPpfUnifiedPeopleTeam =
+        Boolean(volunteerMembership[0])
+    }
+
+    const canAccessActivityTeam =
+      belongsToActivityTeam ||
+      belongsToPpfUnifiedPeopleTeam
+
+    // =====================================================
     // BUSINESS RULE — COMMUNITY
     // Só Mídias pode ser assumida pela Central Principal.
     // =====================================================
@@ -213,7 +258,7 @@ export default async function handler(
         })
       }
 
-      if (!belongsToActivityTeam) {
+      if (!canAccessActivityTeam) {
         return response.status(403).json({
           error:
             `Essa atividade é exclusiva da ${

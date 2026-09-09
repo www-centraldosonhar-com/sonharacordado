@@ -36,6 +36,35 @@ export default async function handler(request, response) {
       ORDER BY name
     `
 
+    // CENTRAL 3.0 — configuração de equipes por projeto.
+    // Mantemos `teams` por compatibilidade e adicionamos uma visão
+    // específica por projeto para as telas que precisam respeitar
+    // APS / PPF / SJ.
+    const projectTeams = await sql`
+      SELECT
+        ptc.project_id,
+        t.id,
+        t.code,
+        COALESCE(
+          ptc.display_name,
+          t.name
+        ) AS name,
+        ptc.admin_mode,
+        ptc.requires_post_event
+      FROM project_team_config ptc
+      JOIN teams t
+        ON t.id = ptc.team_id
+      WHERE
+        ptc.active = 1
+        AND t.active = 1
+      ORDER BY
+        ptc.project_id,
+        COALESCE(
+          ptc.display_name,
+          t.name
+        )
+    `
+
     const adminTeamIds =
       getAdminTeamIds(admin)
 
@@ -848,6 +877,7 @@ export default async function handler(request, response) {
     return response.status(200).json({
       projects,
       teams,
+      projectTeams,
       adminAccess: {
         scope:
           admin.adminScope,

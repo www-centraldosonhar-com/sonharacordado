@@ -1586,6 +1586,7 @@ function AdminPage({
                   item={person}
                   projects={data.projects}
                   teams={data.teams || []}
+                  projectTeams={data.projectTeams || []}
                   onUpdated={reloadAdmin}
                 />
               </article>

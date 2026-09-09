@@ -385,17 +385,29 @@ async function ensureTeamReports(
     return
   }
 
+  // CENTRAL 3.0 — equipes de Pós-Evento configuradas por projeto.
+  // Mantemos teams como catálogo global e usamos project_team_config
+  // apenas para decidir quais equipes participam deste projeto.
   const teams = await sql`
     SELECT
       t.id
 
-    FROM teams t
+    FROM project_team_config ptc
+
+    JOIN teams t
+      ON t.id = ptc.team_id
 
     WHERE
-      t.active = 1
+      ptc.project_id = ${event.project_id}
+      AND ptc.active = 1
+      AND ptc.requires_post_event = 1
+      AND t.active = 1
 
     ORDER BY
-      t.name
+      COALESCE(
+        ptc.display_name,
+        t.name
+      )
   `
 
   for (
