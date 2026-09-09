@@ -175,7 +175,10 @@ export default async function handler(request, response) {
 
         COALESCE(
           ARRAY_AGG(
-            DISTINCT t.name
+            DISTINCT COALESCE(
+              ptc.display_name,
+              t.name
+            )
           ) FILTER (
             WHERE
               t.name IS NOT NULL
@@ -210,6 +213,11 @@ export default async function handler(request, response) {
       LEFT JOIN teams t
         ON t.id = ut.team_id
         AND t.active = 1
+
+      LEFT JOIN project_team_config ptc
+        ON ptc.project_id = u.project_id
+        AND ptc.team_id = t.id
+        AND ptc.active = 1
 
       WHERE
         ${globalAdmin}
@@ -339,6 +347,40 @@ export default async function handler(request, response) {
         r.name
     `
 
+    const assistedTeam =
+      teams.find(
+        team =>
+          team.code === 'assisted'
+      )
+
+    const volunteersTeam =
+      teams.find(
+        team =>
+          team.code === 'volunteers'
+      )
+
+    const ppfUnifiedPeopleAdmin =
+      volunteerTeamAdmin &&
+      Number(admin.projectId) === 2 &&
+      Boolean(volunteersTeam?.id) &&
+      adminTeamIds.includes(
+        Number(volunteersTeam.id)
+      )
+
+    const ppfUnifiedPeopleTeamIds =
+      ppfUnifiedPeopleAdmin
+        ? [
+            ...new Set(
+              [
+                ...adminTeamIds,
+                assistedTeam?.id,
+              ]
+                .filter(Boolean)
+                .map(Number)
+            ),
+          ]
+        : adminTeamIds
+
     const eventRoles = await sql`
       SELECT
         er.id,
@@ -392,7 +434,7 @@ export default async function handler(request, response) {
             ${admin.projectId}
 
           AND er.team_id =
-            ANY(${adminTeamIds})
+            ANY(${ppfUnifiedPeopleTeamIds})
         )
 
       GROUP BY
@@ -479,7 +521,7 @@ export default async function handler(request, response) {
               ${admin.projectId}
 
             AND er.team_id =
-              ANY(${adminTeamIds})
+              ANY(${ppfUnifiedPeopleTeamIds})
           )
         )
 
