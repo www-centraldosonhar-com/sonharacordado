@@ -399,6 +399,7 @@ export default async function handler(
             assisted.full_name
               AS user_name,
 
+            assisted.child_number,
             assisted.guardian_name,
             assisted.guardian_phone,
             assisted.departure_method,
@@ -1424,6 +1425,7 @@ export default async function handler(
 
           assisted.full_name AS user_name,
           project.name AS project_name,
+          assisted.child_number,
           assisted.birth_date,
           assisted.allergies,
           assisted.notes AS assisted_notes,

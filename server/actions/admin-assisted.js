@@ -140,6 +140,26 @@ function normalizeRow(row) {
         ''
       ),
 
+    childNumber: (() => {
+      const raw =
+        row.child_number ??
+        row.childNumber ??
+        row.numero_crianca ??
+        row.numero_da_crianca ??
+        row['Número da Criança'] ??
+        row['Numero da Crianca'] ??
+        ''
+
+      if (raw === '' || raw == null) {
+        return null
+      }
+
+      const value = Number(String(raw).trim())
+      return Number.isInteger(value) && value > 0
+        ? value
+        : null
+    })(),
+
     allergies:
       meaningfulAnswers(
         row.allergies,
@@ -711,6 +731,7 @@ export default async function handler(
         id,
         full_name,
         birth_date,
+        child_number,
         departure_method,
         project_id
 
@@ -896,6 +917,9 @@ export default async function handler(
       birth_date:
         normalized.birthDate,
 
+      child_number:
+        normalized.childNumber,
+
       allergies:
         normalized.allergies,
 
@@ -991,11 +1015,33 @@ export default async function handler(
     of importable
   ) {
     if (person.existingId) {
-      if (person.updateDepartureMethod) {
+      const existingPerson =
+        existing.find(
+          row => Number(row.id) === Number(person.existingId)
+        )
+
+      const shouldUpdateChildNumber =
+        person.child_number != null &&
+        Number(existingPerson?.child_number || 0) !==
+          Number(person.child_number)
+
+      if (
+        person.updateDepartureMethod ||
+        shouldUpdateChildNumber
+      ) {
         await sql`
           UPDATE assisted_people
           SET
-            departure_method = ${person.departure_method},
+            departure_method = CASE
+              WHEN ${person.updateDepartureMethod}
+                THEN ${person.departure_method}
+              ELSE departure_method
+            END,
+            child_number = CASE
+              WHEN ${shouldUpdateChildNumber}
+                THEN ${person.child_number}
+              ELSE child_number
+            END,
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ${person.existingId}
         `
@@ -1008,6 +1054,7 @@ export default async function handler(
       INSERT INTO assisted_people (
         full_name,
         birth_date,
+        child_number,
         departure_method,
         allergies,
         notes,
@@ -1032,6 +1079,8 @@ export default async function handler(
           person.birth_date ||
           null
         },
+
+        ${person.child_number},
 
         ${person.departure_method},
 

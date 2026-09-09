@@ -275,7 +275,11 @@ function VolunteerChecklistPanel({
             !query ||
             normalizeSearch(
               item.user_name
-            ).includes(query)
+            ).includes(query) ||
+            (
+              item.child_number != null &&
+              String(item.child_number).includes(query)
+            )
 
           if (!matchesSearch) {
             return false
@@ -797,6 +801,9 @@ function VolunteerChecklistPanel({
 
                   <span className="checklist-person-info">
                     <strong>
+                      {item.assisted_person_id && item.child_number != null
+                        ? `#${String(item.child_number).padStart(2, '0')} `
+                        : ''}
                       {item.user_name}
                     </strong>
 
