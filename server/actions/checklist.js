@@ -11,7 +11,8 @@ import {
 // =========================================================
 // Pode acessar:
 // - Admin autorizado para a atividade;
-// - voluntário definido como responsável da checklist.
+// - qualquer voluntário com confirmação ativa na própria atividade.
+// Responsáveis antigos permanecem aceitos apenas por compatibilidade.
 // =========================================================
 
 async function getChecklistAccess(
@@ -83,6 +84,17 @@ async function getChecklistAccess(
       )
   }
 
+  const participantRows = await sql`
+    SELECT 1
+    FROM confirmations confirmation
+    WHERE confirmation.event_role_id =
+        ${checklist.event_role_id}
+      AND confirmation.user_id =
+        ${session.userId}
+      AND confirmation.status = 'confirmed'
+    LIMIT 1
+  `
+
   const assigneeRows = await sql`
     SELECT 1
     FROM activity_checklist_assignees aca
@@ -91,10 +103,12 @@ async function getChecklistAccess(
     LIMIT 1
   `
 
-  // Compatibilidade com checklists antigas durante a migração:
-  // assigned_user_id permanece como responsável principal,
-  // enquanto a nova tabela permite dois operadores.
+  // Regra operacional:
+  // qualquer pessoa confirmada NA PRÓPRIA atividade opera
+  // a checklist compartilhada. Os vínculos antigos de
+  // responsável continuam válidos apenas por compatibilidade.
   const assigned =
+    Boolean(participantRows[0]) ||
     Boolean(assigneeRows[0]) ||
     Number(
       checklist.assigned_user_id
@@ -221,6 +235,117 @@ async function syncChecklist(
     )
     DO NOTHING
   `
+}
+
+
+// =========================================================
+// ENSURE OPERATIONAL CHECKLIST
+// =========================================================
+// Check-in de Voluntários e check-in/check-out de Assistidos
+// não dependem mais de responsável escolhido.
+// =========================================================
+
+async function ensureOperationalChecklist(
+  eventRoleId
+) {
+  const activityRows = await sql`
+    SELECT
+      er.id,
+      er.event_id,
+      r.name AS role_name,
+      r.allows_checklist,
+      e.project_id,
+      e.event_status
+    FROM event_roles er
+    JOIN roles r
+      ON r.id = er.role_id
+    JOIN events e
+      ON e.id = er.event_id
+    WHERE er.id = ${eventRoleId}
+      AND er.active = 1
+    LIMIT 1
+  `
+
+  const activity = activityRows[0]
+
+  if (
+    !activity ||
+    Number(activity.allows_checklist) !== 1
+  ) {
+    return null
+  }
+
+  const assistedChecklist =
+    activity.role_name ===
+      'Recepção / Check-in de Assistidos' ||
+    activity.role_name ===
+      'Despedida / Check-out de Assistidos'
+
+  const volunteerChecklist =
+    activity.role_name ===
+      'Recepção / Check-in de Voluntários'
+
+  if (
+    !assistedChecklist &&
+    !volunteerChecklist
+  ) {
+    return null
+  }
+
+  if (
+    assistedChecklist &&
+    activity.project_id === null
+  ) {
+    return null
+  }
+
+  let rows = await sql`
+    SELECT *
+    FROM activity_checklists
+    WHERE event_role_id = ${eventRoleId}
+      AND active = 1
+    ORDER BY id
+    LIMIT 1
+  `
+
+  if (!rows[0]) {
+    await sql`
+      INSERT INTO activity_checklists (
+        event_role_id,
+        title,
+        source_type,
+        assigned_user_id,
+        active
+      )
+      SELECT
+        ${eventRoleId},
+        ${activity.role_name},
+        ${
+          assistedChecklist
+            ? 'assisted_people'
+            : 'event_registrations'
+        },
+        NULL,
+        1
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM activity_checklists
+        WHERE event_role_id = ${eventRoleId}
+          AND active = 1
+      )
+    `
+
+    rows = await sql`
+      SELECT *
+      FROM activity_checklists
+      WHERE event_role_id = ${eventRoleId}
+        AND active = 1
+      ORDER BY id
+      LIMIT 1
+    `
+  }
+
+  return rows[0] || null
 }
 
 
@@ -688,6 +813,10 @@ export default async function handler(
             'Você não pode administrar esta atividade.',
         })
       }
+
+      await ensureOperationalChecklist(
+        numericEventRoleId
+      )
 
       // Antes de calcular o contador, sincroniza a
       // checklist com todas as inscrições confirmadas
@@ -1234,6 +1363,41 @@ export default async function handler(
     // =====================================================
 
     if (operation === 'mine') {
+      const confirmedOperationalActivities =
+        await sql`
+          SELECT DISTINCT
+            c.event_role_id
+          FROM confirmations c
+          JOIN event_roles er
+            ON er.id = c.event_role_id
+          JOIN roles r
+            ON r.id = er.role_id
+          JOIN events e
+            ON e.id = er.event_id
+          WHERE c.user_id = ${session.userId}
+            AND c.status = 'confirmed'
+            AND er.active = 1
+            AND r.allows_checklist = 1
+            AND r.name IN (
+              'Recepção / Check-in de Voluntários',
+              'Recepção / Check-in de Assistidos',
+              'Despedida / Check-out de Assistidos'
+            )
+            AND e.event_status NOT IN (
+              'post_event',
+              'closed'
+            )
+        `
+
+      for (
+        const activity
+        of confirmedOperationalActivities
+      ) {
+        await ensureOperationalChecklist(
+          Number(activity.event_role_id)
+        )
+      }
+
       // ===================================================
       // SYNC BEFORE COUNTERS
       // ===================================================
@@ -1267,6 +1431,15 @@ export default async function handler(
           WHERE
             (
               EXISTS (
+                SELECT 1
+                FROM confirmations confirmation
+                WHERE confirmation.event_role_id =
+                    ac.event_role_id
+                  AND confirmation.user_id =
+                    ${session.userId}
+                  AND confirmation.status = 'confirmed'
+              )
+              OR EXISTS (
                 SELECT 1
                 FROM activity_checklist_assignees aca
                 WHERE aca.checklist_id = ac.id
@@ -1339,6 +1512,15 @@ export default async function handler(
         WHERE
           (
             EXISTS (
+              SELECT 1
+              FROM confirmations confirmation
+              WHERE confirmation.event_role_id =
+                  ac.event_role_id
+                AND confirmation.user_id =
+                  ${session.userId}
+                AND confirmation.status = 'confirmed'
+            )
+            OR EXISTS (
               SELECT 1
               FROM activity_checklist_assignees aca
               WHERE aca.checklist_id = ac.id
@@ -1475,6 +1657,7 @@ export default async function handler(
           )
 
         ORDER BY
+          assisted.child_number NULLS LAST,
           assisted.full_name
       `
           : await sql`
@@ -1578,7 +1761,7 @@ export default async function handler(
       ) {
         return response.status(403).json({
           error:
-            'Somente o responsável desta atividade pode operar a checklist de Assistidos.',
+            'Você precisa estar confirmado nesta atividade para operar a checklist de Assistidos.',
         })
       }
 
@@ -1755,7 +1938,7 @@ export default async function handler(
       ) {
         return response.status(403).json({
           error:
-            'Somente o responsável desta atividade pode operar a checklist de Assistidos.',
+            'Você precisa estar confirmado nesta atividade para operar a checklist de Assistidos.',
         })
       }
 

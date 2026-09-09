@@ -801,7 +801,7 @@ function VolunteerChecklistPanel({
 
                   <span className="checklist-person-info">
                     <strong>
-                      {item.assisted_person_id && item.child_number != null
+                      {item.child_number != null
                         ? `#${String(item.child_number).padStart(2, '0')} `
                         : ''}
                       {item.user_name}
