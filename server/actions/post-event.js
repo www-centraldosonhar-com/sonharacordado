@@ -651,75 +651,159 @@ export default async function handler(
         )
 
       const teamReports =
-        await sql`
-          SELECT DISTINCT ON (
-            team.id
-          )
-            report.id,
-            report.id AS report_id,
+        event.project_id
+          ? await sql`
+              SELECT DISTINCT ON (
+                team.id
+              )
+                report.id,
+                report.id AS report_id,
 
-            team.id AS team_id,
+                team.id AS team_id,
 
-            COALESCE(
-              report.status,
-              'pending'
-            ) AS status,
+                COALESCE(
+                  report.status,
+                  'pending'
+                ) AS status,
 
-            report.summary,
-            report.what_worked,
-            report.what_to_improve,
-            report.next_event_notes,
+                report.summary,
+                report.what_worked,
+                report.what_to_improve,
+                report.next_event_notes,
 
-            report.rating,
-            report.rating_comment,
+                report.rating,
+                report.rating_comment,
 
-            report.returned_by,
-            report.returned_at,
-            report.return_reason,
+                report.returned_by,
+                report.returned_at,
+                report.return_reason,
 
-            report.submitted_by,
-            report.submitted_at,
-            report.updated_at,
+                report.submitted_by,
+                report.submitted_at,
+                report.updated_at,
 
-            COALESCE(
-              report.financial_status,
-              'pending'
-            ) AS financial_status,
+                COALESCE(
+                  report.financial_status,
+                  'pending'
+                ) AS financial_status,
 
-            report.financial_completed_at,
-            report.financial_completed_by,
+                report.financial_completed_at,
+                report.financial_completed_by,
 
-            report.responsible_user_id,
-            report.assigned_at,
+                report.responsible_user_id,
+                report.assigned_at,
 
-            team.code AS team_code,
-            team.name AS team_name,
+                team.code AS team_code,
 
-            submitted_user.name
-              AS submitted_by_name,
+                COALESCE(
+                  ptc.display_name,
+                  team.name
+                ) AS team_name,
 
-            responsible_user.name
-              AS responsible_user_name
+                submitted_user.name
+                  AS submitted_by_name,
 
-          FROM teams team
+                responsible_user.name
+                  AS responsible_user_name
 
-          LEFT JOIN post_event_team_reports report
-            ON report.team_id = team.id
-            AND report.event_id = ${numericEventId}
+              FROM project_team_config ptc
 
-          LEFT JOIN users submitted_user
-            ON submitted_user.id = report.submitted_by
+              JOIN teams team
+                ON team.id = ptc.team_id
+                AND team.active = 1
 
-          LEFT JOIN users responsible_user
-            ON responsible_user.id = report.responsible_user_id
+              LEFT JOIN post_event_team_reports report
+                ON report.team_id = team.id
+                AND report.event_id = ${numericEventId}
 
-          WHERE team.active = 1
+              LEFT JOIN users submitted_user
+                ON submitted_user.id = report.submitted_by
 
-          ORDER BY
-            team.id,
-            report.updated_at DESC NULLS LAST,
-            team.name
-        `
+              LEFT JOIN users responsible_user
+                ON responsible_user.id = report.responsible_user_id
+
+              WHERE
+                ptc.project_id = ${event.project_id}
+                AND ptc.active = 1
+                AND ptc.requires_post_event = 1
+
+              ORDER BY
+                team.id,
+                report.updated_at DESC NULLS LAST,
+                COALESCE(
+                  ptc.display_name,
+                  team.name
+                )
+            `
+          : await sql`
+              SELECT DISTINCT ON (
+                team.id
+              )
+                report.id,
+                report.id AS report_id,
+
+                team.id AS team_id,
+
+                COALESCE(
+                  report.status,
+                  'pending'
+                ) AS status,
+
+                report.summary,
+                report.what_worked,
+                report.what_to_improve,
+                report.next_event_notes,
+
+                report.rating,
+                report.rating_comment,
+
+                report.returned_by,
+                report.returned_at,
+                report.return_reason,
+
+                report.submitted_by,
+                report.submitted_at,
+                report.updated_at,
+
+                COALESCE(
+                  report.financial_status,
+                  'pending'
+                ) AS financial_status,
+
+                report.financial_completed_at,
+                report.financial_completed_by,
+
+                report.responsible_user_id,
+                report.assigned_at,
+
+                team.code AS team_code,
+                team.name AS team_name,
+
+                submitted_user.name
+                  AS submitted_by_name,
+
+                responsible_user.name
+                  AS responsible_user_name
+
+              FROM teams team
+
+              LEFT JOIN post_event_team_reports report
+                ON report.team_id = team.id
+                AND report.event_id = ${numericEventId}
+
+              LEFT JOIN users submitted_user
+                ON submitted_user.id = report.submitted_by
+
+              LEFT JOIN users responsible_user
+                ON responsible_user.id = report.responsible_user_id
+
+              WHERE team.active = 1
+
+              ORDER BY
+                team.id,
+                report.updated_at DESC NULLS LAST,
+                team.name
+            `
 
       const feedbackRows =
         await sql`
