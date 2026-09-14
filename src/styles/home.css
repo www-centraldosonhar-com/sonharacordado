@@ -13043,24 +13043,52 @@ html {
 
 /* Memories — mobile photographer layout */
 @media (max-width: 600px) {
+  .community-memory-photographers {
+    gap: 10px;
+  }
+
   .community-memory-photographer-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
-  }
+    gap: 10px;
 
-  .community-memory-photographer-row > span:first-child {
-    width: 100%;
-    white-space: normal;
-  }
+    padding: 12px;
 
-  .community-memory-photographer-row .community-memory-link {
-    width: 100%;
-    justify-content: center;
+    border: 1px solid rgba(57, 88, 122, .08);
+    border-radius: 14px;
+
+    background: rgba(57, 88, 122, .035);
+
     box-sizing: border-box;
   }
 
-  .community-memory-photographers {
-    gap: 14px;
+  .community-memory-photographer-row > span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    width: 100%;
+
+    color: rgba(45, 67, 93, .78);
+
+    font-size: .76rem;
+    font-weight: 700;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .community-memory-photographer-row .community-memory-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    width: 100%;
+    min-height: 40px;
+
+    border-radius: 11px;
+
+    box-sizing: border-box;
   }
 }
