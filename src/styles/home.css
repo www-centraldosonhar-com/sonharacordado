@@ -13039,3 +13039,28 @@ html {
 .community-memory-photographer-row .community-memory-link {
   flex: 0 0 auto;
 }
+
+
+/* Memories — mobile photographer layout */
+@media (max-width: 600px) {
+  .community-memory-photographer-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .community-memory-photographer-row > span:first-child {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .community-memory-photographer-row .community-memory-link {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .community-memory-photographers {
+    gap: 14px;
+  }
+}
