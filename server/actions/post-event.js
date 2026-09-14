@@ -1,3 +1,6 @@
+import process from 'node:process'
+import { createClient } from '@supabase/supabase-js'
+
 import {
   adminCanAccessEvent,
   getAdminTeamIds,
@@ -7,6 +10,36 @@ import {
   requireAdmin,
   sql,
 } from './_admin.js'
+
+
+const RECEIPT_BUCKET =
+  process.env.REGISTRATION_RECEIPTS_BUCKET ||
+  'sonhar-receipts'
+
+
+function getSupabaseAdmin() {
+  const url =
+    process.env.SUPABASE_URL
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !key) {
+    throw new Error(
+      'Supabase Storage não configurado.'
+    )
+  }
+
+  return createClient(
+    url,
+    key,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  )
+}
 
 
 // =========================================================
@@ -2354,6 +2387,252 @@ return response.status(200).json({
           rows[0],
         message:
           'Gasto cancelado com sucesso.',
+      })
+    }
+
+
+    if (
+      operation ===
+      'prepare-general-receipt'
+    ) {
+      const {
+        contentType,
+      } = request.body ?? {}
+
+      const event =
+        await getEvent(
+          numericEventId
+        )
+
+      if (!event) {
+        return response.status(404).json({
+          error:
+            'Evento não encontrado.',
+        })
+      }
+
+      if (
+        event.project_id !== null
+      ) {
+        return response.status(409).json({
+          error:
+            'Esta operação é exclusiva de Evento Geral.',
+        })
+      }
+
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      const closureRows =
+        await sql`
+          SELECT
+            expenses_closed
+          FROM
+            post_event_closures
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      if (
+        Number(
+          closureRows[0]?.expenses_closed ||
+          0
+        ) === 1
+      ) {
+        return response.status(409).json({
+          error:
+            'Os gastos deste evento já foram finalizados e não podem mais ser alterados.',
+        })
+      }
+
+      const normalizedContentType =
+        String(
+          contentType || ''
+        ).toLowerCase()
+
+      const extensionByType = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'application/pdf': 'pdf',
+      }
+
+      const extension =
+        extensionByType[
+          normalizedContentType
+        ] || 'bin'
+
+      const uniquePart = [
+        Date.now(),
+        Math.random()
+          .toString(36)
+          .slice(2, 10),
+      ].join('-')
+
+      const storagePath = [
+        'general-events',
+        String(numericEventId),
+        `${uniquePart}.${extension}`,
+      ].join('/')
+
+      const supabase =
+        getSupabaseAdmin()
+
+      const {
+        data,
+        error,
+      } =
+        await supabase.storage
+          .from(RECEIPT_BUCKET)
+          .createSignedUploadUrl(
+            storagePath
+          )
+
+      if (
+        error ||
+        !data?.signedUrl
+      ) {
+        throw (
+          error ||
+          new Error(
+            'Não foi possível preparar o comprovante.'
+          )
+        )
+      }
+
+      return response.status(200).json({
+        ok: true,
+        signedUrl:
+          data.signedUrl,
+        storagePath,
+      })
+    }
+
+
+    if (
+      operation ===
+      'general-receipt-url'
+    ) {
+      const {
+        expenseId,
+      } = request.body ?? {}
+
+      const numericExpenseId =
+        Number(expenseId)
+
+      if (
+        !Number.isInteger(
+          numericExpenseId
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Gasto inválido.',
+        })
+      }
+
+      const event =
+        await getEvent(
+          numericEventId
+        )
+
+      if (!event) {
+        return response.status(404).json({
+          error:
+            'Evento não encontrado.',
+        })
+      }
+
+      if (
+        event.project_id !== null
+      ) {
+        return response.status(409).json({
+          error:
+            'Esta operação é exclusiva de Evento Geral.',
+        })
+      }
+
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      const expenseRows =
+        await sql`
+          SELECT
+            id,
+            receipt_path
+          FROM
+            general_event_expenses
+          WHERE
+            id =
+              ${numericExpenseId}
+            AND event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      const expense =
+        expenseRows[0]
+
+      if (!expense) {
+        return response.status(404).json({
+          error:
+            'Gasto não encontrado neste Evento Geral.',
+        })
+      }
+
+      const receiptPath =
+        String(
+          expense.receipt_path || ''
+        ).trim()
+
+      if (!receiptPath) {
+        return response.status(404).json({
+          error:
+            'Este gasto não possui comprovante.',
+        })
+      }
+
+      const supabase =
+        getSupabaseAdmin()
+
+      const {
+        data,
+        error,
+      } =
+        await supabase.storage
+          .from(RECEIPT_BUCKET)
+          .createSignedUrl(
+            receiptPath,
+            300
+          )
+
+      if (
+        error ||
+        !data?.signedUrl
+      ) {
+        throw (
+          error ||
+          new Error(
+            'Não foi possível abrir o comprovante.'
+          )
+        )
+      }
+
+      return response.status(200).json({
+        ok: true,
+        signedUrl:
+          data.signedUrl,
       })
     }
 

@@ -1,4 +1,5 @@
 import PostEventFinancialReview from './PostEventFinancialReview'
+import GeneralEventPostEventPanel from './GeneralEventPostEventPanel.jsx'
 import {
   useEffect,
   useState,
@@ -226,7 +227,43 @@ function AdminPostEventPanel({
         Number(selectedEventId)
     ) || null
 
-  const postEventAvailable =
+  
+
+  const isGeneralEvent =
+    Boolean(selectedEvent) &&
+    selectedEvent.project_id == null
+
+  const [
+    generalFinancialCompleteByEvent,
+    setGeneralFinancialCompleteByEvent,
+  ] = useState({})
+
+  const generalFinancialComplete =
+    Boolean(
+      generalFinancialCompleteByEvent[
+        Number(selectedEventId)
+      ]
+    )
+
+  function handleGeneralFinancialStateChange(
+    complete
+  ) {
+    const numericEventId =
+      Number(selectedEventId)
+
+    if (!numericEventId) {
+      return
+    }
+
+    setGeneralFinancialCompleteByEvent(
+      (current) => ({
+        ...current,
+        [numericEventId]:
+          Boolean(complete),
+      })
+    )
+  }
+const postEventAvailable =
     (() => {
       if (!selectedEvent?.event_date) {
         return false
@@ -561,7 +598,7 @@ function AdminPostEventPanel({
       summary?.closure?.post_event_closed_at
     )
 
-  const closingSteps = [
+  const baseClosingSteps = [
     {
       key: 'opened',
       label: 'Pós-evento aberto',
@@ -589,6 +626,50 @@ function AdminPostEventPanel({
       (step) => step.complete
     ).length
 
+
+  const openingClosingStep =
+    baseClosingSteps[0] || null
+
+  const expensesClosingStep =
+    baseClosingSteps.find(
+      (step) =>
+        step.label ===
+        'Gastos finalizados'
+    ) || null
+
+  const teamReportsClosingStep =
+    baseClosingSteps.find(
+      (step) =>
+        step.label ===
+        'Prestações das equipes'
+    ) || null
+
+  const administrativeClosingStep =
+    baseClosingSteps.find(
+      (step) =>
+        step !== openingClosingStep &&
+        step !== expensesClosingStep &&
+        step !== teamReportsClosingStep
+    ) || null
+
+  const closingSteps =
+    isGeneralEvent
+      ? [
+          openingClosingStep,
+          teamReportsClosingStep
+            ? {
+                ...teamReportsClosingStep,
+                label:
+                  'Prestação financeira',
+                complete:
+                  generalFinancialComplete,
+              }
+            : null,
+          expensesClosingStep,
+          administrativeClosingStep,
+        ].filter(Boolean)
+      : baseClosingSteps
+
   const closingProgress =
     Math.round(
       (
@@ -610,6 +691,12 @@ function AdminPostEventPanel({
     teamReports.length > 0 &&
     pendingTeamReports.length === 0
 
+
+
+  const financialReadyForClose =
+    isGeneralEvent
+      ? generalFinancialComplete
+      : allTeamReportsApproved
 
   const nextClosingAction =
     !postEventOpened
@@ -650,6 +737,47 @@ function AdminPostEventPanel({
                   'Todas as etapas administrativas deste evento foram concluídas.',
               }
 
+
+
+  const displayNextClosingAction =
+    isGeneralEvent
+      ? (
+          !postEventOpened
+            ? {
+                key: 'opened',
+                label: 'Abrir o Pós-evento',
+                description:
+                  'Inicie oficialmente o processo de encerramento deste evento.',
+              }
+            : !generalFinancialComplete
+              ? {
+                  key: 'reports',
+                  label: 'Concluir a prestação financeira',
+                  description:
+                    'Informe se o evento teve gastos, não teve gastos ou foi uma doação.',
+                }
+              : !expensesClosed
+                ? {
+                    key: 'expenses',
+                    label: 'Finalizar os gastos',
+                    description:
+                      'A prestação financeira foi concluída. Finalize esta etapa para enviar o fechamento.',
+                  }
+                : !postEventClosed
+                  ? {
+                      key: 'closed',
+                      label: 'Realizar o encerramento administrativo',
+                      description:
+                        'As etapas financeiras estão concluídas. O evento pode ser finalizado.',
+                    }
+                  : {
+                      key: 'complete',
+                      label: 'Pós-evento concluído',
+                      description:
+                        'Todas as etapas administrativas deste evento foram concluídas.',
+                    }
+        )
+      : nextClosingAction
 
   return (
     <section
@@ -881,36 +1009,36 @@ function AdminPostEventPanel({
 
             <div
               className={`post-event-next-action ${
-                nextClosingAction.key === 'complete'
+                displayNextClosingAction.key === 'complete'
                   ? 'is-complete'
                   : ''
               }`}
             >
               <div className="post-event-next-action-icon">
-                {nextClosingAction.key === 'complete'
+                {displayNextClosingAction.key === 'complete'
                   ? '✓'
                   : '→'}
               </div>
 
               <div className="post-event-next-action-copy">
                 <small>
-                  {nextClosingAction.key === 'complete'
+                  {displayNextClosingAction.key === 'complete'
                     ? 'ENCERRAMENTO'
                     : 'PRÓXIMA AÇÃO'}
                 </small>
 
                 <strong>
-                  {nextClosingAction.label}
+                  {displayNextClosingAction.label}
                 </strong>
 
                 <span>
-                  {nextClosingAction.description}
+                  {displayNextClosingAction.description}
                 </span>
               </div>
             </div>
 
 
-            {nextClosingAction.key ===
+            {displayNextClosingAction.key ===
               'closed' && (
               <button
                 type="button"
@@ -1189,12 +1317,16 @@ function AdminPostEventPanel({
 
 <button
                     type="button"
-                    disabled={(isLoading) || !allTeamReportsApproved}
+                    disabled={(isLoading) || !financialReadyForClose}
                     onClick={closeExpenses}
                   >
-                    🔒 {allTeamReportsApproved
+                    🔒 {financialReadyForClose
                     ? 'Finalizar e enviar ao Financeiro'
-                    : 'Aguardando prestações das equipes'}
+                    : (
+          isGeneralEvent
+            ? 'Aguardando prestação financeira'
+            : 'Aguardando prestações das equipes'
+        )}
                   </button>
                 </>
               )}
@@ -1203,7 +1335,18 @@ function AdminPostEventPanel({
 
 
           {/* ============================================= */}
-          {/* TEAMS */}
+          {/* FINANCIAL REPORT */}
+      {isGeneralEvent ? (
+        <GeneralEventPostEventPanel
+          key={selectedEventId}
+          eventId={selectedEventId}
+          onChanged={reloadSummary}
+          onFinancialStateChange={
+            handleGeneralFinancialStateChange
+          }
+        />
+      ) : (
+        <>
           {/* ============================================= */}
 
           <div className="post-event-block">
@@ -1257,7 +1400,10 @@ function AdminPostEventPanel({
 
 
           {/* ============================================= */}
-          {/* FEEDBACK */}
+        </>
+      )}
+
+      {/* FEEDBACK */}
           {/* ============================================= */}
 
           <section className="post-event-feedback-card">
