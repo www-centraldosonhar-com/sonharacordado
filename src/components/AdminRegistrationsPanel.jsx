@@ -484,14 +484,43 @@ function AdminRegistrationsPanel({
     )
 
 
+  const currentRegistrations =
+    useMemo(
+      () =>
+        allRegistrations.filter(
+          (registration) => {
+            const rawEventDate =
+              registration.event_date
+
+            // Se a inscrição não tiver data por algum motivo,
+            // preservamos o comportamento atual.
+            if (!rawEventDate) {
+              return true
+            }
+
+            const eventDateText =
+              String(rawEventDate).slice(0, 10)
+
+            const eventEnd =
+              new Date(
+                `${eventDateText}T23:59:59`
+              )
+
+            return eventEnd >= new Date()
+          }
+        ),
+      [allRegistrations]
+    )
+
+
   const registrationSummary =
     useMemo(
       () => ({
         total:
-          allRegistrations.length,
+          currentRegistrations.length,
 
         pending:
-          allRegistrations.filter(
+          currentRegistrations.filter(
             (registration) =>
               getStatusOrder(
                 registration.status
@@ -499,20 +528,20 @@ function AdminRegistrationsPanel({
           ).length,
 
         confirmed:
-          allRegistrations.filter(
+          currentRegistrations.filter(
             (registration) =>
               registration.status ===
               'confirmed'
           ).length,
 
         cancelled:
-          allRegistrations.filter(
+          currentRegistrations.filter(
             (registration) =>
               registration.status ===
               'cancelled'
           ).length,
       }),
-      [allRegistrations]
+      [currentRegistrations]
     )
 
 
