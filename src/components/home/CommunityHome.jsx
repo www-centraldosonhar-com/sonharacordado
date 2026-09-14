@@ -763,6 +763,7 @@ function CommunityHome({
                           {event.photographers.map(
                             (photographer) => (
                               <div
+                                className="community-memory-photographer-row"
                                 key={photographer.id}
                               >
                                 <span>

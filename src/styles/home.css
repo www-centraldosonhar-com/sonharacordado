@@ -13012,3 +13012,30 @@ html {
     flex-direction: column;
   }
 }
+
+
+/* Memories photographer rows */
+.community-memory-photographers {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.community-memory-photographer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.community-memory-photographer-row > span:first-child {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.community-memory-photographer-row .community-memory-link {
+  flex: 0 0 auto;
+}
