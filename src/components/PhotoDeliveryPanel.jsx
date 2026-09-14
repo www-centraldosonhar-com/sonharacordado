@@ -258,7 +258,7 @@ function PhotoDeliveryPanel({
             body: JSON.stringify({
               confirmationId,
               deliveryLink:
-                folder.eventFolder.webViewLink,
+                folder.photographerFolder.webViewLink,
             }),
           }
         )
