@@ -1902,6 +1902,690 @@ return response.status(200).json({
     }
 
 
+    // =====================================================
+    // GENERAL EVENT FINANCIAL FLOW
+    // =====================================================
+    // Evento Geral (project_id IS NULL):
+    // - fechamento financeiro único
+    // - sem team_id
+    // - Admin Geral ou Admin de Projeto
+    // =====================================================
+
+    if (
+      operation ===
+      'general-financial-summary'
+    ) {
+      const event =
+        await getEvent(
+          numericEventId
+        )
+
+      if (!event) {
+        return response.status(404).json({
+          error:
+            'Evento não encontrado.',
+        })
+      }
+
+      if (
+        event.project_id !== null
+      ) {
+        return response.status(409).json({
+          error:
+            'Esta operação é exclusiva de Evento Geral.',
+        })
+      }
+
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      const financialRows =
+        await sql`
+          SELECT
+            id,
+            event_id,
+            financial_status,
+            submitted_by,
+            submitted_at,
+            reviewed_by,
+            reviewed_at,
+            review_status,
+            returned_by,
+            returned_at,
+            return_reason,
+            created_at,
+            updated_at
+          FROM
+            post_event_general_financial
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      const expenseRows =
+        await sql`
+          SELECT
+            expense.id,
+            expense.event_id,
+            expense.description,
+            expense.amount,
+            expense.receipt_path,
+            expense.created_by,
+            expense.active,
+            expense.created_at,
+            expense.updated_at,
+            expense.cancellation_reason,
+            expense.cancelled_at,
+            expense.cancelled_by,
+            creator.name AS created_by_name
+          FROM
+            general_event_expenses expense
+          LEFT JOIN users creator
+            ON creator.id =
+              expense.created_by
+          WHERE
+            expense.event_id =
+              ${numericEventId}
+          ORDER BY
+            expense.active DESC,
+            expense.created_at DESC,
+            expense.id DESC
+        `
+
+      const closureRows =
+        await sql`
+          SELECT
+            expenses_closed
+          FROM
+            post_event_closures
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      return response.status(200).json({
+        ok: true,
+        generalFinancial:
+          financialRows[0] || {
+            event_id:
+              numericEventId,
+            financial_status:
+              'pending',
+            review_status:
+              'pending',
+          },
+        expenses:
+          expenseRows,
+        expensesClosed:
+          Number(
+            closureRows[0]?.expenses_closed || 0
+          ) === 1,
+      })
+    }
+
+
+    if (
+      operation ===
+      'add-general-expense'
+    ) {
+      const {
+        description,
+        amount,
+        receiptPath,
+      } = request.body ?? {}
+
+      const event =
+        await getEvent(
+          numericEventId
+        )
+
+      if (
+        !event ||
+        event.event_status !==
+          'post_event'
+      ) {
+        return response.status(409).json({
+          error:
+            'Gastos só podem ser registrados durante o Pós-Evento.',
+        })
+      }
+
+      if (
+        event.project_id !== null
+      ) {
+        return response.status(409).json({
+          error:
+            'Esta operação é exclusiva de Evento Geral.',
+        })
+      }
+
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      const closureRows =
+        await sql`
+          SELECT
+            expenses_closed
+          FROM
+            post_event_closures
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      if (
+        Number(
+          closureRows[0]?.expenses_closed || 0
+        ) === 1
+      ) {
+        return response.status(409).json({
+          error:
+            'Os gastos deste evento já foram finalizados e não podem mais ser alterados.',
+        })
+      }
+
+      const normalizedDescription =
+        String(
+          description || ''
+        ).trim()
+
+      const numericAmount =
+        Number(amount)
+
+      if (
+        !normalizedDescription ||
+        !Number.isFinite(
+          numericAmount
+        ) ||
+        numericAmount <= 0
+      ) {
+        return response.status(400).json({
+          error:
+            'Informe uma descrição e um valor válido para o gasto.',
+        })
+      }
+
+      const currentRows =
+        await sql`
+          SELECT
+            review_status
+          FROM
+            post_event_general_financial
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      const currentReviewStatus =
+        currentRows[0]?.review_status
+
+      if (
+        currentReviewStatus ===
+          'submitted' ||
+        currentReviewStatus ===
+          'approved'
+      ) {
+        return response.status(409).json({
+          error:
+            'A prestação deste Evento Geral já foi enviada ou aprovada. Reabra a decisão antes de alterar os gastos.',
+        })
+      }
+
+      const rows =
+        await sql`
+          INSERT INTO
+            general_event_expenses (
+              event_id,
+              description,
+              amount,
+              receipt_path,
+              created_by
+            )
+          VALUES (
+            ${numericEventId},
+            ${normalizedDescription},
+            ${numericAmount},
+            ${
+              receiptPath
+                ? String(receiptPath)
+                : null
+            },
+            ${Number(admin.id)}
+          )
+          RETURNING *
+        `
+
+      await sql`
+        INSERT INTO
+          post_event_general_financial (
+            event_id,
+            financial_status,
+            review_status,
+            created_at,
+            updated_at
+          )
+        VALUES (
+          ${numericEventId},
+          'pending',
+          'pending',
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        )
+        ON CONFLICT (event_id)
+        DO UPDATE SET
+          financial_status =
+            'pending',
+          review_status =
+            CASE
+              WHEN post_event_general_financial.review_status =
+                'returned'
+              THEN 'returned'
+              ELSE 'pending'
+            END,
+          submitted_by = NULL,
+          submitted_at = NULL,
+          reviewed_by = NULL,
+          reviewed_at = NULL,
+          updated_at =
+            CURRENT_TIMESTAMP
+      `
+
+      return response.status(201).json({
+        ok: true,
+        expense:
+          rows[0],
+        message:
+          'Gasto registrado com sucesso.',
+      })
+    }
+
+
+    if (
+      operation ===
+      'cancel-general-expense'
+    ) {
+      const {
+        expenseId,
+        cancellationReason,
+      } = request.body ?? {}
+
+      const numericExpenseId =
+        Number(expenseId)
+
+      if (
+        !Number.isInteger(
+          numericExpenseId
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Gasto inválido.',
+        })
+      }
+
+      const event =
+        await getEvent(
+          numericEventId
+        )
+
+      if (
+        !event ||
+        event.event_status !==
+          'post_event'
+      ) {
+        return response.status(409).json({
+          error:
+            'Gastos só podem ser alterados durante o Pós-Evento.',
+        })
+      }
+
+      if (
+        event.project_id !== null
+      ) {
+        return response.status(409).json({
+          error:
+            'Esta operação é exclusiva de Evento Geral.',
+        })
+      }
+
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      const closureRows =
+        await sql`
+          SELECT
+            expenses_closed
+          FROM
+            post_event_closures
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      if (
+        Number(
+          closureRows[0]?.expenses_closed || 0
+        ) === 1
+      ) {
+        return response.status(409).json({
+          error:
+            'Os gastos deste evento já foram finalizados e não podem mais ser alterados.',
+        })
+      }
+
+      const currentRows =
+        await sql`
+          SELECT
+            review_status
+          FROM
+            post_event_general_financial
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      if (
+        currentRows[0]?.review_status ===
+          'submitted' ||
+        currentRows[0]?.review_status ===
+          'approved'
+      ) {
+        return response.status(409).json({
+          error:
+            'A prestação deste Evento Geral já foi enviada ou aprovada. Reabra a decisão antes de alterar os gastos.',
+        })
+      }
+
+      const rows =
+        await sql`
+          UPDATE
+            general_event_expenses
+          SET
+            active = 0,
+            cancellation_reason =
+              ${
+                String(
+                  cancellationReason || ''
+                ).trim() || null
+              },
+            cancelled_at =
+              CURRENT_TIMESTAMP,
+            cancelled_by =
+              ${Number(admin.id)},
+            updated_at =
+              CURRENT_TIMESTAMP
+          WHERE
+            id =
+              ${numericExpenseId}
+            AND event_id =
+              ${numericEventId}
+            AND active = 1
+          RETURNING *
+        `
+
+      if (!rows[0]) {
+        return response.status(404).json({
+          error:
+            'Gasto ativo não encontrado neste Evento Geral.',
+        })
+      }
+
+      return response.status(200).json({
+        ok: true,
+        expense:
+          rows[0],
+        message:
+          'Gasto cancelado com sucesso.',
+      })
+    }
+
+
+    if (
+      operation ===
+      'complete-general-financial'
+    ) {
+      const {
+        financialStatus,
+      } = request.body ?? {}
+
+      const allowedStatuses =
+        new Set([
+          'expenses',
+          'no_expenses',
+          'donation',
+        ])
+
+      if (
+        !allowedStatuses.has(
+          financialStatus
+        )
+      ) {
+        return response.status(400).json({
+          error:
+            'Situação financeira inválida.',
+        })
+      }
+
+      const event =
+        await getEvent(
+          numericEventId
+        )
+
+      if (
+        !event ||
+        event.event_status !==
+          'post_event'
+      ) {
+        return response.status(409).json({
+          error:
+            'A situação financeira só pode ser concluída durante o Pós-Evento.',
+        })
+      }
+
+      if (
+        event.project_id !== null
+      ) {
+        return response.status(409).json({
+          error:
+            'Esta operação é exclusiva de Evento Geral.',
+        })
+      }
+
+      if (
+        !isGlobalAdmin(admin) &&
+        !isProjectAdmin(admin)
+      ) {
+        return forbidden(response)
+      }
+
+      const closureRows =
+        await sql`
+          SELECT
+            expenses_closed
+          FROM
+            post_event_closures
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      if (
+        Number(
+          closureRows[0]?.expenses_closed || 0
+        ) === 1
+      ) {
+        return response.status(409).json({
+          error:
+            'Os gastos deste evento já foram finalizados e não podem mais ser alterados.',
+        })
+      }
+
+      const expenseRows =
+        await sql`
+          SELECT
+            COUNT(*)::int AS total
+          FROM
+            general_event_expenses
+          WHERE
+            event_id =
+              ${numericEventId}
+            AND active = 1
+        `
+
+      const activeExpenseCount =
+        Number(
+          expenseRows[0]?.total || 0
+        )
+
+      if (
+        financialStatus ===
+          'expenses' &&
+        activeExpenseCount === 0
+      ) {
+        return response.status(409).json({
+          error:
+            'Registre pelo menos um gasto antes de concluir como "Com gastos".',
+        })
+      }
+
+      if (
+        (
+          financialStatus ===
+            'no_expenses' ||
+          financialStatus ===
+            'donation'
+        ) &&
+        activeExpenseCount > 0
+      ) {
+        return response.status(409).json({
+          error:
+            'Existem gastos ativos neste Evento Geral. Resolva ou cancele os lançamentos antes de marcar como "Sem gastos" ou "Doação".',
+        })
+      }
+
+      const currentRows =
+        await sql`
+          SELECT
+            review_status
+          FROM
+            post_event_general_financial
+          WHERE
+            event_id =
+              ${numericEventId}
+          LIMIT 1
+        `
+
+      if (
+        currentRows[0]?.review_status ===
+          'approved'
+      ) {
+        return response.status(409).json({
+          error:
+            'A prestação deste Evento Geral já está aprovada.',
+        })
+      }
+
+      const nextReviewStatus =
+        financialStatus ===
+          'expenses'
+          ? 'submitted'
+          : 'approved'
+
+      const rows =
+        await sql`
+          INSERT INTO
+            post_event_general_financial (
+              event_id,
+              financial_status,
+              submitted_by,
+              submitted_at,
+              review_status,
+              reviewed_by,
+              reviewed_at,
+              returned_by,
+              returned_at,
+              return_reason,
+              created_at,
+              updated_at
+            )
+          VALUES (
+            ${numericEventId},
+            ${financialStatus},
+            ${Number(admin.id)},
+            CURRENT_TIMESTAMP,
+            ${nextReviewStatus},
+            ${
+              nextReviewStatus ===
+                'approved'
+                ? Number(admin.id)
+                : null
+            },
+            CASE
+              WHEN ${nextReviewStatus} =
+                'approved'
+              THEN CURRENT_TIMESTAMP
+              ELSE NULL
+            END,
+            NULL,
+            NULL,
+            NULL,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+          )
+          ON CONFLICT (event_id)
+          DO UPDATE SET
+            financial_status =
+              EXCLUDED.financial_status,
+            submitted_by =
+              EXCLUDED.submitted_by,
+            submitted_at =
+              EXCLUDED.submitted_at,
+            review_status =
+              EXCLUDED.review_status,
+            reviewed_by =
+              EXCLUDED.reviewed_by,
+            reviewed_at =
+              EXCLUDED.reviewed_at,
+            returned_by = NULL,
+            returned_at = NULL,
+            return_reason = NULL,
+            updated_at =
+              CURRENT_TIMESTAMP
+          RETURNING *
+        `
+
+      return response.status(200).json({
+        ok: true,
+        generalFinancial:
+          rows[0],
+        message:
+          financialStatus ===
+            'expenses'
+            ? 'Prestação do Evento Geral enviada para análise financeira.'
+            : 'Prestação do Evento Geral concluída com sucesso.',
+      })
+    }
+
+
     if (
       operation ===
       'complete-team-financial'
