@@ -441,7 +441,8 @@ export default async function handler(request, response) {
         users.username AS photographer_username,
 
         confirmations.photo_submitted_at,
-        confirmations.completed_at
+        confirmations.completed_at,
+        confirmations.delivery_link
 
       FROM confirmations
 
@@ -472,9 +473,9 @@ export default async function handler(request, response) {
         AND confirmations.completed_at
           IS NOT NULL
 
-        AND events.drive_link IS NOT NULL
+        AND confirmations.delivery_link IS NOT NULL
 
-        AND TRIM(events.drive_link) <> ''
+        AND TRIM(confirmations.delivery_link) <> ''
 
         AND roles.name ILIKE '%fot%'
 

@@ -52,9 +52,6 @@ function CommunityHome({
                 eventDate:
                   memory?.event_date ||
                   null,
-                driveLink:
-                  memory?.drive_link ||
-                  '',
                 photographers: [],
               }
             )
@@ -90,6 +87,10 @@ function CommunityHome({
 
               username:
                 memory?.photographer_username ||
+                '',
+
+              deliveryLink:
+                memory?.delivery_link ||
                 '',
             })
           }
@@ -761,31 +762,36 @@ function CommunityHome({
                         <div className="community-memory-photographers">
                           {event.photographers.map(
                             (photographer) => (
-                              <span
+                              <div
                                 key={photographer.id}
                               >
-                                📷
-                                {' '}
-                                @
-                                {photographer.username ||
-                                  photographer.name ||
-                                  'fotografo'}
-                              </span>
+                                <span>
+                                  📷
+                                  {' '}
+                                  @
+                                  {photographer.username ||
+                                    photographer.name ||
+                                    'fotografo'}
+                                </span>
+
+                                {photographer.deliveryLink && (
+                                  <a
+                                    className="community-memory-link"
+                                    href={photographer.deliveryLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    Abrir fotos
+                                    <span>↗</span>
+                                  </a>
+                                )}
+                              </div>
                             )
                           )}
                         </div>
                       </div>
                     </div>
 
-                    <a
-                      className="community-memory-link"
-                      href={event.driveLink}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Abrir fotos
-                      <span>↗</span>
-                    </a>
                   </article>
                 ))}
               </div>
