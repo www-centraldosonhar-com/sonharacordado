@@ -730,10 +730,6 @@ function CommunityHome({
                     className="community-memory-card"
                   >
                     <div className="community-memory-main">
-                      <div className="community-memory-icon">
-                        📸
-                      </div>
-
                       <div>
                         <small>
                           {event.project}
