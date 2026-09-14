@@ -621,12 +621,6 @@ const postEventAvailable =
     },
   ]
 
-  const completedClosingSteps =
-    closingSteps.filter(
-      (step) => step.complete
-    ).length
-
-
   const openingClosingStep =
     baseClosingSteps[0] || null
 
@@ -669,6 +663,11 @@ const postEventAvailable =
           administrativeClosingStep,
         ].filter(Boolean)
       : baseClosingSteps
+
+  const completedClosingSteps =
+    closingSteps.filter(
+      (step) => step.complete
+    ).length
 
   const closingProgress =
     Math.round(
