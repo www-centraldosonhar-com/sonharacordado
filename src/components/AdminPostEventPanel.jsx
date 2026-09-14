@@ -1,6 +1,7 @@
 import PostEventFinancialReview from './PostEventFinancialReview'
 import GeneralEventPostEventPanel from './GeneralEventPostEventPanel.jsx'
 import {
+  useCallback,
   useEffect,
   useState,
 } from 'react'
@@ -245,24 +246,26 @@ function AdminPostEventPanel({
       ]
     )
 
-  function handleGeneralFinancialStateChange(
-    complete
-  ) {
-    const numericEventId =
-      Number(selectedEventId)
+  const handleGeneralFinancialStateChange =
+    useCallback(
+      (complete) => {
+        const numericEventId =
+          Number(selectedEventId)
 
-    if (!numericEventId) {
-      return
-    }
+        if (!numericEventId) {
+          return
+        }
 
-    setGeneralFinancialCompleteByEvent(
-      (current) => ({
-        ...current,
-        [numericEventId]:
-          Boolean(complete),
-      })
+        setGeneralFinancialCompleteByEvent(
+          (current) => ({
+            ...current,
+            [numericEventId]:
+              Boolean(complete),
+          })
+        )
+      },
+      [selectedEventId]
     )
-  }
 const postEventAvailable =
     (() => {
       if (!selectedEvent?.event_date) {
@@ -1072,7 +1075,8 @@ const postEventAvailable =
                     </strong>
 
                     {step.key ===
-                      'reports' && (
+                      'reports' &&
+                      !isGeneralEvent && (
                       <small>
                         {approvedTeamReports}
                         {' / '}
@@ -1084,7 +1088,8 @@ const postEventAvailable =
               )}
             </div>
 
-            {pendingTeamReports.length > 0 && (
+            {!isGeneralEvent &&
+              pendingTeamReports.length > 0 && (
               <div className="post-event-progress-pending">
                 <small>
                   AINDA FALTA
@@ -1277,42 +1282,66 @@ const postEventAvailable =
                     </strong>
 
                     <span>
-                      Confira os lançamentos e
-                      comprovantes das equipes
-                      antes de finalizar.
+                      {isGeneralEvent
+                        ? 'Confira a prestação financeira consolidada antes de finalizar.'
+                        : (
+                            <>
+                              Confira os lançamentos e
+                              comprovantes das equipes
+                              antes de finalizar.
+                            </>
+                          )}
                     </span>
                   </div>
 
-                                <div
-                className={[
-                  'post-event-financial-gate',
-                  allTeamReportsApproved
-                    ? 'is-ready'
-                    : 'is-locked',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                <strong>
-                  {approvedTeamReports}
-                  {' de '}
-                  {teamReports.length}
-                  {' '}
-                  {teamReports.length === 1
-                    ? 'prestação aprovada'
-                    : 'prestações aprovadas'}
-                </strong>
+                  <div
+                    className={[
+                      'post-event-financial-gate',
+                      financialReadyForClose
+                        ? 'is-ready'
+                        : 'is-locked',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    {isGeneralEvent ? (
+                      <>
+                        <strong>
+                          {generalFinancialComplete
+                            ? 'Prestação financeira concluída'
+                            : 'Prestação financeira pendente'}
+                        </strong>
 
-                <small>
-                  {allTeamReportsApproved
-                    ? 'Todas as prestações foram concluídas e aprovadas. O financeiro global pode ser finalizado.'
-                    : `${pendingTeamReports.length} ${
-                        pendingTeamReports.length === 1
-                          ? 'equipe ainda precisa'
-                          : 'equipes ainda precisam'
-                      } concluir a aprovação.`}
-                </small>
-              </div>
+                        <small>
+                          {generalFinancialComplete
+                            ? 'A prestação financeira consolidada foi concluída. Os gastos podem ser finalizados.'
+                            : 'Conclua a prestação financeira para liberar o fechamento dos gastos.'}
+                        </small>
+                      </>
+                    ) : (
+                      <>
+                        <strong>
+                          {approvedTeamReports}
+                          {' de '}
+                          {teamReports.length}
+                          {' '}
+                          {teamReports.length === 1
+                            ? 'prestação aprovada'
+                            : 'prestações aprovadas'}
+                        </strong>
+
+                        <small>
+                          {allTeamReportsApproved
+                            ? 'Todas as prestações foram concluídas e aprovadas. O financeiro global pode ser finalizado.'
+                            : `${pendingTeamReports.length} ${
+                                pendingTeamReports.length === 1
+                                  ? 'equipe ainda precisa'
+                                  : 'equipes ainda precisam'
+                              } concluir a aprovação.`}
+                        </small>
+                      </>
+                    )}
+                  </div>
 
 <button
                     type="button"
