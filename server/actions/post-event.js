@@ -3311,13 +3311,20 @@ return response.status(200).json({
                 )
             )::int AS approved_count
 
-          FROM teams team
+          FROM project_team_config ptc
+
+          JOIN teams team
+            ON team.id = ptc.team_id
 
           LEFT JOIN post_event_team_reports report
             ON report.team_id = team.id
             AND report.event_id = ${numericEventId}
 
-          WHERE team.active = 1
+          WHERE
+            ptc.project_id = ${event.project_id}
+            AND ptc.active = 1
+            AND ptc.requires_post_event = 1
+            AND team.active = 1
         `
 
       const totalTeams =
