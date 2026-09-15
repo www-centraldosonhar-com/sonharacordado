@@ -1860,7 +1860,32 @@ function AdminPage({
                 </div>
 
                 <span className="admin-collapsible-count">
-                  {(data.registrations || []).length}
+                  {(data.registrations || []).filter(
+                    (registration) => {
+                      const rawEventDate =
+                        registration.event_date
+
+                      if (!rawEventDate) {
+                        return true
+                      }
+
+                      const eventDate =
+                        String(rawEventDate).slice(0, 10)
+
+                      const today = new Date()
+                      const todayKey = [
+                        today.getFullYear(),
+                        String(
+                          today.getMonth() + 1
+                        ).padStart(2, '0'),
+                        String(
+                          today.getDate()
+                        ).padStart(2, '0'),
+                      ].join('-')
+
+                      return eventDate >= todayKey
+                    }
+                  ).length}
                 </span>
               </summary>
 

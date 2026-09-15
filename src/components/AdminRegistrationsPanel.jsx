@@ -513,6 +513,55 @@ function AdminRegistrationsPanel({
     )
 
 
+  const isActiveEventDate = (rawEventDate) => {
+    if (!rawEventDate) {
+      return true
+    }
+
+    const eventDate =
+      String(rawEventDate).slice(0, 10)
+
+    const today = new Date()
+    const todayKey = [
+      today.getFullYear(),
+      String(
+        today.getMonth() + 1
+      ).padStart(2, '0'),
+      String(
+        today.getDate()
+      ).padStart(2, '0'),
+    ].join('-')
+
+    return eventDate >= todayKey
+  }
+
+
+  const activeEventGroups =
+    useMemo(
+      () =>
+        filteredEventGroups.filter(
+          (group) =>
+            isActiveEventDate(
+              group.eventDate
+            )
+        ),
+      [filteredEventGroups]
+    )
+
+
+  const finishedEventGroups =
+    useMemo(
+      () =>
+        filteredEventGroups.filter(
+          (group) =>
+            !isActiveEventDate(
+              group.eventDate
+            )
+        ),
+      [filteredEventGroups]
+    )
+
+
   const registrationSummary =
     useMemo(
       () => ({
@@ -662,8 +711,34 @@ function AdminRegistrationsPanel({
           administração.
         </div>
       ) : (
+        <div className="registration-event-sections">
+
+          <section className="registration-event-section registration-event-section-active">
+            <div className="registration-event-section-header">
+              <div>
+                <strong>🟢 Eventos ativos</strong>
+                <span>
+                  Eventos de hoje e futuros
+                </span>
+              </div>
+
+              <span className="registration-event-section-count">
+                {activeEventGroups.reduce(
+                  (total, group) =>
+                    total + group.registrations.length,
+                  0
+                )}{' '}
+                inscrições
+              </span>
+            </div>
+
+            {activeEventGroups.length === 0 ? (
+              <div className="registration-event-section-empty">
+                Nenhum evento ativo encontrado.
+              </div>
+            ) : (
         <div className="registration-event-list">
-          {filteredEventGroups.map(
+          {activeEventGroups.map(
             (group) => {
               const pending =
                 group.registrations.filter(
@@ -940,6 +1015,313 @@ function AdminRegistrationsPanel({
               )
             }
           )}
+        </div>
+            )}
+          </section>
+
+
+          {finishedEventGroups.length > 0 && (
+            <details className="registration-event-section registration-event-section-finished">
+              <summary className="registration-event-section-header">
+                <div>
+                  <strong>📦 Eventos finalizados</strong>
+                  <span>
+                    Histórico dos eventos anteriores
+                  </span>
+                </div>
+
+                <span className="registration-event-section-count">
+                  {finishedEventGroups.reduce(
+                    (total, group) =>
+                      total + group.registrations.length,
+                    0
+                  )}{' '}
+                  inscrições
+                </span>
+              </summary>
+
+        <div className="registration-event-list">
+          {finishedEventGroups.map(
+            (group) => {
+              const pending =
+                group.registrations.filter(
+                  (registration) =>
+                    getStatusOrder(
+                      registration.status
+                    ) <= 2
+                ).length
+
+              const confirmed =
+                group.registrations.filter(
+                  (registration) =>
+                    registration.status ===
+                    'confirmed'
+                ).length
+
+              return (
+                <details
+                  key={group.eventId}
+                  className="registration-event-card registration-event-collapsible"
+                >
+                  <summary className="registration-event-header registration-event-summary">
+                    <div>
+                      <h3>
+                        {group.eventName}
+                      </h3>
+
+                      <small>
+                        📅{' '}
+                        {formatDateBr(
+                          group.eventDate
+                        )}
+                      </small>
+                    </div>
+
+                    <div className="registration-event-badges">
+                      {pending > 0 && (
+                        <span className="registration-count-pending">
+                          🟡 {pending} para analisar
+                        </span>
+                      )}
+
+                      <span>
+                        ✅ {confirmed}
+                      </span>
+                    </div>
+                  </summary>
+
+
+                  <div className="registration-compact-list">
+                    {group.registrations.map(
+                      (registration) => {
+                        const status =
+                          getStatusInfo(
+                            registration.status
+                          )
+
+                        const actionable =
+                          registration.status !==
+                            'confirmed' &&
+                          registration.status !==
+                            'cancelled'
+
+                        return (
+                          <article
+                            key={
+                              registration.id
+                            }
+                            className={
+                              `registration-compact-row ${
+                                registration.status ===
+                                'confirmed'
+                                  ? 'registration-row-confirmed'
+                                  : ''
+                              }`
+                            }
+                          >
+                            <div className="registration-person">
+                              <strong>
+                                {
+                                  registration.user_name
+                                }
+                              </strong>
+
+                              <small>
+                                {
+                                  registration.project_name
+                                }
+                                {' · '}
+                                {getTeamLabel(
+                                  registration.team
+                                )}
+                              </small>
+                            </div>
+
+
+                            <div className="registration-payment">
+                              {registration.coupon_code ? (
+                                <>
+                                  <strong>
+                                    🎟️ Cupom
+                                  </strong>
+
+                                  <small>
+                                    {
+                                      registration.coupon_code
+                                    }
+                                  </small>
+                                </>
+                              ) : (
+                                <>
+                                  <strong>
+                                    {formatMoney(
+                                      registration.registration_fee
+                                    )}
+                                  </strong>
+
+                                  <small>
+                                    inscrição
+                                  </small>
+                                </>
+                              )}
+                            </div>
+
+
+                            <div className="registration-compact-actions">
+                              {registration.payment_receipt_path && (
+                                <button
+                                  type="button"
+                                  className="registration-receipt-button"
+                                  disabled={
+                                    isLoading
+                                  }
+                                  onClick={() =>
+                                    openReceipt(
+                                      registration
+                                    )
+                                  }
+                                >
+                                  📎 Ver
+                                </button>
+                              )}
+
+
+                              {actionable && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="registration-approve-button"
+                                    disabled={
+                                      isLoading
+                                    }
+                                    onClick={() =>
+                                      approve(
+                                        registration
+                                      )
+                                    }
+                                  >
+                                    ✅
+                                    <span>
+                                      Aprovar
+                                    </span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="registration-reject-button"
+                                    disabled={
+                                      isLoading
+                                    }
+                                    onClick={() =>
+                                      openCorrection(
+                                        registration
+                                      )
+                                    }
+                                  >
+                                    ↩️
+                                    <span>
+                                      Solicitar correção
+                                    </span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
+
+
+                            <div
+                              className={
+                                `registration-status-pill ${status.className}`
+                              }
+                            >
+                              <span>
+                                {status.icon}
+                              </span>
+
+                              <strong>
+                                {status.label}
+                              </strong>
+                            </div>
+
+
+                            {correctionRegistrationId ===
+                              registration.id && (
+                              <div className="registration-correction-editor">
+                                <div className="registration-correction-editor-head">
+                                  <div>
+                                    <small>
+                                      SOLICITAR CORREÇÃO
+                                    </small>
+
+                                    <strong>
+                                      O que precisa ser corrigido?
+                                    </strong>
+                                  </div>
+                                </div>
+
+                                <textarea
+                                  value={correctionReason}
+                                  onChange={(event) =>
+                                    setCorrectionReason(
+                                      event.target.value
+                                    )
+                                  }
+                                  placeholder="Ex.: O comprovante está sem identificação ou não permite confirmar o pagamento."
+                                  rows={3}
+                                  autoFocus
+                                />
+
+                                <div className="registration-correction-editor-actions">
+                                  <button
+                                    type="button"
+                                    disabled={isLoading}
+                                    onClick={
+                                      cancelCorrection
+                                    }
+                                  >
+                                    Cancelar
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="is-primary"
+                                    disabled={
+                                      isLoading ||
+                                      !correctionReason.trim()
+                                    }
+                                    onClick={() =>
+                                      reject(
+                                        registration
+                                      )
+                                    }
+                                  >
+                                    Enviar correção
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+
+                            {registration.rejection_reason && (
+                              <div className="registration-correction-message">
+                                💬{' '}
+                                {
+                                  registration.rejection_reason
+                                }
+                              </div>
+                            )}
+                          </article>
+                        )
+                      }
+                    )}
+                  </div>
+                </details>
+              )
+            }
+          )}
+        </div>
+            </details>
+          )}
+
         </div>
       )}
 

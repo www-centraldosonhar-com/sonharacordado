@@ -5460,3 +5460,101 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Inscrições — separação entre eventos ativos e finalizados */
+
+.registration-event-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.registration-event-section {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+}
+
+.registration-event-section-active {
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.registration-event-section-finished {
+  opacity: 0.9;
+}
+
+.registration-event-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.registration-event-section-header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.registration-event-section-header strong {
+  font-size: 0.96rem;
+}
+
+.registration-event-section-header span {
+  font-size: 0.78rem;
+  opacity: 0.68;
+}
+
+.registration-event-section-count {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.registration-event-section > .registration-event-list {
+  padding: 0 14px 14px;
+}
+
+.registration-event-section-finished > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.registration-event-section-finished > summary::-webkit-details-marker {
+  display: none;
+}
+
+.registration-event-section-finished > summary::after {
+  content: '⌄';
+  font-size: 1rem;
+  opacity: 0.55;
+  transition: transform 0.18s ease;
+}
+
+.registration-event-section-finished[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.registration-event-section-empty {
+  padding: 0 18px 18px;
+  font-size: 0.86rem;
+  opacity: 0.65;
+}
+
+@media (max-width: 600px) {
+  .registration-event-section-header {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .registration-event-section-count {
+    font-size: 0.72rem;
+  }
+
+  .registration-event-section > .registration-event-list {
+    padding: 0 10px 10px;
+  }
+}
