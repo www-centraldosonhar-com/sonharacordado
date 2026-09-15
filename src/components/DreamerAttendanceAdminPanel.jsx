@@ -295,18 +295,20 @@ function DreamerAttendanceAdminPanel() {
             {data?.frequency?.eventCount || 0}
           </strong>
         </div>
-        <div>
-          <span>APS</span>
-          <strong>52</strong>
-        </div>
-        <div>
-          <span>PPF</span>
-          <strong>42</strong>
-        </div>
-        <div>
-          <span>SJ</span>
-          <strong>26</strong>
-        </div>
+        {['APS', 'PPF', 'SJ'].map(project => {
+          const team = data?.frequency?.teams?.find(
+            item => item.project === project
+          )
+
+          return (
+            <div key={project}>
+              <span>{project}</span>
+              <strong>
+                {team?.volunteerCount ?? '—'}
+              </strong>
+            </div>
+          )
+        })}
       </div>
 
       {message ? (
