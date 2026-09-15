@@ -58,7 +58,7 @@ export default async function handler(request, response) {
         users.active,
         projects.name AS project
       FROM users
-      LEFT JOIN projects
+      JOIN projects
         ON users.project_id = projects.id
       WHERE users.id = ${payload.userId}
       LIMIT 1

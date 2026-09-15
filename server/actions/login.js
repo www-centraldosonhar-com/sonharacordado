@@ -154,10 +154,9 @@ export default async function handler(request, response) {
         u.password_hash,
         u.user_type,
         u.active,
-        u.project_id,
         p.name AS project
       FROM users u
-      LEFT JOIN projects p
+      JOIN projects p
         ON p.id = u.project_id
       WHERE
         LOWER(u.username) =
