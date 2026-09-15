@@ -1095,13 +1095,14 @@ export default async function handler(
             )::int
               AS approved_count
 
-          FROM teams team
+          FROM post_event_team_reports report
 
-          LEFT JOIN post_event_team_reports report
-            ON report.team_id = team.id
-            AND report.event_id = ${numericEventId}
+          JOIN teams team
+            ON team.id = report.team_id
 
-          WHERE team.active = 1
+          WHERE
+            report.event_id = ${numericEventId}
+            AND team.active = 1
         `
 
       const totalTeamClosures =
