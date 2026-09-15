@@ -149,7 +149,8 @@ export async function calculateAttendanceFrequency(
         dae.event_id,
         event.name AS event_name,
         event.event_date,
-        event.event_time
+        event.event_time,
+        event.project_id
       FROM dreamer_attendance_events dae
       JOIN events event
         ON event.id = dae.event_id
@@ -199,6 +200,10 @@ export async function calculateAttendanceFrequency(
         item.checked = 1
         AND item.registration_id IS NOT NULL
         AND volunteer.project_id IS NOT NULL
+        AND (
+          selected.project_id IS NULL
+          OR volunteer.project_id = selected.project_id
+        )
 
       GROUP BY
         event_role.event_id,
@@ -223,7 +228,9 @@ export async function calculateAttendanceFrequency(
     JOIN projects project
       ON project.id = team.project_id
 
-    CROSS JOIN selected_events selected
+    JOIN selected_events selected
+      ON selected.project_id IS NULL
+      OR selected.project_id = team.project_id
 
     LEFT JOIN present_by_event_project presence
       ON presence.event_id = selected.event_id
