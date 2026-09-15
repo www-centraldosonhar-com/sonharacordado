@@ -1356,6 +1356,354 @@ export default async function handler(
 
 
     // =====================================================
+    // EVENT HISTORY SUMMARY
+    // Read-only presence history for Global / Project admins
+    // =====================================================
+
+    if (operation === 'event-history-summary') {
+      const numericEventId =
+        Number(eventId)
+
+      if (
+        !Number.isInteger(numericEventId) ||
+        numericEventId <= 0
+      ) {
+        return response.status(400).json({
+          error: 'Evento inválido.',
+        })
+      }
+
+      const admin =
+        await requireAdmin(request)
+
+      if (!admin) {
+        return response.status(403).json({
+          error: 'Acesso não autorizado.',
+        })
+      }
+
+      const adminScope =
+        String(
+          admin.adminScope ||
+          admin.admin_scope ||
+          ''
+        ).toLowerCase()
+
+      // Admin de Equipe não recebe acesso ao
+      // resumo histórico geral do evento.
+      if (
+        adminScope !== 'global' &&
+        adminScope !== 'project'
+      ) {
+        return response.status(403).json({
+          error:
+            'Você não possui acesso ao resumo histórico deste evento.',
+        })
+      }
+
+      const eventRows = await sql`
+        SELECT
+          e.id,
+          e.name,
+          e.event_date,
+          e.event_status,
+          e.project_id,
+          p.name AS project_name
+
+        FROM events e
+
+        LEFT JOIN projects p
+          ON p.id = e.project_id
+
+        WHERE
+          e.id = ${numericEventId}
+
+        LIMIT 1
+      `
+
+      const event = eventRows[0]
+
+      if (!event) {
+        return response.status(404).json({
+          error: 'Evento não encontrado.',
+        })
+      }
+
+      if (
+        event.event_status !== 'post_event' &&
+        event.event_status !== 'closed'
+      ) {
+        return response.status(409).json({
+          error:
+            'O resumo histórico fica disponível após o encerramento do evento.',
+        })
+      }
+
+      // Admin de Projeto:
+      // - evento do próprio projeto
+      // - Evento Geral (project_id NULL)
+      if (
+        adminScope === 'project' &&
+        event.project_id !== null &&
+        Number(event.project_id) !==
+          Number(admin.projectId || admin.project_id)
+      ) {
+        return response.status(403).json({
+          error:
+            'Você não possui acesso a este evento.',
+        })
+      }
+
+
+      // -----------------------------------------------------
+      // VOLUNTEERS
+      // -----------------------------------------------------
+
+      const volunteerRows = await sql`
+        SELECT
+          er.user_id,
+          u.name,
+          p.name AS project_name,
+          aci.checked_at
+
+        FROM activity_checklists checklist
+
+        JOIN event_roles role
+          ON role.id =
+            checklist.event_role_id
+
+        JOIN roles activity
+          ON activity.id =
+            role.role_id
+
+        JOIN activity_checklist_items aci
+          ON aci.checklist_id =
+            checklist.id
+
+        JOIN event_registrations er
+          ON er.id =
+            aci.registration_id
+
+        JOIN users u
+          ON u.id =
+            er.user_id
+
+        LEFT JOIN projects p
+          ON p.id =
+            u.project_id
+
+        WHERE
+          role.event_id =
+            ${numericEventId}
+
+          AND checklist.active = 1
+
+          AND checklist.source_type =
+            'event_registrations'
+
+          AND activity.name =
+            'Recepção / Check-in de Voluntários'
+
+          AND aci.checked = 1
+
+          AND er.status =
+            'confirmed'
+
+        ORDER BY
+          u.name
+      `
+
+
+      // -----------------------------------------------------
+      // ASSISTED
+      // -----------------------------------------------------
+
+      const assistedRows = await sql`
+        SELECT
+          assisted.id,
+          assisted.child_number,
+          assisted.full_name AS name,
+
+          MAX(
+            CASE
+              WHEN activity.name =
+                'Recepção / Check-in de Assistidos'
+                AND aci.checked = 1
+              THEN 1
+              ELSE 0
+            END
+          )::int AS checked_in,
+
+          MAX(
+            CASE
+              WHEN activity.name =
+                'Despedida / Check-out de Assistidos'
+                AND aci.checked = 1
+              THEN 1
+              ELSE 0
+            END
+          )::int AS checked_out,
+
+          MAX(
+            CASE
+              WHEN activity.name =
+                'Recepção / Check-in de Assistidos'
+                AND aci.checked = 1
+              THEN aci.checked_at
+              ELSE NULL
+            END
+          ) AS checked_in_at,
+
+          MAX(
+            CASE
+              WHEN activity.name =
+                'Despedida / Check-out de Assistidos'
+                AND aci.checked = 1
+              THEN aci.checked_at
+              ELSE NULL
+            END
+          ) AS checked_out_at
+
+        FROM activity_checklists checklist
+
+        JOIN event_roles role
+          ON role.id =
+            checklist.event_role_id
+
+        JOIN roles activity
+          ON activity.id =
+            role.role_id
+
+        JOIN activity_checklist_items aci
+          ON aci.checklist_id =
+            checklist.id
+
+        JOIN assisted_people assisted
+          ON assisted.id =
+            aci.assisted_person_id
+
+        WHERE
+          role.event_id =
+            ${numericEventId}
+
+          AND checklist.active = 1
+
+          AND checklist.source_type =
+            'assisted_people'
+
+          AND activity.name IN (
+            'Recepção / Check-in de Assistidos',
+            'Despedida / Check-out de Assistidos'
+          )
+
+        GROUP BY
+          assisted.id,
+          assisted.child_number,
+          assisted.full_name
+
+        HAVING
+          MAX(
+            CASE
+              WHEN activity.name =
+                'Recepção / Check-in de Assistidos'
+                AND aci.checked = 1
+              THEN 1
+              ELSE 0
+            END
+          ) = 1
+
+        ORDER BY
+          assisted.child_number NULLS LAST,
+          assisted.full_name
+      `
+
+      const assistedCheckedOut =
+        assistedRows.filter(
+          (person) =>
+            Number(person.checked_out) === 1
+        ).length
+
+      return response.status(200).json({
+        event: {
+          id: Number(event.id),
+          name: event.name,
+          date: event.event_date,
+          status: event.event_status,
+          projectId:
+            event.project_id === null
+              ? null
+              : Number(event.project_id),
+          projectName:
+            event.project_name || null,
+        },
+
+        volunteers: {
+          total: volunteerRows.length,
+          people: volunteerRows.map(
+            (person) => ({
+              userId:
+                Number(person.user_id),
+              name:
+                person.name,
+              projectName:
+                person.project_name || null,
+              checkedAt:
+                person.checked_at || null,
+            })
+          ),
+        },
+
+        assisted: {
+          checkedIn:
+            assistedRows.length,
+
+          checkedOut:
+            assistedCheckedOut,
+
+          inside:
+            assistedRows.length -
+            assistedCheckedOut,
+
+          people: assistedRows.map(
+            (person) => ({
+              id:
+                Number(person.id),
+
+              childNumber:
+                person.child_number === null
+                  ? null
+                  : Number(
+                      person.child_number
+                    ),
+
+              name:
+                person.name,
+
+              checkedIn:
+                Number(
+                  person.checked_in
+                ) === 1,
+
+              checkedOut:
+                Number(
+                  person.checked_out
+                ) === 1,
+
+              checkedInAt:
+                person.checked_in_at ||
+                null,
+
+              checkedOutAt:
+                person.checked_out_at ||
+                null,
+            })
+          ),
+        },
+      })
+    }
+
+
+    // =====================================================
     // MY CHECKLISTS
     // =====================================================
     // Lista apenas checklists onde o usuário logado foi

@@ -10,6 +10,7 @@ import {
 import {
   getTeamLabel,
 } from '../constants/registrationTeams'
+import EventPresenceHistoryPanel from './EventPresenceHistoryPanel.jsx'
 
 
 const STATUS_INFO = {
@@ -98,6 +99,7 @@ function AdminRegistrationsPanel({
   registrations = [],
   coupons = [],
   canManageCoupons = false,
+  canViewPresenceHistory = false,
   onUpdated,
 }) {
 
@@ -787,7 +789,6 @@ function AdminRegistrationsPanel({
                     </div>
                   </summary>
 
-
                   <div className="registration-compact-list">
                     {group.registrations.map(
                       (registration) => {
@@ -1090,6 +1091,11 @@ function AdminRegistrationsPanel({
                     </div>
                   </summary>
 
+                  {canViewPresenceHistory && (
+                    <EventPresenceHistoryPanel
+                      eventId={group.eventId}
+                    />
+                  )}
 
                   <div className="registration-compact-list">
                     {group.registrations.map(

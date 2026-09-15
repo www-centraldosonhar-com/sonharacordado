@@ -1902,6 +1902,10 @@ function AdminPage({
                       ?.canManageCoupons ||
                     false
                   }
+                  canViewPresenceHistory={
+                    isGlobalAdmin ||
+                    isProjectAdmin
+                  }
                   onUpdated={reloadAdmin}
                 />
               </div>
