@@ -311,6 +311,92 @@ function DreamerAttendanceAdminPanel() {
         })}
       </div>
 
+      {data?.frequency?.teams?.some(
+        team => team.events?.length
+      ) ? (
+        <section className="dreamer-frequency-results">
+          <div className="dreamer-admin-section-title">
+            <div>
+              <h3>Resultado atual</h3>
+              <p>
+                Frequência oficial calculada com os eventos já realizados.
+              </p>
+            </div>
+          </div>
+
+          <div className="dreamer-frequency-results__grid">
+            {[...(data.frequency.teams || [])]
+              .sort(
+                (a, b) =>
+                  Number(b.averageRate || 0) -
+                  Number(a.averageRate || 0)
+              )
+              .map((team, index) => (
+                <article
+                  key={team.project}
+                  className={`dreamer-frequency-result-card ${getProjectClass(team.project)}`}
+                >
+                  <header className="dreamer-frequency-result-card__header">
+                    <div>
+                      <span>
+                        {index === 0
+                          ? '🥇'
+                          : index === 1
+                            ? '🥈'
+                            : '🥉'}{' '}
+                        {team.project}
+                      </span>
+
+                      <strong>
+                        {Number(
+                          team.averageRate || 0
+                        ).toFixed(2)}%
+                      </strong>
+                    </div>
+
+                    <small>
+                      {team.events?.length || 0}{' '}
+                      {(team.events?.length || 0) === 1
+                        ? 'evento computado'
+                        : 'eventos computados'}
+                    </small>
+                  </header>
+
+                  <div className="dreamer-frequency-result-card__events">
+                    {(team.events || []).map(event => (
+                      <div
+                        className="dreamer-frequency-result-event"
+                        key={`${team.project}-${event.eventId}`}
+                      >
+                        <div>
+                          <strong>{event.eventName}</strong>
+                          <span>
+                            {formatEventDate(
+                              event.eventDate
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="dreamer-frequency-result-event__score">
+                          <span>
+                            {event.presentCount} /{' '}
+                            {event.volunteerCount}
+                          </span>
+                          <strong>
+                            {Number(
+                              event.attendanceRate || 0
+                            ).toFixed(2)}%
+                          </strong>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+          </div>
+        </section>
+      ) : null}
+
       {message ? (
         <div
           className={`dreamer-admin-message dreamer-admin-message--${message.type}`}
