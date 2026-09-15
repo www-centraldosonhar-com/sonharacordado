@@ -5927,3 +5927,195 @@
     -webkit-backdrop-filter: blur(10px);
   }
 }
+
+/* =====================================================
+   OLIMPÍADA — RESULTADOS DE FREQUÊNCIA
+   ===================================================== */
+
+.dreamer-frequency-results {
+  margin: 28px 0 32px;
+}
+
+.dreamer-frequency-results__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dreamer-frequency-result-card {
+  --frequency-accent: #a8989b;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(70, 52, 55, 0.08);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(70, 52, 55, 0.055);
+}
+
+.dreamer-frequency-result-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--frequency-accent);
+}
+
+.dreamer-frequency-result-card.project-aps {
+  --frequency-accent: #d94b4b;
+}
+
+.dreamer-frequency-result-card.project-ppf {
+  --frequency-accent: #347bd3;
+}
+
+.dreamer-frequency-result-card.project-sj {
+  --frequency-accent: #e88932;
+}
+
+.dreamer-frequency-result-card__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(70, 52, 55, 0.08);
+}
+
+.dreamer-frequency-result-card__header > div {
+  min-width: 0;
+}
+
+.dreamer-frequency-result-card__header span {
+  display: block;
+  margin-bottom: 5px;
+  color: #5f5355;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.dreamer-frequency-result-card__header strong {
+  display: block;
+  color: #302729;
+  font-size: clamp(1.8rem, 3vw, 2.35rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.dreamer-frequency-result-card__header small {
+  max-width: 90px;
+  color: #8a7c7e;
+  font-size: 0.7rem;
+  line-height: 1.3;
+  text-align: right;
+}
+
+.dreamer-frequency-result-card__events {
+  display: grid;
+  gap: 0;
+}
+
+.dreamer-frequency-result-event {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(70, 52, 55, 0.07);
+}
+
+.dreamer-frequency-result-event:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.dreamer-frequency-result-event > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.dreamer-frequency-result-event > div:first-child strong,
+.dreamer-frequency-result-event > div:first-child span {
+  display: block;
+}
+
+.dreamer-frequency-result-event > div:first-child strong {
+  overflow: hidden;
+  color: #403638;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+}
+
+.dreamer-frequency-result-event > div:first-child span {
+  margin-top: 4px;
+  color: #97898b;
+  font-size: 0.68rem;
+}
+
+.dreamer-frequency-result-event__score {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.dreamer-frequency-result-event__score span,
+.dreamer-frequency-result-event__score strong {
+  display: block;
+  white-space: nowrap;
+}
+
+.dreamer-frequency-result-event__score span {
+  color: #8b7d7f;
+  font-size: 0.7rem;
+}
+
+.dreamer-frequency-result-event__score strong {
+  margin-top: 3px;
+  color: var(--frequency-accent);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 980px) {
+  .dreamer-frequency-results__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-frequency-result-card {
+    padding: 18px;
+  }
+
+  .dreamer-frequency-result-card__header small {
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .dreamer-frequency-results {
+    margin: 24px 0 28px;
+  }
+
+  .dreamer-frequency-result-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .dreamer-frequency-result-card__header {
+    align-items: flex-start;
+  }
+
+  .dreamer-frequency-result-card__header strong {
+    font-size: 1.9rem;
+  }
+
+  .dreamer-frequency-result-event {
+    align-items: flex-start;
+  }
+
+  .dreamer-frequency-result-event > div:first-child strong {
+    white-space: normal;
+  }
+}
