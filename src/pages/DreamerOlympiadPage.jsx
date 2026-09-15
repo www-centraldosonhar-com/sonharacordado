@@ -307,6 +307,20 @@ function DreamerOlympiadPage({
                           <strong>{Number(team.fundraisingPoints || 0).toFixed(2)}</strong>
                         </span>
                         <span>
+                          <small>Economia de Eventos</small>
+                          <strong>
+                            {formatCurrency(team.economyAmount)} ·{' '}
+                            {Number(team.economyEventCount || 0)}{' '}
+                            {Number(team.economyEventCount || 0) === 1
+                              ? 'evento calculado'
+                              : 'eventos calculados'}
+                          </strong>
+                        </span>
+                        <span>
+                          <small>Pontos por economia</small>
+                          <strong>{Number(team.economyPoints || 0).toFixed(2)} pts</strong>
+                        </span>
+                        <span>
                           <small>Frequência</small>
                           <strong>{Number(team.frequencyPoints || 0).toFixed(2)} pts</strong>
                         </span>

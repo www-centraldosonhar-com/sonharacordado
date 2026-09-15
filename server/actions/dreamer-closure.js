@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 
 import { requireDreamerUser } from './_dreamer-access.js'
 import { calculateAttendanceFrequency } from './_dreamer-frequency.js'
+import { calculateEventEconomy } from './_dreamer-event-economy.js'
 import { referralPointsByProject } from './dreamer-referrals.js'
 
 const sql = neon(process.env.DATABASE_URL)
@@ -51,6 +52,10 @@ async function getClosure(campaignId) {
 async function buildSummary(campaign) {
   const referralPointsMap = await referralPointsByProject(campaign.id)
   const frequency = await calculateAttendanceFrequency(campaign.id)
+  const eventEconomyMap = await calculateEventEconomy(
+    sql,
+    campaign.id
+  )
   const frequencyPointsMap = new Map(
     frequency.ranking.map(team => [
       Number(team.projectId),
@@ -130,6 +135,18 @@ async function buildSummary(campaign) {
       frequencyPointsMap.get(Number(row.project_id))
     )
     const adjustmentPoints = number(row.adjustment_points)
+    const eventEconomy = eventEconomyMap.get(
+      Number(row.project_id)
+    )
+    const economyAmount = number(
+      eventEconomy?.economyAmount
+    )
+    const economyEventCount = number(
+      eventEconomy?.calculatedEvents
+    )
+    const economyPoints = number(
+      eventEconomy?.economyPoints
+    )
 
     return {
       projectId: Number(row.project_id),
@@ -143,12 +160,16 @@ async function buildSummary(campaign) {
       costTotal: round(externalCost),
       netTotal: round(netTotal),
       fundraisingPoints: round(fundraisingPoints),
+      economyAmount: round(economyAmount),
+      economyEventCount,
+      economyPoints: round(economyPoints),
       missionPoints: round(missionPoints),
       referralPoints: round(referralPoints),
       frequencyPoints: round(frequencyPoints),
       adjustmentPoints: round(adjustmentPoints),
       totalPoints: round(
         fundraisingPoints +
+        economyPoints +
         missionPoints +
         referralPoints +
         frequencyPoints +

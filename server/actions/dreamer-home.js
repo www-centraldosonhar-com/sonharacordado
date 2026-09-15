@@ -10,6 +10,10 @@ import {
 } from './_dreamer-frequency.js'
 
 import {
+  calculateEventEconomy,
+} from './_dreamer-event-economy.js'
+
+import {
   referralPointsByProject,
 } from './dreamer-referrals.js'
 
@@ -160,6 +164,12 @@ export default async function handler(
         p.id
     `
 
+    const eventEconomyMap =
+      await calculateEventEconomy(
+        sql,
+        campaign.id
+      )
+
     const teams =
       teamRows.map(
         team => {
@@ -195,6 +205,29 @@ export default async function handler(
               ) || 0
             )
 
+          const eventEconomy =
+            eventEconomyMap.get(
+              Number(team.project_id)
+            )
+
+          const economyAmount =
+            Number(
+              eventEconomy?.economyAmount ||
+                0
+            )
+
+          const economyEventCount =
+            Number(
+              eventEconomy?.calculatedEvents ||
+                0
+            )
+
+          const economyPoints =
+            Number(
+              eventEconomy?.economyPoints ||
+                0
+            )
+
           const netTotal =
             directTotal +
             externalTotal
@@ -207,6 +240,7 @@ export default async function handler(
 
           const totalPoints =
             fundraisingPoints +
+            economyPoints +
             missionPoints +
             referralPoints +
             adjustmentPoints
@@ -232,6 +266,10 @@ export default async function handler(
                 fundraisingPoints
                   .toFixed(2)
               ),
+
+            economyAmount,
+            economyEventCount,
+            economyPoints,
 
             missionPoints,
             referralPoints,
