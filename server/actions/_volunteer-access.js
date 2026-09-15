@@ -57,7 +57,7 @@ export async function requireVolunteer(request) {
 
     FROM users u
 
-    JOIN projects p
+    LEFT JOIN projects p
       ON p.id = u.project_id
 
     JOIN user_permissions up_volunteer
@@ -100,7 +100,7 @@ export async function requireVolunteer(request) {
     JOIN teams t
       ON t.id = ut.team_id
 
-    JOIN project_team_config ptc
+    LEFT JOIN project_team_config ptc
       ON ptc.team_id = t.id
       AND ptc.project_id = ${user.project_id}
       AND ptc.active = 1
@@ -109,6 +109,11 @@ export async function requireVolunteer(request) {
       ${user.id}
       AND ut.active = 1
       AND t.active = 1
+
+      AND (
+        ${user.project_id} IS NULL
+        OR ptc.team_id IS NOT NULL
+      )
 
     ORDER BY
       COALESCE(

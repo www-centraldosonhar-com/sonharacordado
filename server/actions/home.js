@@ -26,7 +26,9 @@ export default async function handler(request, response) {
       currentUser.mediaSupport
 
     const currentProjectId =
-      Number(currentUser.project_id)
+      currentUser.project_id == null
+        ? null
+        : Number(currentUser.project_id)
 
 
     const userTeamIds = new Set(
@@ -76,7 +78,7 @@ export default async function handler(request, response) {
       FROM confirmations
       JOIN users
         ON confirmations.user_id = users.id
-      JOIN projects
+      LEFT JOIN projects
         ON users.project_id = projects.id
       JOIN event_roles
         ON confirmations.event_role_id = event_roles.id
