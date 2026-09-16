@@ -313,6 +313,75 @@ export async function calculateAttendanceFrequency(
     }
   }
 
+  // Eventos históricos validados participam da frequência oficial,
+  // preservando a base de voluntários registrada na época do evento.
+  // Eles não entram em eventsById porque não possuem events.id nativo
+  // e não devem gerar snapshots com FK artificial.
+  const historicalRows = await sql`
+    SELECT
+      historical.id AS historical_event_id,
+      historical.name AS event_name,
+      historical.event_date,
+      historical_project.project_id,
+      historical_project.volunteer_base,
+      COUNT(attendance.id)::int AS present_count
+    FROM dreamer_historical_events historical
+    JOIN dreamer_historical_event_projects historical_project
+      ON historical_project.historical_event_id = historical.id
+    LEFT JOIN dreamer_historical_attendance attendance
+      ON attendance.historical_event_id = historical.id
+      AND attendance.project_id = historical_project.project_id
+    WHERE
+      historical.campaign_id = ${campaignId}
+      AND historical.validated = 1
+      AND historical.attendance_enabled = 1
+    GROUP BY
+      historical.id,
+      historical.name,
+      historical.event_date,
+      historical_project.project_id,
+      historical_project.volunteer_base
+    ORDER BY
+      historical.event_date ASC,
+      historical.id ASC,
+      historical_project.project_id ASC
+  `
+
+  for (const row of historicalRows) {
+    const projectId = toNumber(row.project_id)
+    const volunteerCount =
+      toNumber(row.volunteer_base)
+    const presentCount =
+      toNumber(row.present_count)
+
+    const team = teamsById.get(projectId)
+
+    if (!team || volunteerCount <= 0) {
+      continue
+    }
+
+    const attendanceRate =
+      (presentCount / volunteerCount) * 100
+
+    team.events.push({
+      eventId: null,
+      historicalEventId:
+        toNumber(row.historical_event_id),
+      historical: true,
+      eventName: row.event_name,
+      eventDate: row.event_date,
+      eventTime: null,
+      presentCount,
+      volunteerCount,
+      attendanceRate:
+        round(attendanceRate, 4),
+    })
+  }
+
+  const hasEligibleEvents =
+    eventsById.size > 0 ||
+    historicalRows.length > 0
+
   const teams = [...teamsById.values()]
     .map(team => {
       const eventCount = team.events.length
@@ -348,7 +417,7 @@ export async function calculateAttendanceFrequency(
 
   const pointsByProject = new Map()
 
-  if (!hasTie && eventsById.size > 0) {
+  if (!hasTie && hasEligibleEvents) {
     const scoreByPosition = [10, 5, 0]
 
     ordered.forEach((team, index) => {
@@ -364,7 +433,7 @@ export async function calculateAttendanceFrequency(
       ...team,
       position: index + 1,
       frequencyPoints:
-        hasTie || eventsById.size === 0
+        hasTie || !hasEligibleEvents
           ? null
           : pointsByProject.get(
               team.projectId
@@ -380,7 +449,7 @@ export async function calculateAttendanceFrequency(
     scoring: {
       hasTie,
       pointsApplied:
-        !hasTie && eventsById.size > 0,
+        !hasTie && hasEligibleEvents,
       rule: '+10 / +5 / 0',
       note: hasTie
         ? 'Existe empate de frequência. O regulamento ainda precisa definir o critério de desempate antes de aplicar pontos oficiais.'
