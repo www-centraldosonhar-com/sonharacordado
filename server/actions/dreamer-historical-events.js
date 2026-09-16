@@ -658,7 +658,7 @@ async function saveHistoricalAttendance(
         ${allowed.project.id}
   `
 
-  for (const name of names) {
+  if (names.length > 0) {
     await sql`
       INSERT INTO dreamer_historical_attendance (
         historical_event_id,
@@ -666,12 +666,13 @@ async function saveHistoricalAttendance(
         volunteer_name,
         project_id
       )
-      VALUES (
+      SELECT
         ${editable.event.id},
         NULL,
-        ${name},
+        volunteer_name,
         ${allowed.project.id}
-      )
+      FROM unnest(${names}::text[])
+        AS attendance_names(volunteer_name)
     `
   }
 
