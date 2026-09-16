@@ -24,6 +24,7 @@ function DreamerHistoricalEventsAdminPanel() {
   const [reviewEventId, setReviewEventId] = useState(null)
   const [reviewProjectId, setReviewProjectId] = useState('')
   const [savingReview, setSavingReview] = useState(false)
+  const [validatingEvent, setValidatingEvent] = useState(false)
   const [reviewForm, setReviewForm] = useState({
     volunteerBase: '',
     attendanceNames: '',
@@ -419,6 +420,97 @@ function DreamerHistoricalEventsAdminPanel() {
       setError(saveError.message)
     } finally {
       setSavingReview(false)
+    }
+  }
+
+  async function validateEvent() {
+    const event = getReviewEvent()
+
+    if (!event) {
+      setError('Evento histórico não encontrado.')
+      return
+    }
+
+    const preview = getReviewPreview()
+
+    const details = [
+      `Evento: ${event.name}`,
+      `Base histórica: ${preview.volunteerBase || '—'}`,
+    ]
+
+    if (event.attendanceEnabled) {
+      details.push(
+        `Presentes: ${preview.presentCount}`,
+        `Frequência: ${
+          preview.attendanceRate !== null
+            ? `${preview.attendanceRate.toFixed(2)}%`
+            : '—'
+        }`
+      )
+    }
+
+    if (event.economyEnabled) {
+      details.push(
+        `Economia: ${
+          preview.economyAmount !== null
+            ? formatMoney(preview.economyAmount)
+            : '—'
+        }`,
+        `Pontos previstos: ${
+          preview.economyPoints !== null
+            ? preview.economyPoints.toFixed(2)
+            : '—'
+        }`
+      )
+    }
+
+    const confirmed = window.confirm(
+      [
+        'Validar este evento histórico?',
+        '',
+        ...details,
+        '',
+        'Depois da validação, a revisão ficará bloqueada.',
+      ].join('\n')
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setValidatingEvent(true)
+    setError('')
+
+    try {
+      const response = await fetch(
+        '/api/dreamer?action=historical-events',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            operation: 'validateEvent',
+            historicalEventId: event.id,
+          }),
+        }
+      )
+
+      const payload = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.error ||
+            'Não foi possível validar o evento histórico.'
+        )
+      }
+
+      await loadHistoricalEvents()
+      closeReview()
+    } catch (validationError) {
+      setError(validationError.message)
+    } finally {
+      setValidatingEvent(false)
     }
   }
 
@@ -1103,7 +1195,10 @@ function DreamerHistoricalEventsAdminPanel() {
                     <button
                       type="button"
                       onClick={closeReview}
-                      disabled={savingReview}
+                      disabled={
+                        savingReview ||
+                        validatingEvent
+                      }
                     >
                       Fechar
                     </button>
@@ -1111,11 +1206,27 @@ function DreamerHistoricalEventsAdminPanel() {
                     <button
                       type="button"
                       onClick={saveReview}
-                      disabled={savingReview}
+                      disabled={
+                        savingReview ||
+                        validatingEvent
+                      }
                     >
                       {savingReview
                         ? 'Salvando...'
                         : 'Salvar revisão'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={validateEvent}
+                      disabled={
+                        savingReview ||
+                        validatingEvent
+                      }
+                    >
+                      {validatingEvent
+                        ? 'Validando...'
+                        : 'Validar evento'}
                     </button>
                   </div>
                 </div>

@@ -695,6 +695,144 @@ async function saveHistoricalAttendance(
   })
 }
 
+async function validateHistoricalEvent(
+  request,
+  response,
+  campaign,
+  auth
+) {
+  const editable =
+    await getEditableHistoricalEvent(
+      campaign.id,
+      request.body?.historicalEventId
+    )
+
+  const projectRows = await sql`
+    SELECT
+      project_id,
+      volunteer_base,
+      collected_amount,
+      expenses_amount
+    FROM dreamer_historical_event_projects
+    WHERE historical_event_id =
+      ${editable.event.id}
+    ORDER BY project_id
+  `
+
+  if (projectRows.length === 0) {
+    return response.status(400).json({
+      error:
+        'Preencha os dados históricos antes de validar o evento.',
+    })
+  }
+
+  const expectedProjectIds =
+    editable.event.project_id === null
+      ? (await getProjects()).map(
+          project => Number(project.id)
+        )
+      : [Number(editable.event.project_id)]
+
+  const projectMap = new Map(
+    projectRows.map(row => [
+      Number(row.project_id),
+      row,
+    ])
+  )
+
+  for (const projectId of expectedProjectIds) {
+    const row = projectMap.get(projectId)
+
+    if (
+      !row ||
+      !Number.isInteger(
+        Number(row.volunteer_base)
+      ) ||
+      Number(row.volunteer_base) <= 0
+    ) {
+      return response.status(400).json({
+        error:
+          'Todos os projetos do evento precisam possuir uma base histórica válida.',
+      })
+    }
+
+    if (editable.event.economy_enabled) {
+      if (
+        row.collected_amount === null ||
+        row.expenses_amount === null
+      ) {
+        return response.status(400).json({
+          error:
+            'Preencha os dados financeiros de todos os projetos antes de validar.',
+        })
+      }
+    }
+
+    if (editable.event.attendance_enabled) {
+      const [attendance] = await sql`
+        SELECT COUNT(*)::int AS total
+        FROM dreamer_historical_attendance
+        WHERE historical_event_id =
+          ${editable.event.id}
+          AND project_id = ${projectId}
+      `
+
+      const total =
+        Number(attendance?.total || 0)
+
+      if (
+        total >
+        Number(row.volunteer_base)
+      ) {
+        return response.status(400).json({
+          error:
+            'A quantidade de presentes não pode ultrapassar a base histórica.',
+        })
+      }
+    }
+  }
+
+  const [validated] = await sql`
+    UPDATE dreamer_historical_events
+    SET
+      validated = 1,
+      validated_by = ${auth.id},
+      validated_at = NOW(),
+      updated_at = NOW()
+    WHERE id = ${editable.event.id}
+      AND campaign_id = ${campaign.id}
+      AND validated = 0
+    RETURNING
+      id,
+      validated,
+      validated_by,
+      validated_at
+  `
+
+  if (!validated) {
+    return response.status(409).json({
+      error:
+        'Este evento já foi validado ou não está mais disponível para revisão.',
+    })
+  }
+
+  return response.status(200).json({
+    ok: true,
+    event: {
+      id: Number(validated.id),
+      validated: true,
+      validatedBy:
+        validated.validated_by === null
+          ? null
+          : Number(validated.validated_by),
+      validatedAt:
+        validated.validated_at,
+    },
+    message:
+      'Evento histórico validado com sucesso.',
+  })
+}
+
 export default async function dreamerHistoricalEventsHandler(
   request,
   response
@@ -767,6 +905,15 @@ export default async function dreamerHistoricalEventsHandler(
         request,
         response,
         campaign
+      )
+    }
+
+    if (operation === 'validateEvent') {
+      return validateHistoricalEvent(
+        request,
+        response,
+        campaign,
+        auth
       )
     }
 
