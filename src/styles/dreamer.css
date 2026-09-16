@@ -6373,3 +6373,532 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* =========================================================
+   DREAMER — EVENTOS HISTÓRICOS / ADMIN
+   ========================================================= */
+
+.dreamer-history-admin {
+  display: grid;
+  gap: 18px;
+}
+
+.dreamer-history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dreamer-history-header h2 {
+  margin: 4px 0 6px;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+}
+
+.dreamer-history-header p {
+  max-width: 680px;
+  margin: 0;
+  line-height: 1.55;
+  opacity: 0.68;
+}
+
+.dreamer-history-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.dreamer-history-primary,
+.dreamer-history-form__actions button {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 15px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dreamer-history-primary,
+.dreamer-history-form__actions
+  button[type='submit'] {
+  background: #111827;
+  color: #fff;
+}
+
+.dreamer-history-notice {
+  display: grid;
+  gap: 3px;
+  padding: 13px 15px;
+  border: 1px solid rgba(161, 98, 7, 0.16);
+  border-radius: 14px;
+  background: rgba(254, 249, 195, 0.42);
+}
+
+.dreamer-history-notice strong {
+  font-size: 0.82rem;
+}
+
+.dreamer-history-notice span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0.68;
+}
+
+.dreamer-history-error {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(254, 226, 226, 0.75);
+  color: #991b1b;
+}
+
+.dreamer-history-form {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.dreamer-history-form__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dreamer-history-form__header span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+.dreamer-history-form__header h3 {
+  margin: 3px 0 0;
+}
+
+.dreamer-history-form__header > button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.06);
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+
+.dreamer-history-field {
+  display: grid;
+  gap: 7px;
+}
+
+.dreamer-history-field > span,
+.dreamer-history-options legend {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.dreamer-history-field input,
+.dreamer-history-field select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.dreamer-history-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dreamer-history-options legend {
+  grid-column: 1 / -1;
+  margin-bottom: 1px;
+}
+
+.dreamer-history-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 13px;
+  background: rgba(248, 250, 252, 0.72);
+  cursor: pointer;
+}
+
+.dreamer-history-options input {
+  margin-top: 3px;
+}
+
+.dreamer-history-options label > span {
+  display: grid;
+  gap: 2px;
+}
+
+.dreamer-history-options strong {
+  font-size: 0.82rem;
+}
+
+.dreamer-history-options small {
+  line-height: 1.35;
+  opacity: 0.58;
+}
+
+.dreamer-history-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 2px;
+}
+
+.dreamer-history-form__actions
+  button[type='button'] {
+  background: rgba(15, 23, 42, 0.06);
+  color: inherit;
+}
+
+.dreamer-history-form__actions button:disabled,
+.dreamer-history-primary:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.dreamer-history-empty {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 42px 20px;
+  border: 1px dashed rgba(15, 23, 42, 0.14);
+  border-radius: 18px;
+  text-align: center;
+}
+
+.dreamer-history-empty > span {
+  font-size: 1.8rem;
+  opacity: 0.35;
+}
+
+.dreamer-history-empty h3 {
+  margin: 3px 0 0;
+}
+
+.dreamer-history-empty p {
+  max-width: 520px;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  opacity: 0.58;
+}
+
+.dreamer-history-list {
+  display: grid;
+  gap: 11px;
+}
+
+.dreamer-history-card {
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.dreamer-history-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dreamer-history-card__top
+  > div > span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  opacity: 0.48;
+}
+
+.dreamer-history-card h3 {
+  margin: 3px 0;
+}
+
+.dreamer-history-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.62;
+}
+
+.dreamer-history-status {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.dreamer-history-status--review {
+  background: rgba(254, 249, 195, 0.78);
+  color: #854d0e;
+}
+
+.dreamer-history-status--validated {
+  background: rgba(220, 252, 231, 0.82);
+  color: #166534;
+}
+
+.dreamer-history-card__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.dreamer-history-card__flags span {
+  padding: 6px 8px;
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.045);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.dreamer-history-card
+  .dreamer-history-card__pending {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+  font-size: 0.75rem;
+}
+
+.dreamer-history-loading {
+  padding: 30px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+@media (max-width: 640px) {
+  .dreamer-history-header {
+    display: grid;
+  }
+
+  .dreamer-history-primary {
+    width: 100%;
+  }
+
+  .dreamer-history-options {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-history-form {
+    padding: 15px;
+  }
+
+  .dreamer-history-card__top {
+    display: grid;
+  }
+
+  .dreamer-history-status {
+    justify-self: start;
+  }
+
+  .dreamer-history-form__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* =========================================================
+   DREAMER — REVISÃO DE EVENTOS HISTÓRICOS
+   ========================================================= */
+
+.dreamer-history-card__summary {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dreamer-history-summary-project {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.035);
+}
+
+.dreamer-history-summary-project strong {
+  min-width: 42px;
+  font-size: 0.78rem;
+}
+
+.dreamer-history-summary-project span {
+  font-size: 0.72rem;
+  opacity: 0.68;
+}
+
+.dreamer-history-review-button {
+  width: 100%;
+  margin-top: 13px;
+  padding: 10px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.045);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.dreamer-history-review {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 15px;
+  background: rgba(248, 250, 252, 0.78);
+}
+
+.dreamer-history-review__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dreamer-history-review__header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.dreamer-history-review__header > div > span {
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+.dreamer-history-review__header h4 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.dreamer-history-review__section {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.dreamer-history-review__section-title > div {
+  display: grid;
+  gap: 2px;
+}
+
+.dreamer-history-review__section-title strong {
+  font-size: 0.82rem;
+}
+
+.dreamer-history-review__section-title small {
+  font-size: 0.7rem;
+  opacity: 0.55;
+}
+
+.dreamer-history-attendance {
+  width: 100%;
+  min-height: 150px;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.dreamer-history-money-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dreamer-history-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dreamer-history-preview > div {
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.dreamer-history-preview span {
+  font-size: 0.67rem;
+  font-weight: 750;
+  opacity: 0.52;
+}
+
+.dreamer-history-preview strong {
+  font-size: 0.92rem;
+}
+
+.dreamer-history-review__warning {
+  display: grid;
+  gap: 2px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  background: rgba(254, 249, 195, 0.5);
+}
+
+.dreamer-history-review__warning strong {
+  font-size: 0.75rem;
+  color: #854d0e;
+}
+
+.dreamer-history-review__warning span {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  opacity: 0.62;
+}
+
+@media (max-width: 640px) {
+  .dreamer-history-review {
+    padding: 13px;
+  }
+
+  .dreamer-history-review__header {
+    display: grid;
+  }
+
+  .dreamer-history-money-grid,
+  .dreamer-history-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .dreamer-history-summary-project {
+    display: grid;
+    gap: 3px;
+  }
+}
