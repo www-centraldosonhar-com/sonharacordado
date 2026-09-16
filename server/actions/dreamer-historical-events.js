@@ -727,11 +727,11 @@ async function validateHistoricalEvent(
   }
 
   const expectedProjectIds =
-    editable.event.project_id === null
+    editable.event.projectId === null
       ? (await getProjects()).map(
           project => Number(project.id)
         )
-      : [Number(editable.event.project_id)]
+      : [Number(editable.event.projectId)]
 
   const projectMap = new Map(
     projectRows.map(row => [
@@ -756,7 +756,7 @@ async function validateHistoricalEvent(
       })
     }
 
-    if (editable.event.economy_enabled) {
+    if (editable.event.economyEnabled) {
       if (
         row.collected_amount === null ||
         row.expenses_amount === null
@@ -768,7 +768,7 @@ async function validateHistoricalEvent(
       }
     }
 
-    if (editable.event.attendance_enabled) {
+    if (editable.event.attendanceEnabled) {
       const [attendance] = await sql`
         SELECT COUNT(*)::int AS total
         FROM dreamer_historical_attendance
