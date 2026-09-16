@@ -514,7 +514,14 @@ function DreamerHistoricalEventsAdminPanel() {
       await loadHistoricalEvents()
       closeReview()
     } catch (validationError) {
-      setError(validationError.message)
+      console.error(
+        '[historical-events] validateEvent failed:',
+        validationError
+      )
+      setError(
+        validationError?.message ||
+          'Não foi possível validar o evento histórico.'
+      )
     } finally {
       setValidatingEvent(false)
     }
