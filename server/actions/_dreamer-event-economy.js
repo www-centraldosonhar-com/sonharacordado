@@ -129,19 +129,130 @@ export async function calculateEventEconomy(
     })
   }
 
+  // Primeiro calcula a pontuação dos eventos nativos usando
+  // a base competitiva atual da campanha.
   for (const result of byProject.values()) {
     result.economyAmount =
       Number(result.economyAmount.toFixed(2))
 
-    result.economyPoints =
+    result.nativeEconomyPoints =
       result.volunteerCount > 0
-        ? Number(
-            (
-              result.economyAmount /
-              result.volunteerCount
-            ).toFixed(2)
-          )
+        ? result.economyAmount /
+          result.volunteerCount
         : 0
+
+    result.historicalEconomyPoints = 0
+  }
+
+  // Eventos históricos validados de projeto participam da Economia.
+  // Eventos gerais (project_id NULL) permanecem fora desta categoria,
+  // seguindo a mesma regra dos eventos nativos.
+  const historicalRows = await sql`
+    SELECT
+      historical.id AS historical_event_id,
+      historical.name AS event_name,
+      historical.event_date,
+      historical.project_id,
+      historical_project.volunteer_base,
+      historical_project.collected_amount,
+      historical_project.expenses_amount
+    FROM dreamer_historical_events historical
+    JOIN dreamer_historical_event_projects historical_project
+      ON historical_project.historical_event_id =
+        historical.id
+      AND historical_project.project_id =
+        historical.project_id
+    WHERE
+      historical.campaign_id = ${campaignId}
+      AND historical.validated = 1
+      AND historical.economy_enabled = 1
+      AND historical.project_id IS NOT NULL
+    ORDER BY
+      historical.project_id,
+      historical.event_date,
+      historical.id
+  `
+
+  for (const row of historicalRows) {
+    const projectId =
+      Number(row.project_id)
+
+    const result =
+      byProject.get(projectId)
+
+    if (!result) {
+      continue
+    }
+
+    const volunteerBase =
+      Number(row.volunteer_base || 0)
+
+    const collectedAmount =
+      Number(row.collected_amount || 0)
+
+    const expensesAmount =
+      Number(row.expenses_amount || 0)
+
+    if (volunteerBase <= 0) {
+      continue
+    }
+
+    const balanceAmount =
+      collectedAmount - expensesAmount
+
+    const economyAmount =
+      Math.max(0, balanceAmount)
+
+    const economyPoints =
+      economyAmount / volunteerBase
+
+    result.economyAmount +=
+      economyAmount
+
+    result.historicalEconomyPoints +=
+      economyPoints
+
+    result.calculatedEvents += 1
+
+    result.events.push({
+      eventId: null,
+      historicalEventId:
+        Number(row.historical_event_id),
+      historical: true,
+      eventName: row.event_name,
+      eventDate: row.event_date,
+      volunteerCount: volunteerBase,
+      collectedAmount,
+      expensesAmount,
+      balanceAmount,
+      economyAmount:
+        Number(economyAmount.toFixed(2)),
+      economyPoints:
+        Number(economyPoints.toFixed(2)),
+    })
+  }
+
+  for (const result of byProject.values()) {
+    result.economyAmount =
+      Number(result.economyAmount.toFixed(2))
+
+    result.nativeEconomyPoints =
+      Number(
+        result.nativeEconomyPoints.toFixed(2)
+      )
+
+    result.historicalEconomyPoints =
+      Number(
+        result.historicalEconomyPoints.toFixed(2)
+      )
+
+    result.economyPoints =
+      Number(
+        (
+          result.nativeEconomyPoints +
+          result.historicalEconomyPoints
+        ).toFixed(2)
+      )
   }
 
   return byProject
