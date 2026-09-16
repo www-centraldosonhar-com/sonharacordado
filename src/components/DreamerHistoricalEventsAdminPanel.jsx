@@ -453,7 +453,13 @@ function DreamerHistoricalEventsAdminPanel() {
       details.push(
         `Economia: ${
           preview.economyAmount !== null
-            ? formatMoney(preview.economyAmount)
+            ? `R$ ${preview.economyAmount.toLocaleString(
+                'pt-BR',
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }
+              )}`
             : '—'
         }`,
         `Pontos previstos: ${
