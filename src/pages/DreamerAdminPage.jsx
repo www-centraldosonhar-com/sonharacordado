@@ -3,6 +3,7 @@ import {
 } from 'react'
 
 import DreamerAttendanceAdminPanel from '../components/DreamerAttendanceAdminPanel'
+import DreamerEventEconomyAdminPanel from '../components/DreamerEventEconomyAdminPanel'
 import DreamerFundraisingAdminPanel from '../components/DreamerFundraisingAdminPanel'
 import DreamerMissionsAdminPanel from '../components/DreamerMissionsAdminPanel'
 import DreamerReferralsAdminPanel from '../components/DreamerReferralsAdminPanel'
@@ -21,6 +22,11 @@ const ADMIN_SECTIONS = [
     id: 'frequency',
     label: 'Frequência',
     icon: '✓',
+  },
+  {
+    id: 'event-economy',
+    label: 'Economia de Eventos',
+    icon: '◇',
   },
   {
     id: 'fundraising',
@@ -280,6 +286,10 @@ function DreamerAdminPage({
 
           {section === 'frequency' ? (
             <DreamerAttendanceAdminPanel />
+          ) : null}
+
+          {section === 'event-economy' ? (
+            <DreamerEventEconomyAdminPanel />
           ) : null}
 
           {section === 'fundraising' ? (

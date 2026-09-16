@@ -1,5 +1,6 @@
 import dreamerHomeHandler from '../server/actions/dreamer-home.js'
 import dreamerFrequencyHandler from '../server/actions/dreamer-frequency.js'
+import dreamerEventEconomyHandler from '../server/actions/dreamer-event-economy.js'
 import dreamerTeamHandler from '../server/actions/dreamer-team.js'
 import dreamerFundraisingHandler from '../server/actions/dreamer-fundraising.js'
 import dreamerMissionsHandler from '../server/actions/dreamer-missions.js'
@@ -67,6 +68,13 @@ export default async function handler(
 
   if (action === 'community') {
     return dreamerCommunityHandler(
+      request,
+      response
+    )
+  }
+
+  if (action === 'event-economy') {
+    return dreamerEventEconomyHandler(
       request,
       response
     )

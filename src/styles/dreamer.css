@@ -6119,3 +6119,257 @@
     white-space: normal;
   }
 }
+
+/* =========================================
+   DREAMER — ECONOMIA DE EVENTOS / ADMIN
+   ========================================= */
+
+.dreamer-economy-admin {
+  display: grid;
+  gap: 22px;
+}
+
+.dreamer-economy-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dreamer-economy-header h2 {
+  margin: 4px 0 6px;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+
+.dreamer-economy-header p {
+  margin: 0;
+  max-width: 680px;
+  opacity: 0.7;
+  line-height: 1.55;
+}
+
+.dreamer-economy-kicker {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.dreamer-economy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dreamer-economy-project {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.dreamer-economy-project__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-top: 4px solid rgba(15, 23, 42, 0.18);
+}
+
+.dreamer-economy-project--aps
+  .dreamer-economy-project__header {
+  border-top-color: #dc2626;
+}
+
+.dreamer-economy-project--ppf
+  .dreamer-economy-project__header {
+  border-top-color: #2563eb;
+}
+
+.dreamer-economy-project--sj
+  .dreamer-economy-project__header {
+  border-top-color: #f97316;
+}
+
+.dreamer-economy-project__header > div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dreamer-economy-project__header > div:first-child strong {
+  font-size: 1.05rem;
+}
+
+.dreamer-economy-project__header small {
+  opacity: 0.62;
+}
+
+.dreamer-economy-project__points {
+  display: grid;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.dreamer-economy-project__points strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.dreamer-economy-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(15, 23, 42, 0.06);
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.dreamer-economy-summary span {
+  display: grid;
+  gap: 5px;
+  padding: 14px 18px;
+  background: #fff;
+}
+
+.dreamer-economy-summary small,
+.dreamer-economy-event__numbers small {
+  font-size: 0.72rem;
+  opacity: 0.58;
+}
+
+.dreamer-economy-summary strong {
+  font-size: 0.98rem;
+}
+
+.dreamer-economy-events {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.dreamer-economy-event {
+  padding: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.dreamer-economy-event--calculated {
+  background: rgba(240, 253, 244, 0.72);
+}
+
+.dreamer-economy-event__title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dreamer-economy-event__title > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dreamer-economy-event__title strong {
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.dreamer-economy-event__title small {
+  font-size: 0.72rem;
+  opacity: 0.58;
+}
+
+.dreamer-economy-event__title > span {
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.dreamer-economy-event--calculated
+  .dreamer-economy-event__title > span {
+  color: #15803d;
+}
+
+.dreamer-economy-event--pending
+  .dreamer-economy-event__title > span {
+  color: #a16207;
+}
+
+.dreamer-economy-event__numbers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dreamer-economy-event__numbers span {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.dreamer-economy-event__numbers strong {
+  font-size: 0.82rem;
+}
+
+.dreamer-economy-event__pending-copy,
+.dreamer-economy-empty {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  opacity: 0.62;
+}
+
+.dreamer-economy-error {
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(254, 226, 226, 0.75);
+  color: #991b1b;
+}
+
+@media (max-width: 1100px) {
+  .dreamer-economy-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .dreamer-economy-admin {
+    gap: 16px;
+  }
+
+  .dreamer-economy-project {
+    border-radius: 16px;
+  }
+
+  .dreamer-economy-project__header {
+    padding: 15px;
+  }
+
+  .dreamer-economy-events {
+    padding: 10px;
+  }
+
+  .dreamer-economy-event__title {
+    display: grid;
+  }
+
+  .dreamer-economy-event__title > span {
+    justify-self: start;
+  }
+
+  .dreamer-economy-event__numbers {
+    grid-template-columns: 1fr 1fr;
+  }
+}
