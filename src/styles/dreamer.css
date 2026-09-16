@@ -744,7 +744,7 @@
 
   .dreamer-admin-page {
     display: block;
-    padding-bottom: 82px;
+    padding-bottom: 96px;
   }
 
   .dreamer-admin-sidebar {
@@ -769,14 +769,24 @@
   }
 
   .dreamer-admin-sidebar__nav {
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
     gap: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dreamer-admin-sidebar__nav::-webkit-scrollbar {
+    display: none;
   }
 
   .dreamer-admin-sidebar__nav button {
+    flex: 0 0 auto;
     grid-template-columns: 22px auto;
     justify-content: center;
-    padding: 11px 8px;
+    min-width: max-content;
+    padding: 11px 14px;
   }
 
   .dreamer-admin-sidebar__nav button > strong {
