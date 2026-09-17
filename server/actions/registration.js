@@ -97,7 +97,7 @@ async function getEvent(
       paired_registration_event_id,
       active,
       registration_fee,
-      registration_deadline,
+      registration_deadline::text AS registration_deadline,
       registrations_open,
       event_date::text AS event_date
     FROM events
@@ -252,6 +252,29 @@ async function canRegisterWithoutTeam(userId) {
   return Boolean(rows[0])
 }
 
+function parseSaoPauloDeadline(value) {
+  if (!value) {
+    return null
+  }
+
+  const raw = String(value).trim()
+  const hasTimezone =
+    /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)
+
+  const normalized = raw
+    .replace(' ', 'T')
+
+  const parsed = new Date(
+    hasTimezone
+      ? normalized
+      : `${normalized}-03:00`
+  )
+
+  return Number.isNaN(parsed.getTime())
+    ? null
+    : parsed
+}
+
 function registrationIsOpen(event) {
   if (
     !event ||
@@ -261,15 +284,16 @@ function registrationIsOpen(event) {
     return false
   }
 
-  if (!event.registration_deadline) {
+  const deadline =
+    parseSaoPauloDeadline(
+      event.registration_deadline
+    )
+
+  if (!deadline) {
     return false
   }
 
-  return (
-    new Date(
-      event.registration_deadline
-    ) >= new Date()
-  )
+  return deadline >= new Date()
 }
 
 function cleanEmail(value) {

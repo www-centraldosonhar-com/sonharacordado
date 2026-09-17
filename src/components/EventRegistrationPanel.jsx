@@ -119,11 +119,32 @@ const [coupon, setCoupon] =
       event.registration_fee || 0
     ) <= 0
 
-  const deadlineOpen =
-    event.registration_deadline &&
-    new Date(
+  const deadlineOpen = (() => {
+    if (!event.registration_deadline) {
+      return false
+    }
+
+    const raw = String(
       event.registration_deadline
-    ) >= new Date()
+    ).trim()
+
+    const hasTimezone =
+      /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)
+
+    const normalized = raw
+      .replace(' ', 'T')
+
+    const deadline = new Date(
+      hasTimezone
+        ? normalized
+        : `${normalized}-03:00`
+    )
+
+    return (
+      !Number.isNaN(deadline.getTime()) &&
+      deadline >= new Date()
+    )
+  })()
 
   const registrationOpen =
     Number(
