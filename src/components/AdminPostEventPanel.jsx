@@ -239,7 +239,17 @@ function AdminPostEventPanel({
     setGeneralFinancialCompleteByEvent,
   ] = useState({})
 
+  const persistedGeneralFinancialStatus =
+    String(
+      summary?.generalFinancial
+        ?.review_status || 'pending'
+    )
+
   const generalFinancialComplete =
+    persistedGeneralFinancialStatus ===
+      'submitted' ||
+    persistedGeneralFinancialStatus ===
+      'approved' ||
     Boolean(
       generalFinancialCompleteByEvent[
         Number(selectedEventId)

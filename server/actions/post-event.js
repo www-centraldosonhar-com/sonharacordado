@@ -908,12 +908,33 @@ export default async function handler(
           LIMIT 1
         `
 
+      const generalFinancialRows =
+        event.project_id === null
+          ? await sql`
+              SELECT
+                event_id,
+                financial_status,
+                review_status,
+                submitted_at,
+                reviewed_at
+              FROM post_event_general_financial
+              WHERE event_id =
+                ${numericEventId}
+              LIMIT 1
+            `
+          : []
+
+      const generalFinancial =
+        generalFinancialRows[0] || null
+
       return response.status(200).json({
         event,
 
         attendance,
 
         financial,
+
+        generalFinancial,
 
         teamReports,
 
