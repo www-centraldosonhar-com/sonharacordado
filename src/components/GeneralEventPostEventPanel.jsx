@@ -28,7 +28,7 @@ export default function GeneralEventPostEventPanel({
   const [receipt, setReceipt] = useState(null)
   const [message, setMessage] = useState('')
 
-  const financial = summary?.financial || {}
+  const financial = summary?.generalFinancial || {}
 
   const expenses =
     Array.isArray(summary?.expenses)
@@ -52,7 +52,7 @@ export default function GeneralEventPostEventPanel({
   const financialComplete = reviewStatus === 'submitted' || reviewStatus === 'approved'
 
   const emitFinancialState = useCallback((nextSummary) => {
-    const nextStatus = String(nextSummary?.financial?.review_status || 'pending')
+    const nextStatus = String(nextSummary?.generalFinancial?.review_status || 'pending')
     onFinancialStateChange?.(nextStatus === 'submitted' || nextStatus === 'approved')
   }, [onFinancialStateChange])
 
