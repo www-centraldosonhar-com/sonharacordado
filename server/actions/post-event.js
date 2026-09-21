@@ -1088,107 +1088,163 @@ export default async function handler(
           })
       }
 
-      // =================================================
-      // FECHAMENTOS DAS EQUIPES
-      // =================================================
-      // O financeiro global só pode ser finalizado depois
-      // que todos os fechamentos existentes deste evento
-      // forem aprovados.
-      //
-      // A proteção é feita no backend para não depender
-      // apenas do estado visual do botão no frontend.
-      // =================================================
+      let totalRows
 
-      const teamClosureRows =
-        await sql`
-          SELECT
-            COUNT(*)::int
-              AS total_count,
+      if (event.project_id === null) {
+        // =================================================
+        // EVENTO GERAL
+        // =================================================
 
-            COUNT(*) FILTER (
-              WHERE
-                report.status = 'approved'
-                AND report.financial_status IN (
-                  'expenses',
-                  'no_expenses',
-                  'donation'
-                )
-            )::int
-              AS approved_count
+        const generalFinancialRows =
+          await sql`
+            SELECT
+              financial_status,
+              review_status
+            FROM post_event_general_financial
+            WHERE event_id =
+              ${numericEventId}
+            LIMIT 1
+          `
 
-          FROM post_event_team_reports report
+        const generalFinancial =
+          generalFinancialRows[0] || null
 
-          JOIN teams team
-            ON team.id = report.team_id
+        const generalReviewStatus =
+          String(
+            generalFinancial?.review_status ||
+              'pending'
+          )
 
-          WHERE
-            report.event_id = ${numericEventId}
-            AND team.active = 1
-        `
+        if (
+          ![
+            'submitted',
+            'approved',
+          ].includes(generalReviewStatus)
+        ) {
+          return response
+            .status(409)
+            .json({
+              error:
+                'Finalize primeiro a prestação financeira do Evento Geral.',
+            })
+        }
 
-      const totalTeamClosures =
-        Number(
-          teamClosureRows[0]
-            ?.total_count || 0
-        )
-
-      const approvedTeamClosures =
-        Number(
-          teamClosureRows[0]
-            ?.approved_count || 0
-        )
-
-      if (
-        totalTeamClosures === 0
-      ) {
-        return response
-          .status(409)
-          .json({
-            error:
-              'Nenhum fechamento de equipe está disponível para este evento.',
-          })
-      }
-
-      if (
-        approvedTeamClosures !==
-        totalTeamClosures
-      ) {
-        return response
-          .status(409)
-          .json({
-            error:
-              'Ainda existem fechamentos de equipe aguardando aprovação.',
-
-            totalTeamClosures,
-            approvedTeamClosures,
-
-            pendingTeamClosures:
-              totalTeamClosures -
-              approvedTeamClosures,
-          })
-      }
-
-
-      const totalRows =
-        await sql`
-          SELECT
-            COUNT(*) FILTER (
-              WHERE active = 1
-            )::int AS expense_count,
-
-            COALESCE(
-              SUM(amount) FILTER (
+        totalRows =
+          await sql`
+            SELECT
+              COUNT(*) FILTER (
                 WHERE active = 1
-              ),
-              0
-            )::numeric(12,2)
-              AS expense_total
+              )::int AS expense_count,
 
-          FROM team_expenses
+              COALESCE(
+                SUM(amount) FILTER (
+                  WHERE active = 1
+                ),
+                0
+              )::numeric(12,2)
+                AS expense_total
 
-          WHERE event_id =
-            ${numericEventId}
-        `
+            FROM general_event_expenses
+
+            WHERE event_id =
+              ${numericEventId}
+          `
+      } else {
+        // =================================================
+        // FECHAMENTOS DAS EQUIPES
+        // =================================================
+        // Eventos de projeto mantêm a regra existente:
+        // todos os fechamentos precisam estar aprovados.
+        // =================================================
+
+        const teamClosureRows =
+          await sql`
+            SELECT
+              COUNT(*)::int
+                AS total_count,
+
+              COUNT(*) FILTER (
+                WHERE
+                  report.status = 'approved'
+                  AND report.financial_status IN (
+                    'expenses',
+                    'no_expenses',
+                    'donation'
+                  )
+              )::int
+                AS approved_count
+
+            FROM post_event_team_reports report
+
+            JOIN teams team
+              ON team.id = report.team_id
+
+            WHERE
+              report.event_id = ${numericEventId}
+              AND team.active = 1
+          `
+
+        const totalTeamClosures =
+          Number(
+            teamClosureRows[0]
+              ?.total_count || 0
+          )
+
+        const approvedTeamClosures =
+          Number(
+            teamClosureRows[0]
+              ?.approved_count || 0
+          )
+
+        if (totalTeamClosures === 0) {
+          return response
+            .status(409)
+            .json({
+              error:
+                'Nenhum fechamento de equipe está disponível para este evento.',
+            })
+        }
+
+        if (
+          approvedTeamClosures !==
+          totalTeamClosures
+        ) {
+          return response
+            .status(409)
+            .json({
+              error:
+                'Ainda existem fechamentos de equipe aguardando aprovação.',
+
+              totalTeamClosures,
+              approvedTeamClosures,
+
+              pendingTeamClosures:
+                totalTeamClosures -
+                approvedTeamClosures,
+            })
+        }
+
+        totalRows =
+          await sql`
+            SELECT
+              COUNT(*) FILTER (
+                WHERE active = 1
+              )::int AS expense_count,
+
+              COALESCE(
+                SUM(amount) FILTER (
+                  WHERE active = 1
+                ),
+                0
+              )::numeric(12,2)
+                AS expense_total
+
+            FROM team_expenses
+
+            WHERE event_id =
+              ${numericEventId}
+          `
+      }
 
       await sql`
         UPDATE post_event_closures
