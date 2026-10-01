@@ -36,3 +36,93 @@ select,
 textarea {
   font: inherit;
 }
+
+/* =====================================================
+   PIZZADA SOLIDÁRIA — POPUP
+   ===================================================== */
+
+.pizzada-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(10, 16, 30, 0.72);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.pizzada-popup-card {
+  position: relative;
+  width: min(100%, 430px);
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.pizzada-popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  color: #1f2937;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.pizzada-popup-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 22px 22px 0 0;
+}
+
+.pizzada-popup-content {
+  padding: 14px;
+}
+
+.pizzada-popup-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-weight: 800;
+  text-align: center;
+  background: #111827;
+  color: #fff;
+}
+
+@media (max-width: 520px) {
+  .pizzada-popup-overlay {
+    padding: 12px;
+  }
+
+  .pizzada-popup-card {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 18px;
+  }
+
+  .pizzada-popup-image {
+    border-radius: 18px 18px 0 0;
+  }
+}
+

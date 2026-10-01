@@ -119,8 +119,39 @@ function HomePage({
   const currentUser =
     data?.currentUser || user
 
+  const pizzadaPopupKey =
+    currentUser?.id
+      ? `pizzada-solidaria-2026-dismissed-${currentUser.id}`
+      : null
+
+  const [showPizzadaPopup, setShowPizzadaPopup] =
+    useState(() => {
+      const today = new Date()
+      const campaignStart = new Date(2026, 9, 1)
+
+      return today >= campaignStart
+    })
+
+  const dismissPizzadaPopup = () => {
+    if (pizzadaPopupKey) {
+      localStorage.setItem(
+        pizzadaPopupKey,
+        '1'
+      )
+    }
+
+    setShowPizzadaPopup(false)
+  }
+
   const volunteerAccess =
     data?.volunteerAccess
+
+  const shouldShowPizzadaPopup =
+    showPizzadaPopup &&
+    Boolean(pizzadaPopupKey) &&
+    localStorage.getItem(
+      pizzadaPopupKey
+    ) !== '1'
 
   // =====================================================
   // HOME VIEWS
@@ -421,8 +452,46 @@ function HomePage({
     )
   }
 
+  const pizzadaPopup = shouldShowPizzadaPopup ? (
+    <div
+      className="pizzada-popup-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Pizzada Solidária"
+    >
+      <div className="pizzada-popup-card">
+        <button
+          type="button"
+          className="pizzada-popup-close"
+          aria-label="Fechar"
+          onClick={dismissPizzadaPopup}
+        >
+          ×
+        </button>
+
+        <img
+          src="/pizzada-solidaria-2026.JPG"
+          alt="Pizzada Solidária"
+          className="pizzada-popup-image"
+        />
+
+        <div className="pizzada-popup-content">
+          <a
+            href="https://www.sympla.com.br/evento/pizzada-dos-sonhos/3585741"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pizzada-popup-button"
+          >
+            🎟️ Comprar ingresso no Sympla
+          </a>
+        </div>
+      </div>
+    </div>
+  ) : null
+
   return (
     <>
+      {pizzadaPopup}
       <AppHeader
         user={currentUser}
         onBack={onBack}
