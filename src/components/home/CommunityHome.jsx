@@ -827,6 +827,42 @@ function CommunityHome({
                   const today =
                     isBirthdayToday(person)
 
+                  const birthDateRaw =
+                    person?.birth_date ||
+                    person?.birthDate ||
+                    person?.birthday
+
+                  const birthDateParts =
+                    String(birthDateRaw || '')
+                      .slice(0, 10)
+                      .split('-')
+
+                  const birthDay =
+                    Number(birthDateParts[2])
+
+                  const birthMonth =
+                    Number(birthDateParts[1])
+
+                  const birthdayLabel =
+                    birthDay && birthMonth
+                      ? `${String(birthDay).padStart(2, '0')} de ${
+                          [
+                            'janeiro',
+                            'fevereiro',
+                            'março',
+                            'abril',
+                            'maio',
+                            'junho',
+                            'julho',
+                            'agosto',
+                            'setembro',
+                            'outubro',
+                            'novembro',
+                            'dezembro',
+                          ][birthMonth - 1]
+                        }`
+                      : ''
+
                   return (
                     <div
                       className={
@@ -857,9 +893,8 @@ function CommunityHome({
 
                         <span>
                           {today
-                            ? '🎂 É hoje!'
-                            : person?.project ||
-                              'Sonhar Acordado'}
+                            ? `🎂 É hoje!${birthdayLabel ? ` · ${birthdayLabel}` : ''}`
+                            : `${person?.project || 'Sonhar Acordado'}${birthdayLabel ? ` · ${birthdayLabel}` : ''}`}
                         </span>
                       </div>
 
