@@ -467,6 +467,41 @@ const [coupon, setCoupon] =
     )
   }
 
+  if (event.sympla_link) {
+    return (
+      <div className="registration-status-card">
+        <strong>
+          🍕 Evento especial
+        </strong>
+
+        <p>
+          Ingressos vendidos pelo Sympla.
+        </p>
+
+        <p>
+          <strong>
+            R$ {Number(event.registration_fee || 0).toFixed(2).replace('.', ',')}
+          </strong>
+        </p>
+
+        <a
+          href={event.sympla_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="registration-compact-trigger"
+        >
+          <span>
+            🎟️ Comprar ingresso no Sympla
+          </span>
+
+          <span aria-hidden="true">
+            →
+          </span>
+        </a>
+      </div>
+    )
+  }
+
   if (!registrationOpen) {
     return (
       <div className="registration-status-card">
