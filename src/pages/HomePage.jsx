@@ -124,14 +124,6 @@ function HomePage({
       ? `pizzada-solidaria-2026-dismissed-${currentUser.id}`
       : null
 
-  const [showPizzadaPopup, setShowPizzadaPopup] =
-    useState(() => {
-      const today = new Date()
-      const campaignStart = new Date(2026, 9, 1)
-
-      return today >= campaignStart
-    })
-
   const dismissPizzadaPopup = () => {
     if (pizzadaPopupKey) {
       localStorage.setItem(
@@ -140,14 +132,18 @@ function HomePage({
       )
     }
 
-    setShowPizzadaPopup(false)
+    window.location.reload()
   }
 
   const volunteerAccess =
     data?.volunteerAccess
 
+  const today = new Date()
+  const pizzadaCampaignStarted =
+    today >= new Date(2026, 9, 1)
+
   const shouldShowPizzadaPopup =
-    showPizzadaPopup &&
+    pizzadaCampaignStarted &&
     Boolean(pizzadaPopupKey) &&
     localStorage.getItem(
       pizzadaPopupKey
