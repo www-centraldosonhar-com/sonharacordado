@@ -1894,6 +1894,9 @@ function AdminPage({
                   registrations={
                     data.registrations || []
                   }
+                  events={
+                    data.events || []
+                  }
                   coupons={
                     data.registrationCoupons || []
                   }

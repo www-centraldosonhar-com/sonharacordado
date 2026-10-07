@@ -97,6 +97,7 @@ function formatMoney(value) {
 
 function AdminRegistrationsPanel({
   registrations = [],
+  events = [],
   coupons = [],
   canManageCoupons = false,
   canViewPresenceHistory = false,
@@ -139,6 +140,31 @@ function AdminRegistrationsPanel({
     useMemo(() => {
       const groups =
         new Map()
+
+      for (const event of events) {
+        const eventId =
+          Number(event.id)
+
+        if (!Number.isFinite(eventId)) {
+          continue
+        }
+
+        groups.set(
+          eventId,
+          {
+            eventId,
+            eventName:
+              event.name ||
+              event.event_name ||
+              'Evento',
+
+            eventDate:
+              event.event_date,
+
+            registrations: [],
+          }
+        )
+      }
 
       for (
         const registration
@@ -200,7 +226,7 @@ function AdminRegistrationsPanel({
       }
 
       return result
-    }, [registrations])
+    }, [registrations, events])
 
 
   // =====================================================
@@ -476,6 +502,10 @@ function AdminRegistrationsPanel({
           }))
           .filter(
             (group) =>
+              (
+                !normalizedSearch &&
+                statusFilter === 'all'
+              ) ||
               group.registrations.length > 0
           ),
       [
