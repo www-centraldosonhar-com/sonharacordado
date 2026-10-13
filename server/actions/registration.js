@@ -12,6 +12,7 @@ const TEAMS = new Set([
   'media',
   'food',
   'volunteers',
+  'partnerships',
   'administration',
 ])
 
