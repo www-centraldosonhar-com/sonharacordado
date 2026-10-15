@@ -341,6 +341,14 @@ function HomePage({
                         'assisted',
                       ].includes(teamCode)
 
+                    const globalAdminPeopleActivity =
+                      currentUser?.adminScope ===
+                        'global' &&
+                      [
+                        'volunteers',
+                        'assisted',
+                      ].includes(teamCode)
+
                     const joinedMediaActivity =
                       teamCode === 'media' &&
                       myConfirmedActivityIds.has(
@@ -350,6 +358,7 @@ function HomePage({
                     return (
                       ownTeamActivity ||
                       ppfUnifiedPeopleActivity ||
+                      globalAdminPeopleActivity ||
                       joinedMediaActivity
                     )
                   }

@@ -113,12 +113,21 @@ export default async function handler(
 
     const users = await sql`
       SELECT
-        id,
-        project_id
-      FROM users
-      WHERE id =
+        u.id,
+        u.project_id,
+        (
+          SELECT up_admin.admin_scope
+          FROM user_permissions up_admin
+          WHERE
+            up_admin.user_id = u.id
+            AND up_admin.permission = 'admin'
+            AND up_admin.active = 1
+          LIMIT 1
+        ) AS admin_scope
+      FROM users u
+      WHERE u.id =
         ${sessionUser.userId}
-        AND active = 1
+        AND u.active = 1
       LIMIT 1
     `
 
@@ -196,9 +205,14 @@ export default async function handler(
         Boolean(volunteerMembership[0])
     }
 
+    const globalAdminPeopleActivity =
+      user.admin_scope === 'global' &&
+      ['volunteers', 'assisted'].includes(activityTeamCode)
+
     const canAccessActivityTeam =
       belongsToActivityTeam ||
-      belongsToPpfUnifiedPeopleTeam
+      belongsToPpfUnifiedPeopleTeam ||
+      globalAdminPeopleActivity
 
     // =====================================================
     // BUSINESS RULE — COMMUNITY
