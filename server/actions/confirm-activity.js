@@ -205,14 +205,14 @@ export default async function handler(
         Boolean(volunteerMembership[0])
     }
 
-    const globalAdminPeopleActivity =
-      user.admin_scope === 'global' &&
+    const specialPeopleActivityAccess =
+      Number(user.id) === 207 &&
       ['volunteers', 'assisted'].includes(activityTeamCode)
 
     const canAccessActivityTeam =
       belongsToActivityTeam ||
       belongsToPpfUnifiedPeopleTeam ||
-      globalAdminPeopleActivity
+      specialPeopleActivityAccess
 
     // =====================================================
     // BUSINESS RULE — COMMUNITY
