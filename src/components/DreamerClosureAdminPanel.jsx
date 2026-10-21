@@ -149,7 +149,8 @@ export default function DreamerClosureAdminPanel() {
                 <span>Arrecadação <b>{points(team.fundraisingPoints)}</b></span>
                 <span>Frequência <b>{points(team.frequencyPoints)}</b></span>
                 <span>Missões <b>{points(team.missionPoints)}</b></span>
-                <span>Indicações <b>{points(team.referralPoints)}</b></span>
+                <span>Vendas por Missões <b>{currency(team.missionSales)}</b></span>
+                <span>Pontos por Missões <b>{points(team.missionSalesPoints)}</b></span>
                 <span>Ajustes <b>{points(team.adjustmentPoints)}</b></span>
               </div>
             </article>

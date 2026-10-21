@@ -5,6 +5,7 @@ import { requireDreamerUser } from './_dreamer-access.js'
 import { calculateAttendanceFrequency } from './_dreamer-frequency.js'
 import { calculateEventEconomy } from './_dreamer-event-economy.js'
 import { referralPointsByProject } from './dreamer-referrals.js'
+import { missionSalesAmount } from './_dreamer-mission-sales.js'
 
 const sql = neon(process.env.DATABASE_URL)
 const OLYMPIAD_SLUG = 'olimpiada-sonhadora'
@@ -128,6 +129,10 @@ async function buildSummary(campaign) {
       ? netTotal / volunteerCount
       : 0
     const missionPoints = number(row.mission_points)
+    const missionSales = missionSalesAmount(row.project_id)
+    const missionSalesPoints = volunteerCount > 0
+      ? missionSales / volunteerCount
+      : 0
     const referralPoints = number(
       referralPointsMap.get(Number(row.project_id))
     )
@@ -164,6 +169,8 @@ async function buildSummary(campaign) {
       economyEventCount,
       economyPoints: round(economyPoints),
       missionPoints: round(missionPoints),
+      missionSales: round(missionSales),
+      missionSalesPoints: round(missionSalesPoints),
       referralPoints: round(referralPoints),
       frequencyPoints: round(frequencyPoints),
       adjustmentPoints: round(adjustmentPoints),
@@ -171,7 +178,7 @@ async function buildSummary(campaign) {
         fundraisingPoints +
         economyPoints +
         missionPoints +
-        referralPoints +
+        missionSalesPoints +
         frequencyPoints +
         adjustmentPoints
       ),

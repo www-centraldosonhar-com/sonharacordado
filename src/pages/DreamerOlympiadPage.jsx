@@ -329,8 +329,12 @@ function DreamerOlympiadPage({
                           <strong>{Number(team.missionPoints || 0).toFixed(2)} pts</strong>
                         </span>
                         <span>
-                          <small>Indicações</small>
-                          <strong>{Number(team.referralPoints || 0).toFixed(2)} pts</strong>
+                          <small>Vendas por Missões</small>
+                          <strong>{formatCurrency(team.missionSales)}</strong>
+                        </span>
+                        <span>
+                          <small>Pontos por Missões</small>
+                          <strong>{Number(team.missionSalesPoints || 0).toFixed(2)} pts</strong>
                         </span>
                       </div>
                     </article>
@@ -372,9 +376,9 @@ function DreamerOlympiadPage({
                 </article>
                 <article>
                   <span>04</span>
-                  <strong>Indicações</strong>
+                  <strong>Vendas por Missões</strong>
                   <p>
-                    Convites qualificados geram pontos automaticamente nas faixas de 5, 20 e 45 indicações.
+                    O valor obtido em vendas ligadas às missões é convertido em pontos pela mesma regra da arrecadação: valor dividido pela base oficial de voluntários do projeto.
                   </p>
                 </article>
               </div>

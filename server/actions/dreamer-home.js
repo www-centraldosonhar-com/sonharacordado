@@ -17,6 +17,10 @@ import {
   referralPointsByProject,
 } from './dreamer-referrals.js'
 
+import {
+  missionSalesAmount,
+} from './_dreamer-mission-sales.js'
+
 const sql =
   neon(process.env.DATABASE_URL)
 
@@ -238,11 +242,22 @@ export default async function handler(
                 volunteerCount
               : 0
 
+          const missionSales =
+            missionSalesAmount(
+              team.project_id
+            )
+
+          const missionSalesPoints =
+            volunteerCount > 0
+              ? missionSales /
+                volunteerCount
+              : 0
+
           const totalPoints =
             fundraisingPoints +
             economyPoints +
             missionPoints +
-            referralPoints +
+            missionSalesPoints +
             adjustmentPoints
 
           return {
@@ -272,6 +287,12 @@ export default async function handler(
             economyPoints,
 
             missionPoints,
+            missionSales,
+            missionSalesPoints:
+              Number(
+                missionSalesPoints
+                  .toFixed(2)
+              ),
             referralPoints,
             adjustmentPoints,
 
