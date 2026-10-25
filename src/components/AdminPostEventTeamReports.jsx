@@ -640,8 +640,23 @@ function AdminPostEventTeamReports({
                 reportAccess?.currentAdminId
               )
 
+            const adminTeamIds =
+              Array.isArray(
+                reportAccess?.adminTeamIds
+              )
+                ? reportAccess.adminTeamIds.map(
+                    Number
+                  )
+                : []
+
+            const isOwnTeam =
+              adminTeamIds.includes(
+                Number(report.team_id)
+              )
+
             const ownsFinancialFlow =
               reportAccess?.canSubmit &&
+              isOwnTeam &&
               !reportAccess?.expensesClosed &&
               (
                 !isGeneralEvent ||
